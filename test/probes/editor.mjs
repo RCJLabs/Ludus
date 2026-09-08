@@ -69,6 +69,115 @@ const arm = async (opts) => inside(p, ([H, W, SEED, opts]) => {
 
 const C = await arm({});
 const G = await arm({ gambit:4 });
+
+/* ---- #254's VERIFY-FIRST: HAS THE LEDGER GOT ANYTHING TO HOLD? ----
+   #254 wants `d.editors[name]` — a taste, the festivals he owns, and a record of bookings honoured
+   and broken. `SLAVERS` is the model in the same file: four dealers who remember "exactly how the
+   last four went". Before building a sixth memory system, the question is whether the player MEETS
+   the same editor often enough for remembering to mean anything, and whether there is a record with
+   two sides to it.
+
+   Bookings are NOT dark, which had to be checked first: `offerBooking` fires at R()<0.10 a week,
+   the ask becomes a `pendingEvent` with two doors, and the rope answers events with choice 0 —
+   which here is "Sign for it". So the reference player signs every booking it is offered. But
+   `takeBooking`, `offerBooking` and `failBooking` are on no export, so nothing in this suite has
+   ever been able to drive one directly; this reads the deadline the booking leaves behind. */
+const ledgerArm = (ROPE) => inside(p, ([H, W, SEED, ROPE]) => {
+  const A = window.__LVDVS, R = window.__ROPE;
+  R.reset();
+  const T = { houses:0, weeks:0, signed:0, honoured:0, broken:0, stillOpen:0,
+              paidBack:0, fameLost:0, billHad:0, billChecked:0, manFit:0,
+              perEditor:{}, distinctPerHouse:[], maxRepeat:[], gaps:[], names:{} };
+  for(let h=0; h<H; h++){
+    const d = A.newGameState("Led","clean",SEED+"-L"+h, null); T.houses++;
+    const open = {}, mine = {}, lastAt = {}; const metIds = new Set();
+    for(let w=0; w<W && !d.over; w++){
+      R.lanista(d, ROPE); T.weeks++;
+      for(const x of (d.deadlines||[])){
+        if(x.kind !== "booking") continue;
+        if(!open[x.id]){
+          open[x.id] = { editor:x.editor, met:!!x.met, advance:x.advance||0, due:x.due, gid:x.gid };
+          T.signed++;
+          const e = x.editor || "(none)";
+          T.perEditor[e] = (T.perEditor[e]||0) + 1;
+          mine[e] = (mine[e]||0) + 1;
+          if(lastAt[e] != null) T.gaps.push(d.week - lastAt[e]);
+          lastAt[e] = d.week;
+        }
+        open[x.id].met = !!x.met;      /* last sight before it resolves */
+      }
+      /* WAS THE BOUT EVER ON THE BILL? `makeGames` pushes an offer carrying `booking:bk.id` for
+         the festival the booking names, so honouring is reachable and 0-of-124 is about the
+         policy. Counted rather than asserted from the source, because "reachable" read off code
+         and "reached" read off a run are different claims and this project has confused them. */
+      const offs = (d.games && d.games.offers) || [];
+      if(offs.length && (d.deadlines||[]).some(x=>x.kind==="booking" && !x.met)){
+        T.billChecked++;
+        const bo = offs.find(o=>o.booking != null);
+        if(bo){ T.billHad++;
+          const man = (d.gladiators||[]).find(g=>g.id === bo.bookedGid);
+          if(man && man.status === "active") T.manFit++; }
+      }
+      /* one that has gone from the list has been resolved by `deadlineWeek` */
+      { const S0 = R.stats ? R.stats() : {}; for(const bid of (S0.bookedMetIds||[])) metIds.add(bid); }
+      const live = new Set((d.deadlines||[]).filter(x=>x.kind==="booking").map(x=>x.id));
+      for(const id of Object.keys(open)){
+        if(live.has(+id) || live.has(id)) continue;
+        /* ---- HONOUR IS ATTRIBUTED BY ID FROM INSIDE THE WEEK ----
+           The first cut read `met` at last sight from out here and reported 0 honoured in BOTH
+           arms — including the one where 32 of 32 booked bouts marked their contract. A booking is
+           marked in `doFight` and the deadline is dropped by `deadlineWeek` in the same week it
+           falls due, so an observer outside the week can never see the flag set. */
+        if(metIds.has(+id) || metIds.has(id)) T.honoured++;
+        else { T.broken++; T.paidBack += (open[id].advance||0) * 2; T.fameLost += 22; }
+        delete open[id];
+      }
+    }
+    T.stillOpen += Object.keys(open).length;
+    T.distinctPerHouse.push(Object.keys(mine).length);
+    T.maxRepeat.push(Object.values(mine).reduce((a,b)=>Math.max(a,b), 0));
+  }
+  const q = a => { if(!a.length) return null; const s=a.slice().sort((x,y)=>x-y);
+    return { n:a.length, p50:s[Math.floor(s.length/2)], max:s[s.length-1] }; };
+  T.distinctPerHouse = q(T.distinctPerHouse); T.maxRepeat = q(T.maxRepeat); T.gaps = q(T.gaps);
+  /* the lever's OWN reach, before anything is concluded about the game from its result */
+  /* ---- THROUGH `stats()`, BECAUSE THE HANDLE IS NOT THE COUNTER STORE ----
+     The rope's counters live on an inner `R` and the object on `window.__ROPE` carries only the
+     functions — "R holds only counters; the rope's functions are closures". Reading `R.bookedSeen`
+     off the handle gives undefined for EVERY counter, which read as "the lever never saw a booked
+     bout" and would have been published as a fact about the game. The read-path control caught it:
+     `tookSingle`, set in the same function on the same object, came back 0 as well, and a run with
+     three thousand single bouts in it cannot have taken none. */
+  const S = R.stats ? R.stats() : {};
+  T.bookedSeen = S.bookedSeen||0; T.bookedTook = S.bookedTook||0; T.bookedUnfit = S.bookedUnfit||0;
+  T.tookSingle = S.tookSingle||0;
+  T.bookedRan = S.bookedRan||0; T.bookedMet = S.bookedMet||0;
+  return T;
+}, [H, W, SEED, ROPE]);
+const ledger = await ledgerArm({});
+const kept   = await ledgerArm({ booking:true });
+
+console.log(`\n  ---- #254: WHAT A LEDGER WOULD HOLD (${ledger.houses} houses, ${ledger.weeks} weeks) ----`);
+console.log(`  bookings signed          ${ledger.signed}`);
+console.log(`  honoured / broken        ${ledger.honoured} / ${ledger.broken}  (still open at the end: ${ledger.stillOpen})`);
+console.log(`  distinct editors a house meets  ${JSON.stringify(ledger.distinctPerHouse)}`);
+console.log(`  most times one editor is met    ${JSON.stringify(ledger.maxRepeat)}`);
+console.log(`  weeks between meeting the same man ${JSON.stringify(ledger.gaps)}`);
+console.log(`  the bill carried the booked bout ${ledger.billHad} of ${ledger.billChecked} weeks a booking stood with a card up `
+  + `(the booked man active on ${ledger.manFit} of them)`);
+console.log(`  what breaking them cost: ${ledger.paidBack}d paid back and ${ledger.fameLost} fame across ${ledger.houses} houses `
+  + `= ${Math.round(ledger.paidBack/ledger.houses)}d and ${Math.round(ledger.fameLost/ledger.houses)} fame a house`);
+console.log(`  by name: ${Object.entries(ledger.perEditor).map(([k,v])=>`${k} ${v}`).join(" · ") || "(none)"}`);
+console.log(`\n  ---- AND WITH THE ROPE HONOURING WHAT IT SIGNS (booking:true) ----`);
+console.log(`  signed ${kept.signed} · honoured ${kept.honoured} · broken ${kept.broken}`);
+console.log(`  the lever's own reach: a booked bout was on the bill ${kept.bookedSeen} time(s) it looked, `
+  + `taken ${kept.bookedTook}, passed over for an unfit man ${kept.bookedUnfit} `
+  + `[read-path control: tookSingle ${kept.tookSingle}]`);
+console.log(`  booked bouts actually fought ${kept.bookedRan}, and the contract was marked met on `
+  + `${kept.bookedMet} of them (counted inside the week, since the deadline is dropped the week it falls due)`);
+console.log(`  what breaking them still cost: ${kept.paidBack}d and ${kept.fameLost} fame `
+  + `= ${Math.round(kept.paidBack/kept.houses)}d and ${Math.round(kept.fameLost/kept.houses)} fame a house`);
+
 await browser.close(); server.close();
 
 const pc = (n,dd) => dd ? (n/dd*100).toFixed(2)+"%" : "-";

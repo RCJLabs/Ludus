@@ -4389,6 +4389,88 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.236.0 — the reference player signs every booking and keeps one in nine, and it has been billing every measurement in this directory
+
+**#254's verify-first went looking for whether an editor's ledger would have two sides to hold, and
+found something larger underneath it.** `offerBooking` fires at `R()<0.10`, the ask arrives as a
+`pendingEvent` with two doors, and this rope answers events with **choice 0** — which here is *"Sign
+for it"*. So the reference player signs every booking it is ever offered, and had no policy at all
+for keeping one.
+
+| | signed | honoured | broken |
+|---|---|---|---|
+| the rope as it has always been | 122 | **14** | 107 |
+| with the new `booking` lever | 118 | **73** | 44 |
+
+The fourteen are **accidents**: `housePick` sorts the bill by purse and a booking's balance is
+sometimes the biggest thing on it. The other 107 each cost `advance x 2` in coin, 22 fame, 9 patron
+favour and 6 faction — **2,273 denarii and 147 fame a house**, against a median mid-game purse of
+about 4,400 and a median era-2 fame of 1,770. That has been inside every coin curve, every fame
+curve and every ending mix this project has ever published.
+
+**It is not that the game cannot.** `makeGames` puts the booked bout on the bill with
+`booking:bk.id`, and it was there on 106 of the 175 weeks a booking stood with a card up, the named
+man active on 70 of them. The chance existed and this player never took it. `harness.mjs` gains
+**`booking`** (default OFF, the established idiom when a lever changes the reference player): take
+the booked bout when it is on the bill and field the man it names. With it, 62% are kept; the rest
+fail because the man is not fit or the bout is not up that week.
+
+**The default is left as it is, and that is a decision rather than an oversight.** Every figure in
+this file was measured with the rope as it stands, and changing what it does retroactively
+invalidates the comparisons those figures exist for. But it should be said plainly: signing a
+contract and defaulting on it is **strictly dominated** by both alternatives the game offers — sign
+and keep it, or answer *"Do not promise a man five weeks out"* — and it is not a policy anyone chose,
+in exactly the sense the harness's own note says of the crux answer that *"it was never a decision;
+it was a default"*. Changing it is a release of its own, and it will re-phase every seeded fixture in
+the suite.
+
+**And nothing in this suite could ever drive a booking.** `offerBooking`, `takeBooking` and
+`failBooking` were on no export, so the one contract the game asks a player to keep had never been
+asserted end to end. They are on the handle now and `checks/editor.mjs` carries both sides of it:
+the advance moves the box by what it says, the deadline carries its editor and names the man,
+`bookedFor` finds it for its own festival key — without which `makeGames` could never put the bout
+up and the day could not be kept at all — and missing the day costs the advance again and the fame.
+
+**FOUR FAULTS IN MY OWN INSTRUMENTS, AND EACH ONE HID THE NEXT.** They are worth the space because
+the third was one commit from being published as a fact about the game, and the fourth was an
+opt-in lever that was not opt-in.
+
+1. **The lever was not forwarded.** `takeBout` builds a fresh options literal inside `lanista` and
+   reads only what that line hands it, so `booking:true` sat in `o` and never arrived. The arm came
+   back byte-identical to its control — same signed, same honoured, same gold, same fame. That is
+   the inert-lever signature `probe.mjs`'s FAULT THREE exists for, and precisely how `entrance` died:
+   honoured by `run`, not forwarded by `lanista`.
+2. **The read path was wrong.** The rope's counters live on an inner `R`; the object on
+   `window.__ROPE` carries only the functions — *"R holds only counters; the rope's functions are
+   closures"*. Reading `R.bookedSeen` off the handle returns undefined for **every** counter, which
+   read as *"the lever never once saw a booked bout on the bill"*. A control on the read path itself
+   caught it: `tookSingle`, set in the same function on the same object, also came back 0, and a run
+   with 1,398 single bouts in it cannot have taken none.
+3. **Honour was read from outside the week.** A booking is marked in `doFight` and its deadline is
+   dropped by `deadlineWeek` in the same week it falls due, so an observer sampling once a week can
+   never see the flag set. That reported **0 honoured in BOTH arms** — including the one where 32 of
+   32 booked bouts marked their contract — and *"0 of 124 honoured, so the ledger has only one side"*
+   was written and nearly shipped. Honour is attributed by id from inside the week now.
+
+4. **The lever changed the default player.** The line choosing WHICH man fights read
+   `offer.booking != null && men.some(...)` with no reference to the lever at all, so on the roughly
+   fourteen occasions in a hundred and twenty-two that the rope happens onto a booked offer — it
+   does, because `housePick` sorts the bill by purse — it fielded the man the contract named instead
+   of the one `fit()` sorted first. An opt-in lever that quietly moves the reference player is worse
+   than a broken one, because nothing about it looks wrong. **`tells` caught it**: its `veteran`
+   reading fell to 0.71% of offers, under the floor that says a tell a player can never see is
+   written, read and dead — on a release whose only game-code change was an export block. That is
+   the whole argument for a suite this size: the arm I was watching said what I wanted, and a check
+   about scouting reports three items away said the reference player had moved.
+
+**And the sweep that led here came back mostly clean, which is worth recording too.** `charter`'s two
+`n >= 20 && ... === 0` bars are sound — standard bouts reach a crux about 60% of the time, so a
+20-draw all-zero is about one in a hundred million. `faces`'s `ink` is SVG markup length and
+`familia`'s a distinct-drawing count, both low-collision. No second instance of `feud`'s shape. And
+the claim that the last four reds were *"a pattern, not four coincidences"* was **overstated**: only
+`die` and `feud` shared the sample-too-small shape; `grave` was an unscreened precondition and
+`seller` was load timing. Three faults, not one.
+
 ### v3.235.0 — #251 phase 3 closes the item: the succession route existed, and it did not know the post was empty
 
 **Phases 1 and 2 opened three doors out of the square — age, the eye, and a rival — and phase 3's
@@ -9284,9 +9366,13 @@ read** — bookings from an editor who trusts you come with the advance up and t
 
 *Reuses:* EDITORS, APPETITES, PETITIONS, PACTS.season, editorBought, SLAVERS' record shape, CALENDAR.
 
-**Verify first.** Distinct editors met per run and bookings signed by each (`booking` fired 113 times
-over sixteen houses — about twenty-three a name), and the honoured / broken ratio per house, so the
-ledger has something to hold.
+**Verify first — ANSWERED v3.236.0, and it found something under the question.** The ledger has two
+sides: **122 signed, 14 honoured, 107 broken** under the reference player, and **73 of 118** once the
+rope is given a policy for keeping them. A house meets a median of **4 distinct editors** (max 5) and
+signs with the same man a median of **3** times (max 8), a median of **52 weeks apart** — so there is
+repeat contact for a memory to sit on. But the fourteen kept are accidents of `housePick`'s purse
+sort, and the 107 broken cost **2,273 denarii and 147 fame a house**, inside every figure this
+project has published. See the release note; the item's own build is unstarted.
 
 **Risk.** A sixth memory system. Keep it inside the arena's bill, where the editor already speaks.
 

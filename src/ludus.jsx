@@ -34146,6 +34146,10 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     paragonOf, paragonReach, makeParagon, paragonWeek, paragonExpire, PARAGONS,
     PARAGON_REACH, PARAGON_GAP, PARAGON_ODDS, marketWeek,
     buyGearItem, sellGearOne, equipOne, stripAll, mendKitOf, forgeForMan, armHimOff, armAllOff,
+    /* #254 — nothing in this suite could ever drive a booking: `offerBooking`, `takeBooking` and
+       `failBooking` were on no export, so the one contract the game asks a player to keep had never
+       been asserted end to end. The handle is the contract (probe.mjs, FAULT SIX). */
+    offerBooking, takeBooking, failBooking, bookedFor,
     buildUp, setCrestTo, setCareOf, editorBought, EDITORS, PETITIONS, PET_KEYS, runPetition, petitionOdds, petitionWhy, petitionReady, PETITION_COOL, pickAnyOpp, CARE, CARE_KEYS, careWhy, surgeonOK, surgeonFee, retireEligible, FM_KEYS, freedWeek,
     teachSigTo, makeMasterOf, startSecond, switchStyle, techsFor, sigFee, sigOf, TECHNIQUES,
     canMaster, makeMaster, MASTERY_GATE, MASTERY, masterOf, masterNeed,   /* #232 phase 5 — masterOpen/MASTER_ACCLAIM are already on the handle */

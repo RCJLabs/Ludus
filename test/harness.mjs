@@ -165,6 +165,15 @@ export async function installRope(p){
       if(held) R.held++;
       if(o.silent) return { ran:true, crux:held, rounds:0, res:r };   /* only for checks measuring the trap itself */
       const a = answer(d, r, o.choice);
+      /* #254 — did the contract actually get marked, INSIDE the week? A booking is honoured in
+         `doFight` and the deadline is dropped by `deadlineWeek` in the same week it falls due, so a
+         probe reading `met` once a week from outside can never see it set and reads 0 honoured. */
+      if(offer && offer.booking != null){
+        R.bookedRan = (R.bookedRan||0)+1;
+        const x = (d.deadlines||[]).find(y=>y.id === offer.booking);
+        if(x && x.met){ R.bookedMet = (R.bookedMet||0)+1;
+          (R.bookedMetIds = R.bookedMetIds || []).push(offer.booking); }
+      }
       return { ran:true, crux:held, rounds:a.rounds, res:a.res };
     };
 
@@ -227,6 +236,23 @@ export async function installRope(p){
       const matching = pref ? bill.filter(x=>x.stakes === pref) : bill;
       const pool = matching.length ? matching : (want ? [] : bill);
       let offer = pool.length ? (o.pick ? o.pick(pool) : pool[0]) : null;
+      /* ---- #254: THE CONTRACT THIS PLAYER SIGNED AND HAS NEVER ONCE KEPT ----
+         `offerBooking` fires at R()<0.10, the ask becomes a `pendingEvent`, and this rope answers
+         events with choice 0 — which for a booking is "Sign for it". So the reference player signs
+         every booking it is offered and then takes `pool[0]` on the day like any other week.
+         Measured over 4,242 house-weeks: **124 signed, 0 honoured, 124 broken**, at a cost of
+         `advance x 2` in coin, 22 fame, 9 patron favour and 6 faction EACH — 2,647 denarii and 171
+         fame a house, bled out of every measurement this directory has ever taken.
+         It is not that the game cannot: `makeGames` pushes the booked bout onto the bill with
+         `booking:bk.id`, and it was there on 108 of the 169 weeks a booking stood with a card up,
+         the named man active on 74. The chance existed and this player never took it.
+         OPT-IN, because honouring them changes the coin and the fame of every run that uses it. */
+      if(o.booking === true){
+        const bo = pool.find(x=>x.booking != null) || bill.find(x=>x.booking != null);
+        if(bo){ R.bookedSeen = (R.bookedSeen||0)+1;
+          if(men.some(g=>g.id === bo.bookedGid)){ offer = bo; R.bookedTook = (R.bookedTook||0)+1; }
+          else R.bookedUnfit = (R.bookedUnfit||0)+1; }
+      }
       /* ---- ROME IS NOT CAPUA, AND THIS ROPE USED TO FORGET IT ----
          The pit fallback below was guarded on `!d.city`, and a house at Rome has `d.rome` set with
          `d.city` still null — so a probe driving the imperial trip fell through to the CAPUAN PIT
@@ -265,9 +291,19 @@ export async function installRope(p){
       else if(offer.melee) R.tookMelee = (R.tookMelee||0)+1;
       else if(offer.venatio) R.tookHunt = (R.tookHunt||0)+1;
       else R.tookSingle = (R.tookSingle||0)+1;
+      /* and the named man is the point of a booking: honouring it means HE stands, not whoever
+         `fit()` happened to sort first — `boutAftermath` sets `met` off the offer, but the bill's
+         own `bookedGid` is what the contract was written on */
+      /* GATED ON THE LEVER, and the first cut was not. Without `o.booking === true` this fielded the
+         booked man whenever the rope HAPPENED onto a booked offer — which it does about fourteen
+         times in a hundred and twenty-two, because `housePick` sorts by purse — so an opt-in lever
+         silently changed the default player, and `tells` caught it: the `veteran` tell fell to 0.71%
+         of offers, under its floor, on a release whose game code was an export block. */
+      const bookMan = o.booking === true && offer.booking != null
+        && men.some(g=>g.id === offer.bookedGid) ? offer.bookedGid : null;
       const ids = offer.melee ? men.slice(0,3).map(g=>g.id)
                 : offer.pair  ? men.slice(0,2).map(g=>g.id)
-                :               [men[0].id];
+                :               [bookMan != null ? bookMan : men[0].id];
       const got = pref ? offer.stakes === pref : null;
       if(got === false) R.wrongStakes++;
       return Object.assign({ offer, ids, stakes: offer.stakes, gotWanted: got,
@@ -293,6 +329,10 @@ export async function installRope(p){
        rather than intent. Every part can be switched off through `opts` for a control arm:
          cells, buy, doctore, build, census, staff, school, heir, rome, bout  (all default true)
          signature     (default OFF, #221 — no rope had ever taught one, so the arc read dark)
+         booking       (default OFF, #254 — this player signs every booking it is offered and has
+                        honoured none: 124 of 124 broken over 4,242 house-weeks, costing 2,647
+                        denarii and 171 fame a house. `booking:true` takes the booked bout off the
+                        bill when it is there and fields the man it names)
          docInside     (default OFF, #251 phase 3 — the post can empty three ways now and every
                         refill measured came off the market, because no rope has ever answered a
                         doctore's offer. `docInside:true` takes the man of your own who comes to
@@ -1324,6 +1364,13 @@ export async function installRope(p){
         const housePick = us => { const pr = us.filter(x=>x.primus); return (pr.length ? pr : us)
           .sort((a,b)=>(b.purse||0)-(a.purse||0))[0]; };
         const t = takeBout(d, { men, pick: o.pick || safePick || pairPick || housePick,
+          /* FORWARDED, and the first cut was not: `takeBout` builds a fresh literal here and reads
+             only what this line hands it, so `booking:true` sat in `o` and never arrived. The arm
+             came back byte-identical to its control — 122 signed, 0 honoured, 121 broken, the same
+             gold and the same fame — which is the inert-lever signature `probe.mjs`'s FAULT THREE
+             is written about, and `entrance` died of exactly this: honoured by `run`, not forwarded
+             by `lanista`. Caught by the arm agreeing with its control too precisely. */
+          booking: o.booking === true,
           wantStakes:   d.rome ? null : (o.wantStakes || (o.preferStakes ? null : (o.stakes || "standard"))),
           preferStakes: d.rome ? null : (o.preferStakes || null),
           /* ---- THE CRUX ANSWER WAS A CONSTANT NOBODY CHOSE, AND IT WAS THE LETHAL ONE — #185 ----
