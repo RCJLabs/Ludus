@@ -4389,6 +4389,69 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.235.0 — #251 phase 3 closes the item: the succession route existed, and it did not know the post was empty
+
+**Phases 1 and 2 opened three doors out of the square — age, the eye, and a rival — and phase 3's
+verify-first asked who walks in after. The answer was nobody from inside, ever.** Over 3,891
+house-weeks the post emptied **seventeen times** (4 retirements, 13 men taken) across 173 empty
+weeks, and **all 32 refills came from the market**. The freedman route filled it zero times and the
+offer route zero.
+
+Part of that is the reference player, who buys and has never called `takeDoctoreOffer` — phase 1
+recorded that already. **The half that is not policy is the finding:** `offerDoctore` raised an
+offer **twice** in those 3,891 weeks, and **both arrived while the post was full**. Its three
+callers are a rudis twice and a retirement once, none of which has anything to do with the square
+standing empty. The route was never a succession. It was a replacement proposition that happened to
+exist, and nothing connected a man of your own to the post going empty beside him.
+
+**And nothing ever expired an offer.** `d.doctoreOffer` was set in `offerDoctore` and cleared only
+in `takeDoctoreOffer`, so both offers in that run were **still standing at the end** — under an
+agenda row reading *"he will not wait long"*. That is the same shape as the fault the note over
+`agendaSquare` records for the HIRE line, a standing note sitting at urgency 2 above the week's
+actual news, left unfixed on the offer line directly beside it.
+
+**Shipped.** `succeedDoctore(d)` is called at both vacancies, before the market and not instead of
+it — the house can still buy a stranger if it would rather. The pool is the men who have already
+left the sand, which `survey.mjs` established stay on `d.gladiators` with their status and their
+real record; offering to a man who has already gone is the invariant both existing callers keep,
+since an active fighter would have to come off the roster and `takeDoctoreOffer` does not touch it.
+**The heir's mentor comes first** (#237's `c.mentorId`) — a house that has already trusted him with
+the boy has said who it trusts with the young — and otherwise the best record at or above
+`DOC_INSIDE_WINS`. Every offer now carries an `offerUntil`, the succession's and the rudis's alike,
+and it runs down in `doctoreWeek` beside phase 2's.
+
+**Measured on the shipped build, the same 16 x 420 frame:**
+
+| | before | after |
+|---|---|---|
+| offers raised | 2 | **13** |
+| …at an **empty** post | **0** | **11** |
+| weeks an offer stood | to the end of the run | p50 **3**, max 3 |
+| still standing at the end | 2 of 2 | **0** |
+| refills from inside, with `docInside` | 0 of 32 | **11 of 34** |
+
+`harness.mjs` gains **`docInside`** (default OFF, the third opt-in lever of this item), taken before
+the market branch — a house with a man of its own at the gate should not be measured walking past
+him to the stalls. Without it the refill still comes off the market, which is the reference player's
+policy and not the game's.
+
+**THE GATE WENT 176/177, AND THE ONE RED WAS A BAR SIZED OFF A RATE THAT WAS WRONG BY FOUR TIMES.**
+`feud`'s fifth arm fails if your man is the weaker in EVERY named grudge match once at least 25 are
+drawn, and v3.235.0 drew exactly 25 with a best of -1.8. Its own header has widened that sample
+twice already (7 to 12 to 25) and states the principle it was widened on: *"a bar that a correct
+build fails one run in three is noise wearing an assertion's clothes."* The 25 was sized off a
+favourable rate "near a fifth". Measured on this build over four independent seed bases — 105 named
+days — **the real rate is 5 of 105, 4.8%**, at which a 25-draw sample comes back all-negative
+**29.5% of the time**. And the distribution had not moved: medians of **-10.9 / -5.9 / -8.5 / -7.1**
+across the four bases, against the -7.8 and -8.6 the header records for correct builds and the -26.3
+the arm exists to catch, with one base carrying a best of **+12.4**. So the houses go 9 to 30 rather
+than the bar moving — at 4.8% that is about 1.4% of correct builds failing instead of a third of
+them — and the arm reads 92 named days at 17s against 10s. The player's men are not weaker; the
+sample was too small for a rate four times lower than the one it was cut for.
+
+**#251 is closed.** All three phases shipped; every one of them found the item's diagnosis right and
+its stated mechanism wrong in some particular that only measuring first would have caught.
+
 ### v3.234.0 — #251 phase 2: a rival comes for the doctore, and the verify-first corrected the item twice before a line was written
 
 **The item asked for "a `RIVAL_MOVES` move against your doctore weighted by `lanistaOf().train`",
@@ -9094,8 +9157,13 @@ accelerating decline past 48, and two doors at 58 — all at zero new `R()` draw
 weighting, inside the grudge machinery it would otherwise have routed around — gated at the staff
 poach door's grudge 40 and deliberately NOT on `!h.doctore`, since **54 of 58 rival houses have one
 and on every one of them it is the boolean `true`**, which `rivalWeekly` reads for its 1.3x. One
-doctore lost per 299 house-weeks; with the counter answered, 7 of 10 offers are paid off.* *Phase 3 is half-built:* `takeDoctoreOffer` is the one function that can replace a
-sitting man, and the rope has never called it. See the release note.
+doctore lost per 299 house-weeks; with the counter answered, 7 of 10 offers are paid off.* *Phase 3 SHIPPED v3.235.0 and CLOSES THE ITEM.* The route existed and did not know the post was
+empty: over 3,891 house-weeks the square emptied 17 times and **all 32 refills came off the market**,
+while `offerDoctore` raised exactly **two** offers, both while the post was FULL, from callers (a
+rudis, a retirement) unconnected to the vacancy. Nothing expired an offer either — both stood to the
+end of the run under an agenda row saying "he will not wait long". Now the vacancy asks the house
+first, the heir's mentor before the best record, every offer carries a window, and a house that
+looks inside fills the post from its own men 11 times in 34. See the release note.
 
 
 `makeDoctore` writes name, origin, skill, spec, creed, past, fee and wage — **no age, and no clock.**

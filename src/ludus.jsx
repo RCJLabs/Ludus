@@ -5226,6 +5226,12 @@ function doctoreWeek(d){
   }
   /* the three weeks run down here, where the post's own week is — an unanswered offer is an answer */
   if(doc && d.docOffer && --d.docOffer.weeks <= 0){ loseDoctoreTo(d, d.docOffer.house); return; }
+  /* and a man offering to take the square does not wait for ever either (#251 phase 3) */
+  const off = d.doctoreOffer;
+  if(off && off.offerUntil != null && d.week >= off.offerUntil){
+    d.doctoreOffer = null;
+    chron(d, `${off.name} waited on your word about the square and has stopped waiting.`, "bad");
+  }
   /* the second seat empties itself the same way the first does, and a retrain clears it outright */
   if(doc && doc.second){
     const s2 = d.gladiators.find(x=>x.id===doc.second);
@@ -5443,6 +5449,7 @@ function loseDoctoreTo(d, houseName){
   doc.pupil = null; doc.second = null; doc.retrainTo = null; doc.retrainLeft = 0;
   d.doctore = null; d.docOffer = null;
   d.flags.docTaken = (d.flags.docTaken||0) + 1;
+  succeedDoctore(d);            /* #251 phase 3 — inside first, and the market as well */
   makeDoctoreMarket(d);
   return true;
 }
@@ -5485,6 +5492,7 @@ function retireDoctore(d){
   doc.pupil = null; doc.second = null; doc.retrainTo = null; doc.retrainLeft = 0;
   d.doctore = null;
   d.flags.docRetired = (d.flags.docRetired||0) + 1;
+  succeedDoctore(d);            /* #251 phase 3 — inside first, and the market as well */
   makeDoctoreMarket(d);
   return true;
 }
@@ -6145,10 +6153,62 @@ function doctoreFromGladiator(d, g, kind){
       ? `${g.wins} victories and the wooden sword to show for them`
       : `${g.wins} victories, and released before the sand could take him` };
 }
+/* ---- THE HOUSE LOOKS INSIDE BEFORE IT GOES TO THE MARKET — #251 phase 3 ----
+   `probes/doctore.mjs` measured the route this replaces. Over 3,891 house-weeks the post emptied
+   SEVENTEEN times — four retirements and thirteen men taken by a rival, the two doors phases 1 and
+   2 opened — across 173 empty weeks, and **all 32 refills came from the market**. The freedman
+   route filled it zero times and the offer route zero.
+
+   Part of that is the reference player, who buys and has never called `takeDoctoreOffer`. The half
+   that is not: `offerDoctore` raised an offer TWICE in those 3,891 weeks, and BOTH arrived while
+   the post was full. Its three callers are a rudis twice and a retirement once — none of which has
+   anything to do with the square standing empty. So the route was never a succession; it was a
+   replacement proposition that happened to exist, and nothing connected a man of your own to the
+   post going empty beside him.
+
+   The pool is the men who have already left the sand. `survey.mjs` established that a freed or
+   retired man STAYS on `d.gladiators` with his status and his real record, so they are all still
+   there to be asked — and offering to a man who has already gone is the invariant the two existing
+   callers keep, both of which fire after he has walked out. An active fighter would have to be
+   taken off the sand to take the square, and `takeDoctoreOffer` does not touch the roster.
+
+   The boy's mentor comes first (#237's `c.mentorId`), because a house that has already chosen him
+   to teach its heir has said who it trusts with the young. */
+const DOC_INSIDE_WINS = 6;   /* what the yard will accept from one of its own */
+function docSuccessor(d){
+  const pool = (d.gladiators||[]).filter(g =>
+    g && g.status !== "active" && g.status !== "dead" && (g.wins||0) >= DOC_INSIDE_WINS);
+  if(!pool.length) return null;
+  const mid = d.heir && d.heir.mentorId;
+  return (mid && pool.find(g=>g.id === mid)) || pool.slice().sort((a,b)=>(b.wins||0)-(a.wins||0))[0];
+}
+function succeedDoctore(d){
+  if(d.doctore || d.doctoreOffer) return false;
+  const g = docSuccessor(d);
+  if(!g) return false;
+  const o = doctoreFromGladiator(d, g, g.status === "freed" ? "rudis" : "retired");
+  o.offerUntil = d.week + DOC_OFFER_WEEKS;
+  o.inside = true;
+  d.doctoreOffer = o;
+  const taught = d.heir && d.heir.mentorId === g.id;
+  chron(d, `${g.name} is at the gate before the week is out, and he does not pretend it is a `
+    + `social call. He fought ${g.wins} times under your colours${taught ? ` and has had the `
+    + `teaching of your heir` : ``}, and he says the square should not be sold to a stranger `
+    + `while he is standing here.`, "good");
+  return true;
+}
 function offerDoctore(d, g, kind){
   let p = (kind==="rudis" ? 0.45 : 0.3)
     + (d.unrest<35 ? 0.25 : 0) + (g.morale>70 ? 0.15 : 0) - (d.unrest>60 ? 0.3 : 0);
-  if(R() < clamp(p, 0.05, 0.95)){ d.doctoreOffer = doctoreFromGladiator(d, g, kind); return true; }
+  /* ---- AND IT WAITS, WHICH THE AGENDA HAS ALWAYS SAID AND NOTHING EVER MADE TRUE ----
+     `d.doctoreOffer` was set here and cleared ONLY in `takeDoctoreOffer`, so an unanswered offer
+     stood for the rest of the run under an agenda row reading "he will not wait long". Measured:
+     both offers in a 3,891-week run were still standing at the end. That is the same shape as the
+     fault the note over `agendaSquare` records for the HIRE line — a standing note sitting at
+     urgency 2 above the week's actual news — left unfixed on the offer line beside it. */
+  if(R() < clamp(p, 0.05, 0.95)){
+    d.doctoreOffer = Object.assign(doctoreFromGladiator(d, g, kind), { offerUntil: d.week + DOC_OFFER_WEEKS });
+    return true; }
   return false;
 }
 const potentialWord = (p,g)=> p<50?"a modest ceiling": p<70?`promise in ${PR(g).him}`: p<85?"exceptional promise":"a fire the arena has not yet seen";
@@ -34100,6 +34160,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     answerReSignWith, answerRomeWith,
     /* #251 phase 2 — a rival comes for the doctore, and the counter that keeps him */
     startDocOffer, answerDocOfferWith, loseDoctoreTo, docKeepFee, GRUDGE_DOCTORE, DOC_OFFER_WEEKS,
+    succeedDoctore, docSuccessor, DOC_INSIDE_WINS, offerDoctore, doctoreFromGladiator,   /* #251 phase 3 */
     HOSTILE_MOVES, spiteWeight, RIVAL_DOC, rivalCan,
     hostParty, throwFeast, walkTheCells, holdTourney, stageMunus,
     /* the gods: five of them, four real boons, and nothing had ever called either action */
