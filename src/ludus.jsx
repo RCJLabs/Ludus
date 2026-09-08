@@ -12853,6 +12853,36 @@ function lanistaWeek(d){
   if(L.age >= 62 && L.health >= 45 && d.heir && heirOfAge(d) && yearOf(d) >= 6 && R() < 0.06){
     d.succession = { lan:L.name, age:L.age, heir:d.heir.name, kind:d.heir.kind, retire:true,
       years:yearsAtHead(d, L) };
+  /* ---- AND THIS IS THE DOOR #243's FOURTH PHASE NEEDED, MEASURED AND DECLINED ----
+     "The widow as regent — a lanista who dies with a wife and a boy under `SON_AGE` gets a
+     `succession` variant where she holds the house until he is of age." The item gates it on one
+     number and says so: *"how many houses would have a widow-and-minor on the lanista's death —
+     phase 4 is worth building only if that number is not zero."*
+
+     MEASURED (`probes/widow.mjs`, three arms, 48 houses, 10,927 played weeks): **it is zero, and
+     there are no deaths to have one.** Not one lanista died in a played house. Fifteen handovers and
+     fifteen of fifteen were RETIREMENTS, at a median age of 63 — a living man keeping his rooms.
+
+     THE ITEM GUESSED THE WRONG REASON. It blames the boy's 162 weeks. The boy is not the constraint:
+
+       · the HOUSE ends first. The reference player's ends at a median of week 260 with the man aged
+         51 at health p50 **100** — full health, the years barely begun. Ten of sixteen go on the
+         ledger (`debt`), four on a rising. He is nowhere near the door when the run stops.
+       · and where he does reach sixty-two well, this function routes him out ALIVE, deliberately.
+         That is the trade the note above made when `LAN_AGE_FROM` went 42 → 52: at the old onset
+         "the successions that did happen came through the death door, the lanista dropping dead,
+         rather than the retirement the design wrote for it". At the new one he is sound at 62, the
+         retirement gate opens at 6% a week, and health 0 is fifteen years further on. Driven with
+         every term satisfied, **80 of 80 handed on alive, after a median of eleven weeks**.
+
+     So the widow-and-minor has no trigger, and it is not a matter of tuning a number: it would need
+     a lanista's death to be an ordinary end of a house again, which is the thing v3.219.0 measured
+     and traded away on purpose. #243's phases 1-3 are the item — SHE is reachable, 15 of 16 houses
+     marrying at a median of week 35 and a wife standing on **85% of played weeks**.
+
+     THE DOOR IS NOT SHUT, and none of the above says it is: `checks/tenure.mjs` ages a man to health
+     0 and drives both doors, and `checks/widow.mjs` drives this branch with a widow and a boy of
+     three standing and reads both. The refusal is about reachability in a played house. */
   } else if(L.health <= 0){
     if(d.heir && HEIRS[d.heir.kind]) d.succession = { lan:L.name, age:L.age, heir:d.heir.name, kind:d.heir.kind };
     else d.over = { kind:"lanistaDied", name:d.name, lan:L.name, age:L.age, years:yearsAtHead(d, L) };
