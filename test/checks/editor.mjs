@@ -158,6 +158,94 @@ export async function run({ p, errors }){
       + `festivals — two men on one day means one of them is never the editor of anything`);
   }
 
+  /* ---- #254 phase 2: AND THE RECORD IS READ, WHICH FOR ONE RELEASE IT WAS NOT ----
+     Phase 1 shipped `d.editors` with exactly two readers in the program and both were the accessors
+     that write it. A ledger nobody reads is a dark field. These arms are behavioural on purpose:
+     they change the RECORD and assert the game's answer moves, rather than asserting that a term
+     appears in a formula — a check that restates the rule it is checking proves nothing about
+     whether the rule is wired in. */
+  const rd = await p.evaluate(()=>{
+    const A = window.__LVDVS, R = window.__ROPE;
+    const miss = ["editorTrust","cardEditor","petitionOdds","offerBooking","EDITOR_PATIENCE"]
+      .filter(k=>A[k]==null);
+    if(miss.length) return { why:`the handle is missing ${miss.join(", ")}` };
+    const mk = () => { const d = A.newGameState("P2","clean","P2-1"); d.fame = 400; d.gold = 6000;
+      for(const g of A.activeG(d)){ g.pfame = 60; g.wins = 9; } return d; };
+    const k0 = A.EDITOR_KEYS[0];
+    const d0 = mk();
+    const at = (kept, broken, signed) => { d0.editors = { [k0]:{ signed, kept, broken, paid:0, bought:0 } };
+      return +A.editorTrust(d0, k0).toFixed(2); };
+    const spread = { fresh:at(0,0,0), one:at(1,0,1), full:at(4,0,4), burned:at(0,4,4) };
+    /* the advance, on ONE seed and ONE week, with only the record differing */
+    const adv = {};
+    for(const [lab, rec] of [["burned",{signed:6,kept:0,broken:6}],["fresh",{signed:0,kept:0,broken:0}],
+                             ["trusted",{signed:8,kept:8,broken:0}]]){
+      const d = mk(); let o = null;
+      for(let i=0;i<400 && !o;i++){ d.week++;
+        d.editors = {}; for(const ek of A.EDITOR_KEYS) d.editors[ek] = Object.assign({paid:0,bought:0}, rec);
+        o = A.offerBooking(d); }
+      adv[lab] = o ? { advance:o.advance, total:o.advance + o.balance, trust:o.trust } : null;
+    }
+    /* a word with him: one house, one card, four records */
+    const dp = mk();
+    for(let w=0; w<300 && !A.cardEditor(dp); w++){ try { R.lanista(dp); } catch(e){ break; } }
+    const ck = A.cardEditor(dp);
+    const pet = {};
+    if(ck) for(const [lab, rec] of [["burned",{signed:6,kept:0,broken:6}],["fresh",{signed:0,kept:0,broken:0}],
+                                    ["trusted",{signed:8,kept:8,broken:0}],["bought",{signed:0,kept:0,broken:0,bought:1}]]){
+      dp.editors = { [ck]: Object.assign({paid:0,bought:0}, rec) };
+      pet[lab] = +A.petitionOdds(dp, "purse").toFixed(3);
+    }
+    /* and NOT at Rome or in a town, where the card is nobody's */
+    const away = mk(); away.games = { festival:"the imperial games", offers:[], week:away.week };
+    const town = mk(); town.games = { festival:"a town card", offers:[], week:town.week, city:"nuceria" };
+    return { spread, adv, pet, cardEd:ck, patience:A.EDITOR_PATIENCE,
+      romeNull: A.cardEditor(away) === null, townNull: A.cardEditor(town) === null };
+  });
+  if(rd.why) fails.push(`the phase 2 arm could not run: ${rd.why}`);
+  else {
+    lines.push(`the standing (patience ${rd.patience}): fresh ${rd.spread.fresh} · one kept ${rd.spread.one} `
+      + `· four kept ${rd.spread.full} · four broken ${rd.spread.burned}`);
+    lines.push(`  the advance on one seed: burned ${rd.adv.burned && rd.adv.burned.advance} of `
+      + `${rd.adv.burned && rd.adv.burned.total} · fresh ${rd.adv.fresh && rd.adv.fresh.advance} of `
+      + `${rd.adv.fresh && rd.adv.fresh.total} · trusted ${rd.adv.trusted && rd.adv.trusted.advance} of `
+      + `${rd.adv.trusted && rd.adv.trusted.total}`);
+    lines.push(`  a word with ${rd.cardEd}: burned ${rd.pet.burned} · fresh ${rd.pet.fresh} `
+      + `· bought ${rd.pet.bought} · trusted ${rd.pet.trusted}`);
+    if(rd.spread.one >= 1) fails.push(`ONE kept booking makes a man who fully trusts you `
+      + `(${rd.spread.one}) — EDITOR_PATIENCE is not holding the denominator, and a standing earned `
+      + `in one week is not a standing`);
+    if(!(rd.spread.burned < 0 && rd.spread.full > 0)) fails.push(`the standing does not run both ways `
+      + `(four kept ${rd.spread.full}, four broken ${rd.spread.burned})`);
+    if(!rd.adv.burned || !rd.adv.trusted) fails.push(`no booking was offered for one of the arms, so the `
+      + `advance comparison measured nothing`);
+    else {
+      if(!(rd.adv.trusted.advance > rd.adv.fresh.advance && rd.adv.fresh.advance > rd.adv.burned.advance))
+        fails.push(`the advance does not move with the record (burned ${rd.adv.burned.advance}, fresh `
+          + `${rd.adv.fresh.advance}, trusted ${rd.adv.trusted.advance}) — phase 2's first limb is that a `
+          + `man who trusts you puts more down in front, and if these are equal the ledger is unread`);
+      if(!(rd.adv.trusted.total > rd.adv.burned.total))
+        fails.push(`the purse is the same for a house he trusts and one that has let him down twice`);
+    }
+    if(!rd.cardEd) fails.push(`no card in 300 weeks was on a festival an editor owns, so the petition `
+      + `arm measured nothing — 55.6% of card weeks were on one when this was measured`);
+    else {
+      if(!(rd.pet.trusted > rd.pet.fresh && rd.pet.fresh > rd.pet.burned))
+        fails.push(`the odds of a word with the editor do not move with his record (burned `
+          + `${rd.pet.burned}, fresh ${rd.pet.fresh}, trusted ${rd.pet.trusted}) — favour alone made `
+          + `every editor the same man, which is what #254 is about`);
+      if(!(rd.pet.bought > rd.pet.fresh && rd.pet.bought < rd.pet.trusted))
+        fails.push(`buying his ear (${rd.pet.bought}) is not worth more than nothing (${rd.pet.fresh}) `
+          + `and less than keeping your word (${rd.pet.trusted}). This is the FIRST live reader the `
+          + `bribe has ever had — #205 measured its only other one firing on 0.00% of lookups — and a `
+          + `bribe worth as much as a kept booking is the wrong game`);
+    }
+    if(!rd.romeNull) fails.push(`the imperial card has an editor. It carries no \`fest\`, and `
+      + `\`editorFor\` falls back to the first key rather than drawing — so without the ownership `
+      + `test a petition at Rome reads a Capuan's ledger`);
+    if(!rd.townNull) fails.push(`a town's card has an editor — the five names put on Capua's festivals`);
+  }
+
   const readers = [...src.matchAll(/editorBought\(d\)/g)].length;
   lines.push(`editorBought has ${readers} reader(s) in the file`);
   if(/if\(!pool\.length\) return \{ opp: genOpponent\(editorBought\(d\)/.test(src))

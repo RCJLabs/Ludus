@@ -4389,6 +4389,57 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.238.0 — #254 phase 2: the record is read, which for one release it was not
+
+**Phase 1 shipped `d.editors` and NOTHING read it.** The whole program held exactly two readers and
+both were the accessors that write it. A ledger nobody reads is the dark field this project keeps
+finding in other people's work, and for one release it was mine — the festival ownership made the
+TABLE live, and the record itself sat there. Phase 2 is the obligation that creates, not an option.
+
+**The verify-first sized all three limbs before any were built.**
+
+| | reach |
+|---|---|
+| bookings, for the advance limb | 122 signed over 16 x 420 |
+| card weeks, for the petition limb | 1,206 of 2,877 weeks (41.9%) |
+| …on a festival an editor OWNS | **671 of 1,206 (55.6%)** |
+| …at Rome or in a town, where the card is nobody's | 280 (23.2%) |
+| a petition is ready, and at least one applies | **100% of card weeks** |
+
+The petition door is wide open — ready on every card week — and the editor is identifiable on more
+than half of them. That 23.2% is why `cardEditor` is gated on the man actually OWNING the festival:
+the imperial card and a town's carry no `fest`, and `editorFor` falls back to the first key rather
+than drawing, so without the test a petition at Rome would read a Capuan's ledger.
+
+**`editorTrust` runs -1 to +1 and is deliberately slow.** The denominator never falls below
+`EDITOR_PATIENCE`, so one kept booking out of one is 0.25 rather than a man who trusts you. That is
+calibrated against the measured range rather than to taste: the reference player keeps 14 of 122 and
+a house that tries keeps 73 of 118, so real play sits near 0.25 and full trust asks for nearly
+perfect keeping.
+
+**What the record now changes,** measured on one seed and one week with only the ledger differing:
+
+| | trust | advance | purse | a word with him |
+|---|---|---|---|---|
+| let him down six times | −1 | 129 | 559 | 0.305 |
+| never dealt with him | 0 | 222 | 635 | 0.465 |
+| bought his ear | 0 | — | — | 0.545 |
+| kept eight of eight | +1 | **334** | **711** | **0.625** |
+
+A house he trusts gets **2.6× the advance** and a 27% better purse, and a 32-point swing on the odds
+of a word with him. Favour alone had made every editor the same man, which is the whole of #254.
+
+**And the bribe has a live reader for the first time.** `GAMBITS.bribe` marks the editor whose day
+is next, and `petitionOdds` reads it — worth more than nothing and less than a kept word. #205
+measured the flag's only other reader firing on **0.00%** of lookups; that finding stands, and this
+does not pretend to fix it, but the ear you buy now belongs to somebody.
+
+**The arms are behavioural on purpose.** They change the RECORD and assert the game's answer moves,
+rather than asserting that a term appears in a formula — a check that restates the rule it is
+checking proves nothing about whether the rule is wired in, and this suite has shipped one of those
+before. No new `R()` call: the standing is deterministic and the purse is scaled off a total that
+was already drawn.
+
 ### v3.237.0 — #254 phase 1: the editor stops being a name drawn per line, and the festival is his
 
 **`EDITORS` was five strings and `pick(EDITORS)` signed a booking with one of them.** The name was
@@ -9438,9 +9489,11 @@ and a `line` in `SLAVERS`' idiom — with `d.editors[k]` holding `signed`/`kept`
 whose festival it is** rather than a draw, which is what stops the record being decoration: an editor
 drawn fresh every time can never come back for the same reason. Measured after: 125 signings spread
 19-30 across the five, unevenly, because a man's signings now track how often his day comes round.
-*Phases 2 and 3 remain* — the record read (`petitionOdds` off his ledger rather than favour alone,
-the advance up for a house he trusts, `bribedEditor` a man you have bought before), and his voice on
-the pre-card line.
+*Phase 2 SHIPPED v3.238.0 — the record read.* `editorTrust` runs -1..+1 off the ledger, slow by
+`EDITOR_PATIENCE`; a house he trusts gets 2.6x the advance and a 27% better purse, and the odds of a
+word with him swing 0.305 to 0.625 where favour alone had made every editor the same man. The bribe
+marks the man whose day is next and `petitionOdds` reads it — the first live reader that flag has
+ever had. *Phase 3 remains:* his voice on the pre-card line, in `SLAVERS.say`'s idiom.
 
 
 `EDITORS` is five strings — Aulus Vibius, Publius Sittius, the aedile Norbanus, Marcus Blossius, the
