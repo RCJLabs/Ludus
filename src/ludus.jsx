@@ -13359,6 +13359,35 @@ const weeklyBill = d => Math.round(
   activeG(d).reduce((n,g)=> n + (10 + seasonUpkeep(d)) * pit(d,"upkeep") + (isAuctor(g)? g.auctor.wage : 0), 0)
   + bUpkeep(d) + workUpkeep(d) + gearUpkeep(d) + liturgy(d) + collDues(d) + hhUpkeep(d)
   + (d.doctore? docWage(d.doctore) : 0) + staffWages(d));
+/* ---- AND THE YOUNG HOUSE'S DEATH IS ANSWERABLE IN ADVANCE — #247's last leftover, DECLINED ----
+   The other thing v3.225.0 left open: the young house that tips at week 25-41 with nothing to sell.
+   MEASURED (`probes/young.mjs`, three seed prefixes x 128 houses x 120 weeks, 384 an arm), with the
+   rope's own levers as the restraint:
+
+     ref      the rope as it plays              42/384 = 10.9% dead of debt by week 60 · 259 alive
+     nobuy    never buys a man                   23/384 =  6.0%                        · 309 alive
+     nobuild  never puts up a room               41/384 = 10.7%  (all but identical: not a cost)
+     thrift   buys nothing at all, from week one   9/384 =  2.3%                        · 342 alive
+
+   SO IT IS ANSWERABLE, AND ONLY IN ADVANCE. These houses hear the money row — 100% of them, first
+   at a median of week 18, six red weeks each, dying at a median of week 32 — and they die short a
+   median of 207d with 312d of sellable men still in the yard. But the reference player BUYS NOTHING
+   while that row is red: **0 men over 384 houses in every arm**. `spare()`'s reserve is already a
+   solvency rule at the moment it matters. What kills them is the roster committed to BEFORE the
+   alarm, which is why `probes/opening.mjs` put the discriminant on the men and not the box — the
+   men are the bill.
+
+   NOTHING IS BUILT. Not an earlier alarm (v3.228.0: four candidates at 4.8-9.3% precision against
+   the row's 19.3%), not a door in the locked floor (below), and not a spending brake, because the
+   brake is on. The lever is "buy fewer men early", which this game already offers and already
+   prices. `checks/young.mjs` holds it.
+
+   AND THE SUSPICION IT STARTED FROM WAS WRONG, which is the part worth keeping. The first cut
+   reported "69.2% of the young dead took another man after the row spoke, at up to 2,300 denarii"
+   and read as a careless reference player. Two label faults stacked: a man ARRIVING counts
+   `bargain`, `auctoratus` and a damnatio, none of which the rope chose, and "after the row first
+   spoke" counts the quiet weeks between red runs. A lever built to stop the buying came back
+   byte-identical, twice, which is what gave it away. */
 /* ---- AND THE LOCKED FLOOR HAS NO DOOR WORTH BUILDING — #247's leftover, MEASURED AND DECLINED ----
    Four of these nine lines cannot be stopped by any action in the game: `bUpkeep`, `workUpkeep`,
    `liturgy` and `hhUpkeep`. v3.225.0 named that a locked floor, established that it beats a dying
