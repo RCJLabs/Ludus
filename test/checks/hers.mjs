@@ -25,8 +25,14 @@
 
    MEASURED AFTER, on the same seeds, differing only in which door the rope takes:
 
-     giving   12 asks (spare 7, house 5)   her mood p50 60, p90 74, max 86 - 2 men kept off the block
-     refusing 18 asks (spare 11, house 7)  her mood p10 32, and p10 16 at the house's end
+     giving   11 asks (house 6, spare 5)   her mood p50 60, p90 74, max 86 - 2 men kept off the block
+     refusing 15 asks (house 8, spare 7)   her mood p10 32, and p10 20 at the house's end
+
+   THE FIRST DRAFT OF THIS HEADER CARRIED spare 7 / house 5 AND spare 11 / house 7, which was the
+   measurement taken BEFORE arm 2 found the tie: with both conversations unheard a stable sort gave
+   it to whichever was declared first, 24 of 24 from fresh. Those numbers are the bug's own footprint
+   and are left here as that rather than deleted, because a header that reports a build which no
+   longer exists is the fault this suite spends most of its time catching in the game.
 
    SEVEN ARMS. */
 import { found, clearAll, installRope } from "../harness.mjs";
