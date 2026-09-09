@@ -13359,6 +13359,37 @@ const weeklyBill = d => Math.round(
   activeG(d).reduce((n,g)=> n + (10 + seasonUpkeep(d)) * pit(d,"upkeep") + (isAuctor(g)? g.auctor.wage : 0), 0)
   + bUpkeep(d) + workUpkeep(d) + gearUpkeep(d) + liturgy(d) + collDues(d) + hhUpkeep(d)
   + (d.doctore? docWage(d.doctore) : 0) + staffWages(d));
+/* ---- AND THE LOCKED FLOOR HAS NO DOOR WORTH BUILDING — #247's leftover, MEASURED AND DECLINED ----
+   Four of these nine lines cannot be stopped by any action in the game: `bUpkeep`, `workUpkeep`,
+   `liturgy` and `hhUpkeep`. v3.225.0 named that a locked floor, established that it beats a dying
+   house's weekly net in most debt deaths, and wrote down the remedy it did not build — *"a way to
+   shed the locked floor (mothball a building, abandon a work, step down a rank)"*.
+
+   PRICED NOW (`probes/brink.mjs`, 128 houses, 52 debt deaths that reached the money row), each door
+   shut by asking `weeklyBill` itself rather than by summing components — the terms are not
+   independent, since `bUpkeep` is scaled by `houseLoad`, which reads `riseOf`:
+
+     · WORKS HAVE NO SUBJECT AT ALL. 0 of 52 dying houses had ever finished one.
+     · The doors are small. Best single building p50 21 a week, a rank step p50 57, the whole
+       household p50 23 — and EVERY locked line together p50 110 a week (p90 217).
+     · AND NOT ONE DEATH CHANGES. `wouldHaveSaved` reads 98.1% for every door, which is the same
+       98.1% the escapable bill and `liquidate` already reach without any of them. The single death
+       nobody covers is not covered by every door together either.
+     · Nor does taking it early. From the FIRST red week — a median of 98 weeks out, the whole floor
+       shed over all of them, p90 14,840 denarii — the houses saved ONLY by the floor are 0 of 52,
+       because 52 of 52 were already covered without it.
+
+   THE ARITHMETIC IS STOCK AGAINST FLOW. The gap is a stock (p50 1,190d) arriving inside the five or
+   six weeks the money row gives; a door is a flow (p50 110 a week, so 660d over that window) while
+   a sale is worth thousands at once. On the real dying houses, the whole floor shed for every week
+   the row gives is 528d against a fire-sale's 2,733d, and it outruns the sale on 1 of 22.
+
+   SO THE FLOOR IS REAL AND IT IS NOT THE OBSTACLE, and the honest reading of the pair of figures is
+   sharper than the item's: "the locked floor beats what a dying house nets in a week" is TRUE and
+   says nothing about survival, because the thing that closes a five-week gap was never a weekly
+   saving. 98.1% of these deaths already have an approach. What they lack is a player who takes it,
+   which is #247a's ground and already shipped. `checks/cliff.mjs` arm 7 holds the inequality on the
+   real population, and if the flow ever outruns the sale this is worth re-reading. */
 /* ---- WHAT THE CREDITORS WILL CARRY ----
    The run ended at gold below −250 (−420 with a loan open) — constants from the
    v0.1 economy, when a house's whole week cost about fifty denarii and the line

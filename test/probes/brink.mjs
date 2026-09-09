@@ -57,7 +57,9 @@ const out = await p.evaluate(([H, W, SEED])=>{
   const A = window.__LVDVS, R = window.__ROPE;
   const NEED = ["newGameState","weeklyBill","creditLine","liquidate","runway","moneyRow","activeG",
                 "bUpkeep","workUpkeep","gearUpkeep","liturgy","collDues","hhUpkeep","staffWages",
-                "docWage","seasonUpkeep","isAuctor","pit"];
+                "docWage","seasonUpkeep","isAuctor","pit",
+                /* #247's leftover: what a door in the locked floor would actually be worth */
+                "BKEYS","bLevel","ALL_WORK_KEYS","workDone","riseOf"];
   const miss = NEED.filter(k=>A[k]==null);
   if(miss.length) return { why:`the handle is missing ${miss.join(", ")}` };
 
@@ -73,12 +75,48 @@ const out = await p.evaluate(([H, W, SEED])=>{
       + (A.isAuctor(g) ? g.auctor.wage : 0), 0);
     const esc = men + A.gearUpkeep(d) + A.collDues(d) + (d.doctore ? A.docWage(d.doctore) : 0) + A.staffWages(d);
     const lock = A.bUpkeep(d) + A.workUpkeep(d) + A.liturgy(d) + A.hhUpkeep(d);
-    return { men, esc, lock, total:A.weeklyBill(d) };
+    return { men, esc, lock, total:A.weeklyBill(d),
+      bld:A.bUpkeep(d), wrk:A.workUpkeep(d), lit:A.liturgy(d), hh:A.hhUpkeep(d) };
+  };
+
+  /* ---- AND WHAT A DOOR IN THAT FLOOR WOULD BE WORTH — #247's leftover ----
+     v3.225.0 wrote down "a way to shed the locked floor (mothball a building, abandon a work, step
+     down a rank)" and did not open it. Each door is priced here by SHUTTING IT AND ASKING THE
+     GAME'S OWN `weeklyBill` — not by adding up the component, because the terms are not independent:
+     `bUpkeep` is scaled by `houseLoad`, which reads `activeG` AND `riseOf`, so stepping down a rank
+     takes something off the buildings too and a component-wise sum would miss it. Nothing here
+     draws, so the counterfactual costs the stream nothing. */
+  const worth = (d, mutate) => { const before = A.weeklyBill(d); const undo = mutate();
+    const after = A.weeklyBill(d); undo(); return Math.max(0, before - after); };
+  const doors = d => {
+    let bestB = 0, nB = 0;
+    for(const k of (A.BKEYS||[])){ if(!A.bLevel(d,k)) continue; nB++;
+      const v = worth(d, ()=>{ const was = d.buildings[k]; d.buildings[k] = 0;
+        return ()=>{ d.buildings[k] = was; }; });
+      if(v > bestB) bestB = v; }
+    const allB = worth(d, ()=>{ const was = d.buildings; d.buildings = {}; return ()=>{ d.buildings = was; }; });
+    let bestW = 0, nW = 0;
+    for(const k of (A.ALL_WORK_KEYS||[])){ if(!A.workDone(d,k)) continue; nW++;
+      const v = worth(d, ()=>{ const w = d.works[k], was = w.left; w.left = 1;
+        return ()=>{ w.left = was; }; });
+      if(v > bestW) bestW = v; }
+    const allW = worth(d, ()=>{ const was = d.works; d.works = {}; return ()=>{ d.works = was; }; });
+    const rank = A.riseOf(d);
+    const step = rank > 0 ? worth(d, ()=>{ const was = d.rise.rank; d.rise.rank = was - 1;
+      return ()=>{ d.rise.rank = was; }; }) : 0;
+    const allH = worth(d, ()=>{ const was = d.household; d.household = {}; return ()=>{ d.household = was; }; });
+    return { bestB, allB, nB, bestW, allW, nW, step, rank, allH };
   };
 
   const t = { houses:0, ends:{}, debt:[], other:[], alive:[],
     /* the decisive tally, over the debt deaths only */
     firstRed:[], gapAtRed:[], remedyAtRed:[], coveredAtRed:0, redSeen:0, noRed:0,
+    /* #247's leftover: the locked floor by component, and what each door would buy */
+    part:{ bld:[], wrk:[], lit:[], hh:[] }, has:{ bld:0, wrk:0, lit:0, hh:0, rank:0 },
+    door:{ bestB:[], allB:[], bestW:[], allW:[], step:[], allH:[], allLock:[] },
+    saves:{ bestB:0, allB:0, bestW:0, allW:0, step:0, allH:0, allLock:0, none:0 },
+    doorSeen:0,
+    early:{ n:0, weeks:[], gap:[], remedy:0, withLock:0, onlyLock:0, lockOver:[] },
     lockShareAtRed:[], lockShareAtDeath:[], incomeAtRed:[], lockVsIncome:0, weeksFromRed:[],
     /* ---- AND THE TWO KINDS OF DEBT DEATH, WHICH THE POOLED FIGURE HIDES ----
        `lockedShareOfBillAtRed` reads p25 0 and p50 52.5 on one seed and p50 0 on the other: that is
@@ -98,6 +136,9 @@ const out = await p.evaluate(([H, W, SEED])=>{
       const s = split(d);
       let mr = null; try { mr = A.moneyRow(d); } catch(e){}
       const row = { week:d.week, gold:Math.round(d.gold), bill:s.total, lock:s.lock, esc:s.esc,
+        bld:s.bld, wrk:s.wrk, lit:s.lit, hh:s.hh,
+        /* only on a red week: this is where the question lives and the counterfactual is not cheap */
+        doors: mr ? doors(d) : null,
         run:(()=>{ try { return A.runway(d); } catch(e){ return null; } })(),
         red: !!mr, fund:(()=>{ try { return A.liquidate(d).total; } catch(e){ return 0; } })(),
         net:0 };
@@ -130,6 +171,15 @@ const out = await p.evaluate(([H, W, SEED])=>{
       red = log.length - 1;
       while(red > 0 && log[red-1].red) red--;
     }
+    /* ---- AND THE SAME QUESTION ASKED EARLY, BECAUSE A DOOR IS NOT AN EMERGENCY LEVER ----
+       The run above is the moment the house is dying — a median of five or six weeks. A weekly
+       saving cannot close a four-figure gap in five weeks; only a sale can, which is what makes the
+       `wouldHaveSaved` figures below identical to the fire-sale's. So the door is also priced from
+       the FIRST week the money row ever went red, where a mothballed building has eighty weeks to
+       pay for itself. The probe's own note above says that window flatters the answer, and it does
+       — which is exactly why both are reported and neither is reported alone. */
+    let first = null;
+    for(let i=0;i<log.length;i++) if(log[i].red){ first = i; break; }
 
     /* THE QUESTION, on the debt deaths */
     if(kind === "debt"){
@@ -154,6 +204,36 @@ const out = await p.evaluate(([H, W, SEED])=>{
         const netWk = after.reduce((n,x)=>n+x.net,0)/Math.max(1,left);
         t.incomeAtRed.push(Math.round(netWk));
         if(r.lock > netWk) t.lockVsIncome++;
+        /* ---- THE LEFTOVER'S OWN QUESTION: would a door have closed it? ---- */
+        if(r.doors){
+          t.doorSeen++;
+          const D = r.doors;
+          if(r.bld > 0) t.has.bld++; if(r.wrk > 0) t.has.wrk++;
+          if(r.lit > 0) t.has.lit++; if(r.hh > 0) t.has.hh++;
+          if(D.rank > 0) t.has.rank++;
+          t.part.bld.push(r.bld); t.part.wrk.push(r.wrk); t.part.lit.push(r.lit); t.part.hh.push(r.hh);
+          const allLock = D.allB + D.allW + D.step + D.allH;   /* an upper bound, not a door */
+          for(const [k,v] of Object.entries({ bestB:D.bestB, allB:D.allB, bestW:D.bestW,
+                                              allW:D.allW, step:D.step, allH:D.allH, allLock })){
+            t.door[k].push(Math.round(v));
+            if(remedy + v * left >= gap) t.saves[k]++;
+          }
+          if(remedy < gap && remedy + allLock * left < gap) t.saves.none++;
+        }
+        /* the early reading, on the same house */
+        if(first !== null && log[first].doors){
+          const F = log[first], fl = log.length - first;
+          const aft = log.slice(first);
+          const fIn = aft.reduce((n,x)=>n+x.net,0), fOut = aft.reduce((n,x)=>n+x.bill,0);
+          const fGap = Math.max(0, fOut - fIn - F.gold);
+          const fRem = F.esc * fl + F.fund;
+          const fLock = F.doors.allB + F.doors.allW + F.doors.step + F.doors.allH;
+          t.early.n++; t.early.weeks.push(fl); t.early.gap.push(Math.round(fGap));
+          if(fRem >= fGap) t.early.remedy++;
+          if(fRem + fLock * fl >= fGap) t.early.withLock++;
+          if(fRem < fGap && fRem + fLock * fl >= fGap) t.early.onlyLock++;
+          t.early.lockOver.push(Math.round(fLock * fl));
+        }
         { const B = t.byKind[r.lock > 0 ? "built" : "bare"];
           B.n++; if(remedy >= gap) B.covered++; if(r.lock > netWk) B.lockBeats++;
           B.gap.push(Math.round(gap)); B.remedy.push(Math.round(remedy)); B.week.push(r.week); }
@@ -186,6 +266,22 @@ const out = await p.evaluate(([H, W, SEED])=>{
       byKind: Object.fromEntries(Object.entries(t.byKind).map(([k,B])=>[k, { n:B.n,
         couldHaveCovered: pc(B.covered, B.n), lockedFloorBeatsNet: pc(B.lockBeats, B.n),
         diedAtWeek: q(B.week), gap: q(B.gap), remedy: q(B.remedy) }])) },
+    /* ---- #247's LEFTOVER: A DOOR IN THE LOCKED FLOOR ---- */
+    floor: {
+      redWeeksPriced: t.doorSeen,
+      hasAtRed: Object.fromEntries(Object.entries(t.has).map(([k,v])=>[k, `${v}/${t.doorSeen} = ${pc(v,t.doorSeen)}%`])),
+      aWeek: Object.fromEntries(Object.entries(t.part).map(([k,v])=>[k, q(v)])),
+      doorIsWorthAWeek: Object.fromEntries(Object.entries(t.door).map(([k,v])=>[k, q(v)])),
+      /* the same question from the FIRST red week, where a door has time to pay for itself */
+      takenEarly: { n:t.early.n, weeksToDeath:q(t.early.weeks), gap:q(t.early.gap),
+        lockShedOverThoseWeeks:q(t.early.lockOver),
+        coveredWithoutTheFloor:`${t.early.remedy}/${t.early.n} = ${pc(t.early.remedy,t.early.n)}%`,
+        coveredWithIt:`${t.early.withLock}/${t.early.n} = ${pc(t.early.withLock,t.early.n)}%`,
+        ONLY_WITH_IT:`${t.early.onlyLock}/${t.early.n} = ${pc(t.early.onlyLock,t.early.n)}%` },
+      wouldHaveSaved: Object.fromEntries(Object.entries(t.saves).map(([k,v])=>[k,
+        k === "none" ? `${v}/${t.doorSeen} = ${pc(v,t.doorSeen)}% beyond every door together`
+                     : `${v}/${t.doorSeen} = ${pc(v,t.doorSeen)}%`])),
+    },
   };
 }, [H,W,SEED]);
 
