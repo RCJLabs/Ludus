@@ -457,7 +457,18 @@ export async function installRope(p){
       const fin = (f, args) => { try { return f(...args); } catch(e){ bump("threw"); return null; } };
       if(d.over) return did;
       const spare = () => d.gold - LAN.reserve(d);
+      /* ---- AND HE DOES NOT BUY WHILE HIS OWN ALARM IS RINGING — MEASURED, #247's leftover ----
+         A `solvent:true` lever was added here to test whether the reference player buys men into a
+         red money row, on the suspicion that the young house's death at week 25-41 was the rope
+         being careless rather than the game being hard. IT CHANGED NOTHING, byte-identically, and
+         the reason is that there was nothing to change: over 128 houses x 120 weeks,
+         `probes/young.mjs` counts **0 men bought on a week the money row was red**, in every arm.
+         `spare()`'s reserve is already a solvency rule at the moment it matters, and the lever was
+         taken out again rather than left as a no-op option.
 
+         What the young house dies of is a commitment made BEFORE the alarm: `buy:false` from week
+         one takes the young debt deaths from 10.2% to 6.3% and full thrift to 1.6%, while stopping
+         at the warning saves nobody, because by then the roster it cannot carry is already bought. */
       /* the cells first — the largest single lever measured in this project */
       if(on("cells")){
         if(d.unrest >= 30 && fin(A.throwFeast,[d])) bump("feast");

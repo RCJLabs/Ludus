@@ -4389,6 +4389,59 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.247.0 — #247's last leftover: the young house's death is answerable in advance, and #247 closes
+
+The other thing v3.225.0 left open — *"the young house's death at week 25-41, which is this item's
+original phase 2 under a different diagnosis"*. Three things were already settled, so this does not
+re-ask them: being poor early does not predict death (phase 1, and `probes/opening.mjs` puts the
+week-8 discriminant at 54.0 on 100 where 50 knows nothing); an earlier alarm is not worth building
+(v3.228.0); and a bare house has no locked floor to shed (v3.246.0).
+
+**So the one question left is whether the death is answerable at all** — #247b's shape, which
+answered yes for the rising. Measured on identical seeds with the rope's own levers as the restraint
+(`probes/young.mjs`, **three seed prefixes × 128 houses × 120 weeks**, 384 an arm):
+
+| arm | | young debt deaths | alive at 120 |
+|---|---|---|---|
+| ref | the rope as it plays | **42/384 = 10.9%** | 259 |
+| nobuy | never buys a man | 23/384 = 6.0% | 309 |
+| nobuild | never puts up a room | 41/384 = 10.7% — all but identical, so not a young-house cost | 261 |
+| thrift | buys nothing at all, from week one | **9/384 = 2.3%** | **342** |
+
+**It is answerable, and only in advance.** These houses hear the money row — **100% of them**, first
+at a median of week 18, six red weeks each, dying at a median of week 32 — and they die short a
+median of **207d with 312d of sellable men still in the yard**. But the reference player **buys
+nothing while that row is red: 0 men over 384 houses in every arm.** `spare()`'s reserve is already a
+solvency rule at the moment it matters. What kills them is the roster committed to *before* the
+alarm, which is why `probes/opening.mjs` put the discriminant on the men and not the box — the men
+are the bill.
+
+**So nothing is built.** Not an alarm, not a floor door, not a spending brake. The lever is "buy
+fewer men early", which the game already offers and already prices.
+
+**And the suspicion this started from was wrong, which is the part worth keeping.** The first cut
+reported *"69.2% of the young dead took another man after the row spoke, at up to 2,300 denarii"* and
+read as a careless reference player — the instrument accusing itself. **Two label faults stacked:** a
+man ARRIVING counts `bargain`, `auctoratus` and a damnatio, none of which the rope chose; and "after
+the row first spoke" counts the quiet weeks between red runs. A `solvent` lever built to stop the
+buying came back **byte-identical, twice**, which is what gave it away both times. Corrected,
+purchases on a red week are **zero**, and the lever was taken out of the harness rather than left as
+a no-op — its finding kept as a note where the buy rule lives.
+
+**Three seed prefixes because one would not have done.** The check's own 96-house set reads 7 against
+6 — a ratio of **0.86** where the pooled figure is **0.21** — and a bar set from a single seed set
+would have failed a build with nothing wrong on it. That is the third time this stretch (`tells`,
+`cells`, and here) that a bar was tighter than its sample. The per-prefix ratios are 0.16, 0.33 and
+0.18; the **survival gap** (259 → 342, and 61 → 83 on the outlier set) moves the same way on all four
+sets measured, so `checks/young.mjs` asserts survival and the direction, and reports the death ratio
+beside the pooled figure rather than asserting it.
+
+**Shipped:** `probes/young.mjs` (four arms, paired on identical seeds), `checks/young.mjs` (five
+arms, 30s), the refusal recorded in `src` beside `weeklyBill`, and the harness note where the buy
+rule lives. **No game code touched.**
+
+**#247 IS CLOSED**, and with it the fifteen.
+
 ### v3.246.0 — #247's leftover priced: the locked floor is real, and a door in it would save nobody
 
 v3.225.0 left two things open on #247 and named the first: *"a way to shed the locked floor (mothball
@@ -9722,8 +9775,14 @@ DECLINED, v3.246.0:** works have no subject at all (0 of 52 dying houses ever fi
 doors are worth p50 110d a week all together, and `wouldHaveSaved` reads 98.1% for every one of them
 — the same 98.1% the fire-sale already reaches without them; taken from the first red week, a median
 of 98 weeks out, the houses saved ONLY by the floor are 0 of 52. The gap is a stock and a door is a
-flow. **Left open:** the young house's death at week 25-41, which is this item's original phase 2
-under a different diagnosis — 76.9% coverable against a built house's 100%.
+flow. **AND THE YOUNG HOUSE'S DEATH WAS ANSWERED AND DECLINED, v3.247.0 — #247 IS CLOSED.** Over
+three seed prefixes x 128 houses, a reference player loses 10.9% of houses to debt inside sixty weeks
+and a house that buys nothing at all loses **2.3%**, with 342 alive against 259 — so it is answerable,
+and only IN ADVANCE. These houses hear the money row 100% of the time, first at a median of week 18,
+and die at week 32 short 207d with 312d of sellable men in the yard; the reference player buys **0**
+men on a red week across all 384. The roster was committed before the alarm, which is why the
+discriminant sits on the men and not the box. Nothing is built: not an alarm, not a floor door, not a
+brake that is already on.
 Original text follows.
 
 Fourteen of sixteen houses end, and the two endings that take them are the strongbox and the cells:
