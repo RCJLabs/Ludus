@@ -9446,8 +9446,8 @@ with `+`, so its event column had read `[object Object]` since it was written. F
 
 ---
 
-**#242 — Buy the Yard** *(new system · large · 5 phases)* — **PHASES 1 AND 2 SHIPPED v3.240.0;
-PHASES 3 AND 5 DECLINED ON THE MEASUREMENT.** The verify-first answered both of the item's own
+**#242 — Buy the Yard** *(new system · large · 5 phases)* — **CLOSED. PHASES 1 AND 2 SHIPPED
+v3.240.0 AND PHASE 4 v3.241.0; PHASES 3 AND 5 DECLINED ON THE MEASUREMENT.** The verify-first answered both of the item's own
 decision rules: yards go dark a median of ONCE a house at a median of week 185 (not "twice a run at
 week 200+", so this does not go beside #248), and the nine-name pool never emptied in 420 weeks, so
 the "stays dark for ever" edge is not reachable and is recorded rather than fixed. A dark yard stands
@@ -9725,8 +9725,11 @@ of it routed through grudge so a warm bay stays warm.
 
 ---
 
-**#247 — The Ending Curve** *(overhaul · large · verify-first heavy · 3 phases)* — **PHASE 1 SHIPPED,
-v3.207.0, AND IT SPLIT THE ITEM.** Measured on 88 seeded houses (`probes/ending.mjs`, `checks/ending.mjs`):
+**#247 — The Ending Curve** *(overhaul · large · verify-first heavy · 3 phases)* — **CLOSED
+v3.247.0.** Phase 1 shipped v3.207.0; the item split into #247a (v3.208.0), #247b (v3.209.0) and
+#247c (v3.210.0); the original phase 2 closed v3.228.0; phase 2's own answer was refuted v3.225.0;
+and both leftovers were measured and declined — the locked floor v3.246.0, the young house's death
+v3.247.0. **PHASE 1 SHIPPED, v3.207.0, AND IT SPLIT THE ITEM.** Measured on 88 seeded houses (`probes/ending.mjs`, `checks/ending.mjs`):
 **three** shapes, not two — debt 35, the cells 29, ruin 11, still standing 12, `banned` 0. The debt
 death is a CLIFF (gold p50 4,359 and 2,105 ten weeks out, ~1,000 one week out) whose warnings both
 miss — `debtStage` fired before 16 of 35, `runway` went short for 88 of 88 including every survivor.
@@ -9962,7 +9965,8 @@ it is decoration, and `legible.mjs` is the judge.
 
 ---
 
-**#251 — The Doctore Is a Man** *(overhaul · medium · 3 phases)* — **PHASE 1 SHIPPED v3.233.0, AND
+**#251 — The Doctore Is a Man** *(overhaul · medium · 3 phases)* — **CLOSED. ALL THREE PHASES
+SHIPPED, v3.233.0, v3.234.0 AND v3.235.0.** **PHASE 1 SHIPPED v3.233.0, AND
 THE VERIFY-FIRST CONFIRMED THE ITEM OUTRIGHT.** Over 3,502 house-weeks the doctore's id changed
 **zero** times in any house; the age field never existed; his skill was byte-identical from hire to
 the last week on all fifteen houses that had one. Two of those were promoted off the source rather
@@ -10011,7 +10015,8 @@ break.
 
 ---
 
-**#252 — Mastery Is Above the Ninetieth Percentile** *(gameplay · medium · 2 phases)* — **PHASE 1
+**#252 — Mastery Is Above the Ninetieth Percentile** *(gameplay · medium · 2 phases)* — **CLOSED.
+BOTH PHASES SHIPPED, v3.227.0 AND v3.229.0.** **PHASE 1
 SHIPPED v3.227.0, AND IT NAMES PHASE 2's TARGET.** The verbs (`makeMasterOf`, `startSecond`,
 `squareBout`) were never on the test handle, so nothing here had ever made a master and the census
 read 0% at the top — the fourth instance of #219/#220/#221/#246's shape. With them exported and a
@@ -10079,7 +10084,8 @@ it since he was nine") already fits a brother or cousin who grew up in the yard.
 
 ---
 
-**#254 — The Editor Remembers** *(overhaul · medium · 3 phases)* — **PHASE 1 SHIPPED v3.237.0.**
+**#254 — The Editor Remembers** *(overhaul · medium · 3 phases)* — **CLOSED. ALL THREE PHASES
+SHIPPED, v3.237.0, v3.238.0 AND v3.239.0.** **PHASE 1 SHIPPED v3.237.0.**
 `EDITORS` is a keyed table now — a taste that is an `APPETITES` key, the `CALENDAR` festival he owns,
 and a `line` in `SLAVERS`' idiom — with `d.editors[k]` holding `signed`/`kept`/`broken`/`paid` off
 `takeBooking`, the honour site in `doFight`, and `failBooking`. The booking's editor is **the man
@@ -10153,7 +10159,8 @@ way the list already groups.
 
 ---
 
-**#256 — The Bay Has No Strongbox** *(overhaul · medium · 3 phases)* — **PHASE 1 SHIPPED v3.211.0.**
+**#256 — The Bay Has No Strongbox** *(overhaul · medium · 3 phases)* — **CLOSED v3.213.0. ALL THREE
+PHASES SHIPPED, v3.211.0, v3.212.0 AND v3.213.0.** **PHASE 1 SHIPPED v3.211.0.**
 `h.purse` exists, seeded from fame and stature, fed by the tier's appearance fee and purse from every
 card their men fight (the player's and the third of their fighting he never sees), spent on the men,
 the standing, the doctore, the wagons and every move the table makes — and answered when empty by a
