@@ -4389,6 +4389,59 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.246.0 — #247's leftover priced: the locked floor is real, and a door in it would save nobody
+
+v3.225.0 left two things open on #247 and named the first: *"a way to shed the locked floor (mothball
+a building, abandon a work, step down a rank)"*. It is priced now and it is **declined**.
+
+**Each door is shut by asking `weeklyBill` itself**, not by summing components — the terms are not
+independent, since `bUpkeep` is scaled by `houseLoad`, which reads `riseOf`, so stepping down a rank
+takes something off the buildings too. Nothing in the counterfactual draws, so it costs the stream
+nothing. `probes/brink.mjs`, 128 houses, **52 debt deaths that reached the money row**:
+
+| | at the last red week |
+|---|---|
+| houses with a finished **work** | **0 of 52** — the door has no subject at all |
+| best single building | p50 **21**d a week |
+| a rank step | p50 **57**d |
+| the whole household | p50 **23**d |
+| **every locked line together** | p50 **110**d a week (p90 217) |
+
+**And not one death changes.** `wouldHaveSaved` reads **98.1% for every door** — the same 98.1% the
+escapable bill and `liquidate` already reach without any of them. The one death nobody covers is not
+covered by every door together either. **Nor does taking it early:** from the first red week, a
+median of **98 weeks** out, with the whole floor shed over all of them (p90 **14,840d**), the houses
+saved *only* by the floor are **0 of 52** — because 52 of 52 were already covered without it.
+
+**The arithmetic is stock against flow.** The gap is a stock (p50 1,190d) arriving inside the five or
+six weeks the money row gives; a door is a flow (110d a week, so 660d over that window) while a sale
+is worth thousands at once. On the real dying houses the whole floor shed for every week the row
+gives is **528d against a fire-sale's 2,733d**, and it outruns the sale on **1 of 22**.
+
+**So the floor is real and it is not the obstacle** — and this sharpens v3.225.0's own reading rather
+than repeating it. *"The locked floor beats what a dying house nets in a week"* is true (84.6% pooled
+here, 91.4% of built houses) and says nothing about survival, because what closes a five-week gap was
+never a weekly saving. **98.1% of these deaths already have an approach.** What they lack is a player
+who takes it, which is #247a's ground and shipped at v3.208.0.
+
+**One figure revised.** v3.225.0 measured 81% of debt deaths coverable; twenty releases on, the same
+instrument reads **88.9%** on one seed set and **98.1%** on another. The direction is the same and
+the conclusion is stronger, but the old number should not be quoted as current.
+
+**And the first cut of the check's arm was a bare house in a costume.** It drove a fixture — a
+starting roster at week 220 wearing four rooms and a rank — and duly inverted the inequality at a
+bill of 173d a week against a fire-sale of 532d, because that house is not built. Arm 7 reads the
+real houses `checks/cliff.mjs` already plays to death instead. That is the fourth fixture of mine
+this stretch that measured a population the finding was not about.
+
+**Shipped:** `probes/brink.mjs` extended (each door priced, and the same question asked from the
+first red week), `checks/cliff.mjs` arm 7 holding the stock-against-flow inequality on the real
+population, the refusal recorded in `src` beside `weeklyBill`. **No game code touched.**
+
+**#247's remaining leftover is the young house's death at week 25–41** — 13 bare houses here died at
+a median of week 35 short 271d with a remedy of 676d, and their coverability is **76.9%** against the
+built houses' **100%**. That is the one the locked floor was never going to reach.
+
 ### v3.245.0 — #243 phase 3: the mistress has two conversations of her own, and where she stands is worth something
 
 **MEASURED FIRST** (`probes/mistress.mjs`, 16 × 420), because an ask is only worth writing if it has
@@ -9664,8 +9717,13 @@ BARE ones (dying at week 25-41, short 287d with 416d to their name). The approac
 house that least looks like it needs one. It is a fire-sale rather than a fix — the locked floor
 (buildings, works, liturgy, household, none of which any action stops) beats a built house's weekly
 net in 95% of these deaths — which is how a debt death becomes a `ruin`. Shipped: the money row
-carries `liquidate`'s figure, which it had never said. **Left open:** shedding the locked floor, and
-the young house's death, which is this item's original phase 2 under a different diagnosis.
+carries `liquidate`'s figure, which it had never said. **SHEDDING THE LOCKED FLOOR WAS PRICED AND
+DECLINED, v3.246.0:** works have no subject at all (0 of 52 dying houses ever finished one), the
+doors are worth p50 110d a week all together, and `wouldHaveSaved` reads 98.1% for every one of them
+— the same 98.1% the fire-sale already reaches without them; taken from the first red week, a median
+of 98 weeks out, the houses saved ONLY by the floor are 0 of 52. The gap is a stock and a door is a
+flow. **Left open:** the young house's death at week 25-41, which is this item's original phase 2
+under a different diagnosis — 76.9% coverable against a built house's 100%.
 Original text follows.
 
 Fourteen of sixteen houses end, and the two endings that take them are the strongbox and the cells:

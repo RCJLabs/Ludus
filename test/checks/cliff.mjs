@@ -86,18 +86,32 @@ export async function run({ p, errors }){
   const r = await p.evaluate(([H, W, DEAD_IN])=>{
     const A = window.__LVDVS, R = window.__ROPE;
     const miss = ["newGameState","moneyRow","runway","RUNWAY_WARN","swingOf","exposed","weeklyBill",
-                  "liquidate","creditLine"].filter(k=>A[k]==null);
+                  "liquidate","creditLine",
+                  /* arm 7 — #247's leftover, priced */
+                  "bUpkeep","workUpkeep","liturgy","hhUpkeep","BKEYS","riseOf","HH_KEYS","hireFolk"].filter(k=>A[k]==null);
     if(miss.length || !R || typeof R.lanista !== "function") return { why:`the handle is missing ${miss.join(", ") || "the rope"}` };
     let weeks = 0, said = 0, saidFatal = 0, short = 0, shortFatal = 0;
-    const deaths = [], swings = [];
+    const deaths = [], swings = [], floorRows = [];
     for(let h=0; h<H; h++){
       const d = A.newGameState("Cf"+h, "clean", `CLIFFCHK-${h}`);
-      const mine = [];
+      const mine = []; let lastRed = null;
       for(let w=0; w<W; w++){
         if(d.over) break;
         let row = null; try { row = A.moneyRow(d); } catch(e){}
         const rw = A.runway(d);
         mine.push({ week:d.week, said: !!row, short: rw != null && rw < A.RUNWAY_WARN });
+        /* arm 7 keeps the LAST red week's floor, because that is the week a player would be
+           standing at when the row tells him to do something */
+        if(row){ const shed = (mut)=>{ const b = A.weeklyBill(d); const undo = mut();
+            const a = A.weeklyBill(d); undo(); return Math.max(0, b - a); };
+          lastRed = { week:d.week, bill:A.weeklyBill(d),
+            lock: A.bUpkeep(d) + A.workUpkeep(d) + A.liturgy(d) + A.hhUpkeep(d),
+            allB: shed(()=>{ const was = d.buildings; d.buildings = {}; return ()=>{ d.buildings = was; }; }),
+            allW: shed(()=>{ const was = d.works; d.works = {}; return ()=>{ d.works = was; }; }),
+            allH: shed(()=>{ const was = d.household; d.household = {}; return ()=>{ d.household = was; }; }),
+            step: A.riseOf(d) > 0 ? shed(()=>{ const was = d.rise.rank; d.rise.rank = was - 1;
+              return ()=>{ d.rise.rank = was; }; }) : 0,
+            fund: Math.round(A.liquidate(d).total) }; }
         if(w === 200){ let sw = null; try { sw = A.swingOf(d); } catch(e){}
           swings.push({ h, swing:sw, bill:A.weeklyBill(d), gold:Math.round(d.gold) }); }
         try { R.lanista(d); } catch(e){ break; }
@@ -112,6 +126,7 @@ export async function run({ p, errors }){
       if(kind === "debt"){
         const heard = mine.filter(x=>x.said && x.week >= fatalFrom);
         deaths.push({ h, week:d.week, heard:heard.length, lead: heard.length ? d.week - heard[0].week : null });
+        if(lastRed) floorRows.push(lastRed);
       }
     }
     /* 5 · the figure the row appends when the house is under, driven rather than waited for: a
@@ -166,12 +181,64 @@ export async function run({ p, errors }){
       return { lit, deaths, precision: lit ? Math.round(1000*hit/lit)/10 : 0,
         reached: deaths ? Math.round(1000*reached/deaths)/10 : 0, FLOOR:10, RFLOOR:50, MIN_DEATHS:8 };
     })();
-    return { weeks, said, saidFatal, short, shortFatal, deaths, swings, figure, opening };
+    /* ---- 7 · #247's LEFTOVER, PRICED AND DECLINED ----
+       v3.225.0 wrote down "a way to shed the locked floor (mothball a building, abandon a work,
+       step down a rank)" and left it open. `probes/brink.mjs` prices each door now, over 128 houses
+       and 52 debt deaths that reached the money row, and the answer is no:
+
+         · WORKS HAVE NO SUBJECT AT ALL — 0 of 52 dying houses had ever finished one.
+         · the doors are small: the best single building p50 21 a week, a rank step p50 57, the
+           whole household p50 23, and EVERY locked line together p50 110 a week (p90 217).
+         · and not one death changes. `wouldHaveSaved` reads 98.1% for every door — the same 98.1%
+           the escapable bill and the fire-sale already reach without them. The one death nobody
+           covers is not covered by every door together either.
+         · nor does taking it EARLY help: from the first red week, a median of 98 weeks out, with
+           the whole floor shed over all of them (p90 14,840d), the houses saved ONLY by the floor
+           are 0 of 52 — because 52 of 52 were already covered without it.
+
+       THE ARITHMETIC IS STOCK AGAINST FLOW, and this arm holds it ON THE REAL DYING HOUSES rather
+       than a driven one. The first cut of this arm DID drive one — a starting roster at week 220
+       wearing four rooms and a rank — and it inverted the inequality at a bill of 173d a week and a
+       fire-sale of 532d, because that house is not built, it is a bare house in a costume. The
+       population the finding is about is the one this check already plays to death.
+
+       The gap is a stock (p50 1,190d) arriving in the five or six weeks the money row gives; the
+       doors are a flow (p50 110 a week). If the flow ever outruns the sale, the door is worth
+       building and #247's leftover should be re-read. */
+    const floor = (()=>{
+      if(!floorRows.length) return { n:0 };
+      const med = (a)=>{ const x = a.slice().sort((p,q)=>p-q); return x[Math.floor(x.length/2)]; };
+      const doors = floorRows.map(f=>f.allB + f.allW + f.allH + f.step);
+      const over = doors.map(v=>v*6);
+      return { n:floorRows.length, weeks:6,
+        bill:med(floorRows.map(f=>f.bill)), lock:med(floorRows.map(f=>f.lock)),
+        allB:med(floorRows.map(f=>f.allB)), allW:med(floorRows.map(f=>f.allW)),
+        allH:med(floorRows.map(f=>f.allH)), step:med(floorRows.map(f=>f.step)),
+        doors:med(doors), over:med(over), fund:med(floorRows.map(f=>f.fund)),
+        beat: floorRows.filter((f,i)=>over[i] >= f.fund).length };
+    })();
+    return { weeks, said, saidFatal, short, shortFatal, deaths, swings, figure, opening, floor };
   }, [HOUSES, WEEKS, DEAD_IN]);
 
   if(r.why) return { pass:false, why:r.why, lines };
   if(!r.deaths.length)
     return { pass:false, why:`no house died of debt in ${r.weeks} weeks — the arm has nothing to measure`, lines };
+
+  { const f = r.floor;
+    if(!f.n) bad.push(`arm 7 saw no debt death that ever heard the money row, so #247's leftover is not being measured at all`);
+    else {
+      lines.push(`#247's leftover, on ${f.n} real debt deaths at their last red week: bill p50 ${f.bill}d/wk, locked ${f.lock}d `
+        + `· doors — buildings ${f.allB}, works ${f.allW}, household ${f.allH}, a rank step ${f.step} = ${f.doors}d/wk`);
+      lines.push(`   shed for all ${f.weeks} weeks the row gives: ${f.over}d against \`liquidate\`'s ${f.fund}d already on the table, `
+        + `and the floor outruns the sale on ${f.beat} of ${f.n} `
+        + `[measured over 52 deaths: every door saves 98.1%, which is what the fire-sale saves without them; taken early, 0 of 52 are saved ONLY by the floor]`);
+      if(!(f.doors > 0)) bad.push(`every door in the locked floor priced at nought — \`weeklyBill\` has stopped reading the components`);
+      if(!(f.over < f.fund))
+        bad.push(`the whole locked floor shed for ${f.weeks} weeks is worth ${f.over}d against a fire-sale's ${f.fund}d — `
+          + `the stock-against-flow arithmetic #247's leftover was declined on has inverted, and a door in the floor `
+          + `should be re-read [measured: doors p50 110d a week against a gap of p50 1,190d arriving in five or six]`);
+    }
+  }
 
   const rowP = r.said ? r.saidFatal / r.said : 0;
   const shortP = r.short ? r.shortFatal / r.short : 0;
