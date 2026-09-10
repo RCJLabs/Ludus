@@ -4389,6 +4389,56 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.249.0 — #259: the fire-sale, taken at last, and "coverable" was a word about arithmetic
+
+`probes/survey.mjs` reads **0 men sold across 518 men and 3,538 weeks**, and not because the
+reference player declines: **the rope had no lever to sell one.** `sellMan` has been on the handle
+for many releases; `court`, `gambit`, `loan` and `works` all had opt-in levers and selling had none.
+
+That matters because of what was built on top of it. v3.246.0 and v3.247.0 both concluded **98.1% of
+debt deaths were coverable**, and the remedy in both is `liquidate(d).total` — the spare steel, the
+paper owed, and every man but one at `gladValue * 0.55`. **An arithmetic figure that nobody had ever
+taken.**
+
+**The price is right and the cost was missing.** `sellPrice` is `rnd(gladValue(g)*0.55)`, the same
+term `liquidate` sums, so the coin is exactly what was promised — driven, one man priced at 294d put
+294d in the box. What `sellMan` ALSO does, and `liquidate` does not count: `d.unrest += 2 + 3 per
+sore brother`, `defiance += 3` on every man left, `favourLost`, `loseFavourite`, and the brothers
+remember it. Driven, one sale: **unrest +2, defiance +6 across the men left.**
+
+**MEASURED with the lever** (`probes/sale.mjs`, **three seed prefixes × 128 houses × 420 weeks**, 384
+an arm), selling at the red week — the paper, then the steel, then the men cheapest-first, never the
+last man, only far enough to clear the line and a fortnight's bill:
+
+| | ref (cannot sell) | sell | |
+|---|---|---|---|
+| **debt** | 160 | **89** | −44% |
+| **rebellion** | 100 | **121** | +21% |
+| **alive** | 67 | **98** | +46% |
+| men sold | 0 | **675** in 210 of 384 houses | |
+
+**So the remedy is real and "coverable" overstated it by about a factor of two.** The sale removes
+**71 of 160** debt deaths — not 98% of them — and of those 71, **31 become survivors and 21 become
+the rising**, the rest ruin, banned and emptied. **Less than half of what it prevents turns into a
+house that lives.** The coin arrives; survival does not follow, because the roster it can no longer
+carry was #247's own diagnosis and selling the roster is not the same as fixing it.
+
+**Consistent on all three prefixes** (debt 51/47/62 → 31/29/29; alive 24/26/17 → 36/33/29), which is
+why three were run: the house-by-house pairing is NOT the claim, because the first sale moves the
+`R()` stream and from that week house *i* is two different worlds. The probe says so where it prints
+it.
+
+**The record is corrected in three places rather than restated** — the `src` note beside
+`weeklyBill`, v3.246.0's release entry, and `checks/cliff.mjs` arm 7's header — each keeping what it
+said and adding what taking the remedy actually does.
+
+**The lever is opt-in**, on `works`'s precedent: switching it on re-phases every seeded fixture, and
+making it the default is its own release with every affected figure re-measured. **`checks/sale.mjs`
+holds that the reference player still sells nothing without it.**
+
+**Shipped:** the `sell` lever in `test/harness.mjs`, `probes/sale.mjs`, `checks/sale.mjs` (four arms,
+39s), and the three corrections. **No game code touched.**
+
 ### v3.248.0 — #257: she was never his wife, and it was on two panels of the same screen
 
 Found while measuring #243 phase 3 and recorded rather than fixed at the time. `HOUSEHOLD.wife` is a
@@ -4536,6 +4586,12 @@ than repeating it. *"The locked floor beats what a dying house nets in a week"* 
 here, 91.4% of built houses) and says nothing about survival, because what closes a five-week gap was
 never a weekly saving. **98.1% of these deaths already have an approach.** What they lack is a player
 who takes it, which is #247a's ground and shipped at v3.208.0.
+
+> **CORRECTED v3.249.0.** The player who takes it was measured, and this overstates it. "Coverable"
+> is arithmetic — `liquidate`'s total against the gap — and nothing had ever sold a man because the
+> rope had no lever to. With one, selling at the red week takes debt deaths **160 → 89** over 384
+> houses: it removes 71 of 160, not 98%, and of those 71 **31 become survivors and 21 become the
+> rising**. The remedy is real; the figure was never a survival rate. See #259.
 
 **One figure revised.** v3.225.0 measured 81% of debt deaths coverable; twenty releases on, the same
 instrument reads **88.9%** on one seed set and **98.1%** on another. The direction is the same and
@@ -9836,7 +9892,9 @@ net in 95% of these deaths — which is how a debt death becomes a `ruin`. Shipp
 carries `liquidate`'s figure, which it had never said. **SHEDDING THE LOCKED FLOOR WAS PRICED AND
 DECLINED, v3.246.0:** works have no subject at all (0 of 52 dying houses ever finished one), the
 doors are worth p50 110d a week all together, and `wouldHaveSaved` reads 98.1% for every one of them
-— the same 98.1% the fire-sale already reaches without them; taken from the first red week, a median
+— the same 98.1% the fire-sale already reaches without them **(and "reaches" is arithmetic: taken,
+that sale removes 44% of the debt deaths and a fifth of what it removes comes back as the rising —
+#259, v3.249.0)**; taken from the first red week, a median
 of 98 weeks out, the houses saved ONLY by the floor are 0 of 52. The gap is a stock and a door is a
 flow. **AND THE YOUNG HOUSE'S DEATH WAS ANSWERED AND DECLINED, v3.247.0 — #247 IS CLOSED.** Over
 three seed prefixes x 128 houses, a reference player loses 10.9% of houses to debt inside sixty weeks
@@ -10353,7 +10411,12 @@ figures, and every one that moves needs its release entry annotated rather than 
 
 ---
 
-**#259 — The Fire-Sale Has Never Been Made** *(overhaul · medium–large · verify-first heavy)*
+**#259 — The Fire-Sale Has Never Been Made** *(overhaul · medium–large · verify-first heavy)* —
+**CLOSED v3.249.0. THE ANSWER IS THAT IT WORKS AND "COVERABLE" OVERSTATED IT BY ABOUT A FACTOR OF
+TWO:** with a `sell` lever the debt deaths go **160 → 89** over 384 houses, and of the 71 removed
+**31 become survivors and 21 become the rising**. The coin is exactly what `liquidate` promises; the
+cost — 2 unrest a man, 3 a sore brother, 3 defiance on everyone left — is not in the figure. Original
+text follows.
 
 `men.sold` reads **0 across 3,538 weeks and 518 men**, and the reason is not that the reference player
 declines: **the rope has no lever to sell a man at all.** `sellMan` is on the handle; `o.court`,

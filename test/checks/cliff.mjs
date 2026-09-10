@@ -189,7 +189,10 @@ export async function run({ p, errors }){
          · WORKS HAVE NO SUBJECT AT ALL — 0 of 52 dying houses had ever finished one.
          · the doors are small: the best single building p50 21 a week, a rank step p50 57, the
            whole household p50 23, and EVERY locked line together p50 110 a week (p90 217).
-         · and not one death changes. `wouldHaveSaved` reads 98.1% for every door — the same 98.1%
+         · and not one death changes. (That 98.1% is ARITHMETIC — `liquidate`'s total against the
+           gap. #259 measured the sale being taken: debt deaths 160 -> 89 over 384 houses, 31 of the
+           71 removed becoming survivors and 21 the rising. `checks/sale.mjs` holds it.)
+         · `wouldHaveSaved` reads 98.1% for every door — the same 98.1%
            the escapable bill and the fire-sale already reach without them. The one death nobody
            covers is not covered by every door together either.
          · nor does taking it EARLY help: from the first red week, a median of 98 weeks out, with
