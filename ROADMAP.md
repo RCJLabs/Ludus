@@ -4389,6 +4389,66 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.248.0 — #257: she was never his wife, and it was on two panels of the same screen
+
+Found while measuring #243 phase 3 and recorded rather than fixed at the time. `HOUSEHOLD.wife` is a
+household-**staff** slot whose displayed name was *"The lanista's wife"*. `d.domus.wife` is somebody
+else: the woman `resolveMatch` puts in the house at a median of week 22, with her own name and
+family, and since #243 three standing ties, a fever that can kill her and two conversations of her
+own.
+
+**MEASURED FIRST** (`probes/matron.mjs`, 16 × 420, two arms):
+
+| | reference | never marries |
+|---|---|---|
+| the household slot taken | **16/16 houses at week 19** — free, before the matchmakers call | 16/16 at week 19 |
+| **both women standing** | **2,371 weeks = 78.7%** | — |
+| **the same name on both panels** | **311 of those 2,371 weeks** | — |
+| told *"a man alone…"* while she stands | **88%** of open-match weeks | **97.4%** |
+| worth a week, in lanista health | **0.344** against the married wife's **0.168** | 0.401 |
+
+Two women, both called his wife, with different names, on two panels of one screen — and one week in
+eight with the *same* name, because `makeFolk` and `matchEvent`'s `wname()` draw from the same
+`HH_NAMES`. That is the #150 shape, and unlike most of them it was never hidden.
+
+**She is not a wife, and every word of her own entry already said so:** here before the ludus,
+opinions about all of it, *"she has always been here"*, no fee, no wage, and she never leaves —
+`householdWeek`'s quitting clause is gated past her. That describes somebody who belongs to the
+**villa**, and it survives a succession, which a wife deliberately does not: `succeed` resets
+`d.domus` and leaves `d.household` alone. Driven, a succession now keeps her and empties the domus,
+which is the structural claim made true rather than asserted.
+
+**She is The Matron.** The mechanic is untouched to four decimal places — 0.35 × `hhSkill`, byte for
+byte. The **key stays `wife`** because it is saved state and renaming it would empty the household of
+every existing save; `HH_FREE` is what the code says now, so nothing but the save format still calls
+her that.
+
+**And the two women no longer share a name.** `matchEvent` excludes the household's own women from
+its pool: 0 collisions over 120 driven cards and 240 candidate names, against the 311 weeks measured
+before. **This is the re-phasing change** — the exclusion moves `pick`'s loop count on about one card
+in eight.
+
+**`marryReady` is deliberately NOT gated on her**, and arm 4 holds that: she is in 16 of 16 houses, so
+gating the match on an empty household slot would take the marriage from 14 of 16 houses to none, and
+#243 would go dark in its entirety.
+
+**And the re-phase turned `cliff` arm 7 red on a fault of mine from two releases ago.** It reported
+*"every door in the locked floor priced at nought — `weeklyBill` has stopped reading the
+components"* on a build where nothing about the bill had changed. `probes/brink.mjs` splits the debt
+deaths into two populations and says in its own header that pooling them answers neither question —
+a **bare** house dying at week 25-41 has no buildings, works, liturgy or household, so it has no
+floor to shed, which is half of v3.246.0's finding rather than a fault. Arm 7 took the median over
+BOTH, and v3.248.0's re-phase tipped the mix: 12 of 23 deaths bare, median locked floor 0.
+
+Repaired to the population the claim is about, it is a **sharper** statement than the pooled one was:
+on the **11 built** deaths of 23, the whole locked floor shed for every week the row gives is **828d
+against a fire-sale's 4,397d**, and it outruns the sale on **0 of 11** rather than 1 of 22. The bare
+count is reported beside it, because it is the other half.
+
+**Shipped:** `probes/matron.mjs` (two arms), `checks/matron.mjs` (five arms, 7s), the rename and the
+pool split in `src`, `checks/cliff.mjs` arm 7 re-based on the built dead, with the measurement
+recorded on the entry itself.
+
 ### v3.247.0 — #247's last leftover: the young house's death is answerable in advance, and #247 closes
 
 The other thing v3.225.0 left open — *"the young house's death at week 25-41, which is this item's
@@ -9446,8 +9506,8 @@ with `+`, so its event column had read `[object Object]` since it was written. F
 
 ---
 
-**#242 — Buy the Yard** *(new system · large · 5 phases)* — **PHASES 1 AND 2 SHIPPED v3.240.0;
-PHASES 3 AND 5 DECLINED ON THE MEASUREMENT.** The verify-first answered both of the item's own
+**#242 — Buy the Yard** *(new system · large · 5 phases)* — **CLOSED. PHASES 1 AND 2 SHIPPED
+v3.240.0 AND PHASE 4 v3.241.0; PHASES 3 AND 5 DECLINED ON THE MEASUREMENT.** The verify-first answered both of the item's own
 decision rules: yards go dark a median of ONCE a house at a median of week 185 (not "twice a run at
 week 200+", so this does not go beside #248), and the nine-name pool never emptied in 420 weeks, so
 the "stays dark for ever" edge is not reachable and is recorded rather than fixed. A dark yard stands
@@ -9725,8 +9785,11 @@ of it routed through grudge so a warm bay stays warm.
 
 ---
 
-**#247 — The Ending Curve** *(overhaul · large · verify-first heavy · 3 phases)* — **PHASE 1 SHIPPED,
-v3.207.0, AND IT SPLIT THE ITEM.** Measured on 88 seeded houses (`probes/ending.mjs`, `checks/ending.mjs`):
+**#247 — The Ending Curve** *(overhaul · large · verify-first heavy · 3 phases)* — **CLOSED
+v3.247.0.** Phase 1 shipped v3.207.0; the item split into #247a (v3.208.0), #247b (v3.209.0) and
+#247c (v3.210.0); the original phase 2 closed v3.228.0; phase 2's own answer was refuted v3.225.0;
+and both leftovers were measured and declined — the locked floor v3.246.0, the young house's death
+v3.247.0. **PHASE 1 SHIPPED, v3.207.0, AND IT SPLIT THE ITEM.** Measured on 88 seeded houses (`probes/ending.mjs`, `checks/ending.mjs`):
 **three** shapes, not two — debt 35, the cells 29, ruin 11, still standing 12, `banned` 0. The debt
 death is a CLIFF (gold p50 4,359 and 2,105 ten weeks out, ~1,000 one week out) whose warnings both
 miss — `debtStage` fired before 16 of 35, `runway` went short for 88 of 88 including every survivor.
@@ -9962,7 +10025,8 @@ it is decoration, and `legible.mjs` is the judge.
 
 ---
 
-**#251 — The Doctore Is a Man** *(overhaul · medium · 3 phases)* — **PHASE 1 SHIPPED v3.233.0, AND
+**#251 — The Doctore Is a Man** *(overhaul · medium · 3 phases)* — **CLOSED. ALL THREE PHASES
+SHIPPED, v3.233.0, v3.234.0 AND v3.235.0.** **PHASE 1 SHIPPED v3.233.0, AND
 THE VERIFY-FIRST CONFIRMED THE ITEM OUTRIGHT.** Over 3,502 house-weeks the doctore's id changed
 **zero** times in any house; the age field never existed; his skill was byte-identical from hire to
 the last week on all fifteen houses that had one. Two of those were promoted off the source rather
@@ -10011,7 +10075,8 @@ break.
 
 ---
 
-**#252 — Mastery Is Above the Ninetieth Percentile** *(gameplay · medium · 2 phases)* — **PHASE 1
+**#252 — Mastery Is Above the Ninetieth Percentile** *(gameplay · medium · 2 phases)* — **CLOSED.
+BOTH PHASES SHIPPED, v3.227.0 AND v3.229.0.** **PHASE 1
 SHIPPED v3.227.0, AND IT NAMES PHASE 2's TARGET.** The verbs (`makeMasterOf`, `startSecond`,
 `squareBout`) were never on the test handle, so nothing here had ever made a master and the census
 read 0% at the top — the fourth instance of #219/#220/#221/#246's shape. With them exported and a
@@ -10079,7 +10144,8 @@ it since he was nine") already fits a brother or cousin who grew up in the yard.
 
 ---
 
-**#254 — The Editor Remembers** *(overhaul · medium · 3 phases)* — **PHASE 1 SHIPPED v3.237.0.**
+**#254 — The Editor Remembers** *(overhaul · medium · 3 phases)* — **CLOSED. ALL THREE PHASES
+SHIPPED, v3.237.0, v3.238.0 AND v3.239.0.** **PHASE 1 SHIPPED v3.237.0.**
 `EDITORS` is a keyed table now — a taste that is an `APPETITES` key, the `CALENDAR` festival he owns,
 and a `line` in `SLAVERS`' idiom — with `d.editors[k]` holding `signed`/`kept`/`broken`/`paid` off
 `takeBooking`, the honour site in `doFight`, and `failBooking`. The booking's editor is **the man
@@ -10153,7 +10219,8 @@ way the list already groups.
 
 ---
 
-**#256 — The Bay Has No Strongbox** *(overhaul · medium · 3 phases)* — **PHASE 1 SHIPPED v3.211.0.**
+**#256 — The Bay Has No Strongbox** *(overhaul · medium · 3 phases)* — **CLOSED v3.213.0. ALL THREE
+PHASES SHIPPED, v3.211.0, v3.212.0 AND v3.213.0.** **PHASE 1 SHIPPED v3.211.0.**
 `h.purse` exists, seeded from fame and stature, fed by the tier's appearance fee and purse from every
 card their men fight (the player's and the third of their fighting he never sees), spent on the men,
 the standing, the doctore, the wagons and every move the table makes — and answered when empty by a
@@ -10226,6 +10293,22 @@ mechanically *cheaper* in lasting consequence than the alternative branch, which
 arc; a political analogue of `d.nemesis`; a cooperative venatio mode; and, in the one domain that drew zero
 votes from any of the three curators, an anytime, generated-not-written Almanac extending the glossary sheet's
 own proven idiom.
+
+**#257 — Two Women, Both Called His Wife** *(overhaul · small · single step)* — **CLOSED v3.248.0,
+FOUND WHILE MEASURING #243 PHASE 3 AND NOT PART OF IT.** `HOUSEHOLD.wife` was a household-STAFF slot
+named *"The lanista's wife"*, and `d.domus.wife` is somebody else entirely. Measured
+(`probes/matron.mjs`, 16 x 420): the household slot is taken in **16 of 16 houses at week 19**, free
+and before the matchmakers call; **both women stand on 78.7% of played weeks**; both names come out
+of `HH_NAMES`, so **311 of those 2,371 weeks showed the SAME NAME twice**, once in the household
+panel and once on the blood one; `marryReady` reads only `!domusOf(d).wife`, so a house with her
+standing in it was told *"a man alone at the head of a ludus leaves nothing behind but a ledger"* on
+**88%** of the weeks the match was open (97.4% in a house that never marries); and she was worth
+**more lanista health than the wife he married**, 0.344 a week against 0.168. She is **The Matron**
+now — which is what every word of her own entry already said, and it survives a succession as a wife
+deliberately does not. The key stays `wife` because it is saved state; `HH_FREE` is what the code
+says. `checks/matron.mjs`, five arms.
+
+---
 
 **#232 — The Training-Square Duel** *(new system)* — **SHIPPED, v3.182.0 + v3.183.0 + v3.184.0.** `simulateSpar` (the fifth engine, structurally unable to kill: no appeal/missio block, damage capped after every multiplier, a hard floor of `SPAR_YIELD - SPAR_CAP`) and the `EVENTS.feud` rewiring shipped, with the odds measured against the branch they replace and held to 1.4 points. The beat-viewer wiring shipped in v3.183.0 with `SPAR_CRUX`'s own three orders — and confirmed the item's own predicted hazard, that the viewer's `solo` flag would hand a spar the single sand's whole menu. `holdTourney`'s final shipped in v3.184.0 — the seed loses it 38.6% of the time — closing the item. **Phase 5 shipped in v3.189.0** — its mastery half, after the measurement showed its prerequisite was missing: there was no way to spar on purpose (40 spars in 2,815 played weeks, all from feuds) and mastery was already thin (15 of 435 men). The square is a door the player opens now, and `canMaster` wants a man beaten in it who the house prices at or above him. The pair-lead half was declined with a reason. Phase 5's hooks were never fudge-replacements; the primacy challenge found beside Phase 4 was written up as a design decision rather than a defect, because fixing it properly means letting you kill your own champion — **decided and shipped in v3.188.0**: it goes through `simulateFight` at standard stakes with the appeal live, and somebody dies in 2.8-4.5% of them.
 The only round-by-round fight resolver in the game (simulateFight, plus doFight's pause/resume) has never been pointed at a fight inside the walls: EVENTS.feud's i===0 branch settles a named duel between two of your own men with one power() call per side scaled by an independent 0.8–1.3 roll and a flat 16% injury check, and holdTourney (line 1452) ranks the whole eligible roster by a score() formula and crowns a yard-tournament winner having fought zero rounds. A trimmed sibling resolver — simulateSpar, built the way simulatePair was explicitly built "apart from simulateFight on purpose" (line 17077) — gives the two scenes the game's own prose already stages as a stopped-yard spectacle an actual animated bout, with no missio-to-death path.

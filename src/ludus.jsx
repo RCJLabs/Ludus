@@ -2222,7 +2222,30 @@ const HOUSEHOLD = {
   keeper: { name:"Housekeeper", wage:5, blurb:"Somebody has to know where everything is and who is lying.",
     good:(d,f)=>{ d.unrest = clamp(d.unrest - 0.5*hhSkill(f), 0, 100); },
     line:"The cells are quieter by half a point a week and nobody can say exactly why." },
-  wife:   { name:"The lanista's wife", wage:0, blurb:"She was here before the ludus was and has opinions about all of it.",
+  /* ---- SHE WAS NEVER HIS WIFE — #257, and it was on screen ----
+     This slot was called "The lanista's wife", and `d.domus.wife` is somebody else: a woman he
+     marries at a median of week 22 through `resolveMatch`, with her own name, her own family, three
+     standing ties, a fever that can kill her and two conversations of her own (#243).
+
+     MEASURED (`probes/matron.mjs`, 16 x 420): this slot is taken in **16 of 16 houses at week 19**,
+     free and before the matchmakers call, and **both women stand on 78.7% of played weeks**. Both
+     names are drawn from `HH_NAMES`, so **311 of those 2,371 weeks showed the SAME NAME twice** —
+     once as "the lanista's wife" in the household panel and once as "your wife" on the blood one.
+     And `marryReady` asks only `!domusOf(d).wife`, so a house with her standing in it is told *"a
+     man alone at the head of a ludus leaves nothing behind but a ledger"* on **88%** of the weeks
+     the match is open — 97.1% in a house that never marries. She is also worth MORE lanista health
+     than the wife he actually married: 0.344 a week against 0.168.
+
+     She is not a wife and never was. Everything the entry actually says — here before the ludus,
+     opinions about all of it, "she has always been here", never leaves (`householdWeek`'s quitting
+     clause is gated past her), free, and she keeps the man at the head of it upright — describes
+     somebody who belongs to the VILLA rather than to him. That also survives a succession, which a
+     wife does not: `succeed` resets `d.domus` and deliberately does not reset `d.household`.
+
+     The KEY stays `wife` because it is saved state and renaming it would empty the household of
+     every existing save. `HH_FREE` is what the code says now, so nothing but the save format still
+     calls her that. */
+  wife:   { name:"The Matron", wage:0, blurb:"There has been a woman keeping this villa upright since before it had a ludus attached, and it has never been the master.",
     good:(d,f)=>{ if(d.lanista) d.lanista.health = clamp(d.lanista.health + 0.35*hhSkill(f), 0, 100); },
     line:"You last longer at this than a man doing it alone, which is most of them." },
 };
@@ -2239,13 +2262,16 @@ const HH_SEEN = {
           f=>`${f.name} moved two men to different cells this week without asking anybody, and something that was going to happen did not.` ],
   wife: [ f=>`${f.name} told you what she thought of the card you took, at length, and she was right, which is worse.`,
           f=>`You have been sleeping. ${f.name} arranged it and did not discuss it with you.`,
-          f=>`${f.name} has been at this as long as you have and from a chair nobody put her name on.` ],
+          f=>`${f.name} has been in this villa longer than you have and runs it from a chair nobody put her name on.` ],
 };
 const hhLine = (d, k, f) => pick(HH_SEEN[k] || [x=>`${x.name} keeps this house standing.`])(f);
 const hhWord = f => { const s = (f && f.skill) || 55;
   return s >= 74 ? "the best in Capua at it" : s >= 62 ? "very good at it"
     : s >= 48 ? "good enough" : "learning, and it shows"; };
 const HH_KEYS = Object.keys(HOUSEHOLD);
+/* the one who was always here: no fee, no wage, and she does not leave. The key is `wife` because
+   it is saved state (see the note on the entry); nothing in the code says that any more. */
+const HH_FREE = "wife";
 const HH_NAMES = ["Vibia","Fulvia","Sallustia","Cornelia","Hostilia","Lollia","Pomponia","Statilia","Cispia","Naevia","Aebutia","Rubria"];
 /* a woman on the sand drew a crowd and cost you the respectable half of the town.
    Rome banned senators' daughters from it, then banned it outright under Severus. */
@@ -2271,10 +2297,10 @@ function hireFolk(d, kind){
   const H = HOUSEHOLD[kind];
   if(!H || hasFolk(d, kind)) return false;
   const fee = rnd(hhWage(d, kind) * 16);
-  if(kind !== "wife" && d.gold < fee) return false;
-  if(kind !== "wife") d.gold -= fee;
+  if(kind !== HH_FREE && d.gold < fee) return false;
+  if(kind !== HH_FREE) d.gold -= fee;
   d.household = Object.assign({}, houseFolk(d), { [kind]: makeFolk(d, kind) });
-  chron(d, kind==="wife"
+  chron(d, kind===HH_FREE
     ? `${d.household[kind].name} has been running the domestic half of this house since before there was a ludus in it, and has now been told so out loud.`
     : `${d.household[kind].name} takes the ${H.name.toLowerCase()}'s place at ${H.wage} denarii a week. Nobody on the sand will ever mention her and the house will not run without her.`, "good");
   return true;
@@ -2290,7 +2316,7 @@ function householdWeek(d){
        itself is a thing the player has no reason to keep paying for */
     if(f.weeks > 3 && R() < 0.018) chron(d, hhLine(d, k, f), "info");
     /* they leave a house that is coming apart */
-    if(k!=="wife" && f.weeks>8 && (d.unrest>78 || d.gold< -80) && R()<0.05){
+    if(k!==HH_FREE && f.weeks>8 && (d.unrest>78 || d.gold< -80) && R()<0.05){
       delete d.household[k];
       chron(d, `${f.name} is gone in the morning without saying anything to anybody. She was owed two weeks and did not ask for them.`, "bad");
     }
@@ -3202,7 +3228,7 @@ function agendaFolk(d, add){
      it is what the note says it is. So this waits for a house that can carry three more wages for a
      season, not one that can merely pay the fee this week. */
   if(d.week < YEAR_WEEKS) return;
-  const missing = HH_KEYS.filter(k => k !== "wife" && !hasFolk(d, k));
+  const missing = HH_KEYS.filter(k => k !== HH_FREE && !hasFolk(d, k));
   if(!missing.length) return;
   const ask = Math.min(...missing.map(k => rnd(hhWage(d, k) * 16)));
   if(d.gold < ask + weeklyBill(d) * 12) return;
@@ -9908,6 +9934,9 @@ const KIN_BARGAIN = {
 function matchEvent(d){
   if(!marryReady(d)) return null;
   const used = new Set();
+  /* #257 — the household's own women are drawn from `HH_NAMES` too, and 311 of 2,371 weeks with
+     both standing showed the SAME NAME on two panels of one screen. They are excluded here. */
+  for(const f of Object.values(houseFolk(d))) if(f && f.name) used.add(f.name);
   const wname = () => { let n, i=0; do { n = pick(HH_NAMES); i++; } while(used.has(n) && i<20); used.add(n); return n; };
   const cands = [];
   cands.push({ kind:"merchant", who:wname(), family:`the ${pick(["Vettii","Popidii","Caecilii","Numisii","Epidii"])}`,
@@ -22986,7 +23015,7 @@ const SECT_LIVE = {
   block:     d => !rosterFull(d) && (d.market||[]).some(m=>m.price <= d.gold),
   cells:     d => d.unrest >= 30 || tourneyReady(d) || walkReady(d),
   square:    d => !d.doctore && (d.doctoreMarket||[]).length > 0,
-  household: d => HH_KEYS.some(k=>!hasFolk(d,k) && (k==="wife" || d.gold >= rnd(hhWage(d,k)*16))),
+  household: d => HH_KEYS.some(k=>!hasFolk(d,k) && (k===HH_FREE || d.gold >= rnd(hhWage(d,k)*16))),
   temple:    d => pietyOf(d) <= 20 || (offeringReady(d) && !blessOf(d) && d.gold >= 200),
   school:    d => !d.doctrine && d.gold >= Math.min(...DOC_KEYS.map(k=>DOCTRINES[k].cost)),
   collegium: d => !collOn(d) && d.gold >= COLL_FEE,
@@ -26712,17 +26741,17 @@ const SECT = {
               <span className="disp" style={{fontSize:"var(--fs-base)",color:f?"var(--ink-hi)":"var(--ink-dim)"}}>
                 {f ? `${f.name} · ${H.name.toLowerCase()}` : H.name}
               </span>
-              <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{f ? `${f.weeks}w · ${hhWage(S,k)}d/wk` : (k==="wife" ? "—" : `${fee}d · ${hhWage(S,k)}d/wk`)}</span>
+              <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{f ? `${f.weeks}w · ${hhWage(S,k)}d/wk` : (k===HH_FREE ? "—" : `${fee}d · ${hhWage(S,k)}d/wk`)}</span>
             </div>
             {f && <div style={{marginTop:2}}><span className="tag tag-gold">{hhWord(f)}</span></div>}
             <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{f ? H.line : H.blurb}</div>
-            {!f && k!=="wife" && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>How good she turns out to be is not on the price. A great one is worth half again what a poor one is.</div>}
+            {!f && k!==HH_FREE && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>How good she turns out to be is not on the price. A great one is worth half again what a poor one is.</div>}
             {!f && <button className="btn btn-ghost" style={{width:"100%",marginTop:6}}
-              disabled={k!=="wife" && S.gold<fee}
+              disabled={k!==HH_FREE && S.gold<fee}
               onClick={()=>mut(d=>{ hireFolk(d, k); })}>
-              {k==="wife" ? "She has always been here" : `Take her on · ${fee}d`}
+              {k===HH_FREE ? "She has always been here" : `Take her on · ${fee}d`}
             </button>}
-            {!f && <Jaws S={S} fee={k==="wife"?0:fee} kind="folk" arg={k}/>}
+            {!f && <Jaws S={S} fee={k===HH_FREE?0:fee} kind="folk" arg={k}/>}
           </div>
         ); })}
     </Sect>
@@ -34974,6 +35003,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* #243 phase 1 — her family as a standing tie, and the hostage the rival wedding is */
     wifeOf, wifeFrom, wifeKin, wifeYears, wifeWord, kinFeudBroken, WIFE_WORD,
     /* #243 phase 2 — she has a life, and losing her re-opens the slot */
+    hhSkill, HOUSEHOLD, HH_FREE,   /* #257 — the free household slot, which was never his wife */
     kinTie, famTie, kinName, widowOf, wifeAgeNow, wifeIllEvent, resolveWifeIll, wifeDies,
     /* #243 phase 3 — her own asks, and the mood they move */
     HER_ASKS, HER_KEYS, HER_FROM, HER_RATE, HER_COOL, HER_MOOD, wifeMood, moveMood, wifeWarm,
