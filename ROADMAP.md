@@ -4389,6 +4389,53 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.250.0 — #258: eleven rows of the survey were counted on the night the house died
+
+`probes/survey.mjs` is this project's "what a player MEETS" instrument, and its own header already
+carried the note for this fault, found once and fixed once: *"`if(d.rebellion) sum.arcs.rebellion.any++`
+sat down in the end-of-run block, so 'rebellion 3' never meant three risings — it meant three of
+fourteen houses had one STANDING on the night their run ended."* **The repair was made for that one
+row and not for the shape. Eleven others were left in the same block.**
+
+A courtship, a pact, a lot on the block and a trip to Rome are objects the game sets and clears. Read
+once at the end, they say what was OPEN on the final week. Corrected — every one of them a transition
+counted in the week, on the `wasAway`/`hadLoan` pattern the same loop already used:
+
+| row | before | after | |
+|---|---|---|---|
+| `rome.offered` | 1 | **50** | |
+| `rome.gone` | 1 | **49** | and now agrees exactly with `did.toRome`'s 49 on the same run |
+| `pacts` | 2 | **34** | |
+| `powLot` | 1 | **11** | |
+| `collegium`, `laws`, `doctrines`, `brand`, `elections` | 12/16/12/8/16 | unchanged | a system entered once and never left reads the same either way |
+
+**And three rows were not being counted at all.**
+
+- **`munera`** read `sum.munera += d.honoured` — **the same field as `rites.honoured`, published twice
+  under two names.** `d.honoured` is men given funeral games. It reads `d.munusLast`'s stamp now.
+- **`monuments`** was initialised to 0 in the accumulator and **incremented nowhere** — a row that
+  read nought for ever whatever the game did. `d.works` holds both tables, so it is split by key now.
+- **`piety.offerings`** read `+= (d.week - (-9) - 0) && 0` — **`x && 0` is always 0**, with a comment
+  beside it admitting the field was "not readable". It reads `d.lastOffering`'s stamp now.
+
+**All three still read 0**, and that is the point: they are true zeros now rather than artefacts, and
+they belong to #260 — the reference player has no lever for a munus or an offering, and `works:true`
+is opt-in.
+
+**`checks/probe.mjs` FAULT NINE** holds the shape: `sum.<row> += <transient> ? 1 : 0` in a file with a
+week loop, and it scans 238 files.
+
+**AND THE FIRST CUT OF THAT RULE COULD NOT FIRE.** It reused `files` and `dir` from FAULT EIGHT,
+which are `test/checks` alone — so a rule written about a PROBE never opened one, reported "185
+probes scanned" over 185 checks, and found nothing when the fault was deliberately put back. The
+sabotage test is the only thing that says whether a rule works, and it said no. Both directories now,
+and the count says which: **238 files with a week loop, 1 found with the fault restored and 0
+without.**
+
+**Shipped:** `probes/survey.mjs` repaired (eleven rows re-scoped, three rows given a field to read,
+and its own header's "Rome offers 0" corrected where it published it), `checks/probe.mjs` FAULT NINE.
+**No game code touched.**
+
 ### v3.249.0 — #259: the fire-sale, taken at last, and "coverable" was a word about arithmetic
 
 `probes/survey.mjs` reads **0 men sold across 518 men and 3,538 weeks**, and not because the
@@ -10388,7 +10435,12 @@ above is the same finding from a second instrument).
 
 ---
 
-**#258 — The Survey Reports Five Things It Does Not Measure** *(instrument · medium · single step)*
+**#258 — The Survey Reports Five Things It Does Not Measure** *(instrument · medium · single step)* —
+**CLOSED v3.250.0, AND IT WAS ELEVEN ROWS RATHER THAN FIVE.** `rome.gone` 1 → **49** (and now agrees
+with `did.toRome`), `pacts` 2 → 34, `powLot` 1 → 11; `munera`, `monuments` and `piety.offerings`
+given a field to read and all three genuinely 0. `checks/probe.mjs` FAULT NINE holds the shape, and
+its own first cut could not fire — it scanned the wrong directory, which the sabotage test caught.
+Original text follows.
 
 Every one of these is read at the END OF A RUN, in one block, and reported as though it counted
 engagement over the run:

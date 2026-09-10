@@ -254,4 +254,5 @@
 {"v":"3.247.0","checks":183,"failed":[]},
 {"v":"3.248.0","checks":184,"failed":["cliff"]},
 {"v":"3.248.0","checks":184,"failed":[]},
-{"v":"3.249.0","checks":185,"failed":[]}]
+{"v":"3.249.0","checks":185,"failed":[]},
+{"v":"3.250.0","checks":185,"failed":[]}]

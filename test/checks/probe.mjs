@@ -480,6 +480,44 @@ export async function run(){
         + `run played and how it ended`);
   }
 
+  /* ---- FAULT NINE: A ROW COUNTED OUTSIDE THE WEEK, AND A ROW COUNTED NOWHERE ----
+     `probes/survey.mjs` already carries the note for the first half, found once and fixed once:
+     `if(d.rebellion) sum.arcs.rebellion.any++` sat in the end-of-run block, so "rebellion 3" meant
+     three houses with a rising STANDING on their last night rather than three risings. ELEVEN OTHER
+     ROWS IN THE SAME FILE WERE LEFT IN THAT BLOCK — the repair was made for one row and not for the
+     shape. Corrected in v3.250.0, `rome.gone` went **1 to 49** and now agrees exactly with
+     `did.toRome`'s 49 on the same run; `pacts` went 2 to 34 and `powLot` 1 to 11.
+
+     THE SHAPE IS `sum.<row> += <transient> ? 1 : 0`. A courtship, a pact, a lot on the block and a
+     trip to Rome are all objects the game sets and clears; read once at the end they say what was
+     OPEN on the final week, and that is never what the row is named for. A cumulative field read
+     with `|| 0` is a different thing and is not flagged.
+
+     THE SECOND LIMB is a row that is never counted at all: `monuments` was initialised to 0 in the
+     accumulator and incremented NOWHERE, so it read nought for ever whatever the game did. Any key
+     declared in a summary literal with a numeric zero and never incremented is that fault. */
+  /* ---- AND IT SCANNED THE WRONG DIRECTORY, WHICH THE SABOTAGE TEST CAUGHT ----
+     The first cut of this reused `files` and `dir` from FAULT EIGHT, which are `test/checks` alone —
+     so a rule written about `probes/survey.mjs` never opened a probe, reported "185 probes scanned"
+     over 185 CHECKS, and found nothing when the fault was deliberately put back. A rule that cannot
+     fire is worth less than no rule, and the only thing that says whether it can is putting the
+     fault back. Both directories now, and the count says which. */
+  { const bad9 = []; let seen9 = 0;
+    for(const sub of ["checks", "probes"]){
+      const dd = path.join(ROOT, "test", sub);
+      for(const f of fs.readdirSync(dd).filter(x=>x.endsWith(".mjs"))){
+        const t = fs.readFileSync(path.join(dd, f), "utf8");
+        const code9 = t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+        if(!/for\s*\(\s*let\s+w\s*=/.test(code9)) continue;    /* no week loop: not this shape */
+        seen9++;
+        const flag = code9.match(/\bsum\.[A-Za-z_][\w.]*\s*\+=\s*\(?\s*d\.[A-Za-z_]\w*\s*(?:&&[^;]*)?\?/g) || [];
+        for(const m of flag) bad9.push(`${sub}/${f}: \`${m.trim().slice(0, 56)}\``);
+      }
+    }
+    if(bad9.length) bad.push(`FAULT NINE — a row counted outside the week, a transient read as a flag: ${bad9.slice(0,3).join(" · ")}`);
+    lines.push(`fault nine: ${seen9} files with a week loop scanned for a transient read as a flag — ${bad9.length} found`);
+  }
+
   /* ---- FAULT THREE: THE ROPE'S OWN OPTION LITERALS ----
      Only the literals the rope passes to its own inner functions, and only where a CALL opens one:
      `takeBout(d, {` and `run(d, offer, ids, {`. Two things the first draft of this got wrong and
