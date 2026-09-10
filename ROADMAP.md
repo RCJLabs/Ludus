@@ -4432,8 +4432,22 @@ in eight.
 gating the match on an empty household slot would take the marriage from 14 of 16 houses to none, and
 #243 would go dark in its entirety.
 
+**And the re-phase turned `cliff` arm 7 red on a fault of mine from two releases ago.** It reported
+*"every door in the locked floor priced at nought — `weeklyBill` has stopped reading the
+components"* on a build where nothing about the bill had changed. `probes/brink.mjs` splits the debt
+deaths into two populations and says in its own header that pooling them answers neither question —
+a **bare** house dying at week 25-41 has no buildings, works, liturgy or household, so it has no
+floor to shed, which is half of v3.246.0's finding rather than a fault. Arm 7 took the median over
+BOTH, and v3.248.0's re-phase tipped the mix: 12 of 23 deaths bare, median locked floor 0.
+
+Repaired to the population the claim is about, it is a **sharper** statement than the pooled one was:
+on the **11 built** deaths of 23, the whole locked floor shed for every week the row gives is **828d
+against a fire-sale's 4,397d**, and it outruns the sale on **0 of 11** rather than 1 of 22. The bare
+count is reported beside it, because it is the other half.
+
 **Shipped:** `probes/matron.mjs` (two arms), `checks/matron.mjs` (five arms, 7s), the rename and the
-pool split in `src`, with the measurement recorded on the entry itself.
+pool split in `src`, `checks/cliff.mjs` arm 7 re-based on the built dead, with the measurement
+recorded on the entry itself.
 
 ### v3.247.0 — #247's last leftover: the young house's death is answerable in advance, and #247 closes
 

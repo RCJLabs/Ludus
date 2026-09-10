@@ -205,17 +205,27 @@ export async function run({ p, errors }){
        The gap is a stock (p50 1,190d) arriving in the five or six weeks the money row gives; the
        doors are a flow (p50 110 a week). If the flow ever outruns the sale, the door is worth
        building and #247's leftover should be re-read. */
+    /* ---- AND IT IS THE BUILT DEAD THIS IS ABOUT, NOT ALL OF THEM ----
+       `probes/brink.mjs` splits the debt deaths into two populations and says pooling them answers
+       neither question: a BARE house dying at week 25-41 has no buildings, works, liturgy or
+       household, so it has no floor to shed — which is half of v3.246.0's finding, not a fault. The
+       first cut of this arm took the median over BOTH and asserted the doors were priced above
+       nought; v3.248.0's re-phase tipped the mix toward bare, the median locked floor read 0, and
+       the arm reported that `weeklyBill` had stopped reading its own components on a build where
+       nothing had changed. The rows with a floor are the ones the claim is about; the bare count is
+       reported beside them because it IS the other half. */
     const floor = (()=>{
-      if(!floorRows.length) return { n:0 };
+      const built = floorRows.filter(f=>f.lock > 0);
+      if(!built.length) return { n:0, all:floorRows.length, bare:floorRows.length };
       const med = (a)=>{ const x = a.slice().sort((p,q)=>p-q); return x[Math.floor(x.length/2)]; };
-      const doors = floorRows.map(f=>f.allB + f.allW + f.allH + f.step);
+      const doors = built.map(f=>f.allB + f.allW + f.allH + f.step);
       const over = doors.map(v=>v*6);
-      return { n:floorRows.length, weeks:6,
-        bill:med(floorRows.map(f=>f.bill)), lock:med(floorRows.map(f=>f.lock)),
-        allB:med(floorRows.map(f=>f.allB)), allW:med(floorRows.map(f=>f.allW)),
-        allH:med(floorRows.map(f=>f.allH)), step:med(floorRows.map(f=>f.step)),
-        doors:med(doors), over:med(over), fund:med(floorRows.map(f=>f.fund)),
-        beat: floorRows.filter((f,i)=>over[i] >= f.fund).length };
+      return { n:built.length, all:floorRows.length, bare:floorRows.length - built.length, weeks:6,
+        bill:med(built.map(f=>f.bill)), lock:med(built.map(f=>f.lock)),
+        allB:med(built.map(f=>f.allB)), allW:med(built.map(f=>f.allW)),
+        allH:med(built.map(f=>f.allH)), step:med(built.map(f=>f.step)),
+        doors:med(doors), over:med(over), fund:med(built.map(f=>f.fund)),
+        beat: built.filter((f,i)=>over[i] >= f.fund).length };
     })();
     return { weeks, said, saidFatal, short, shortFatal, deaths, swings, figure, opening, floor };
   }, [HOUSES, WEEKS, DEAD_IN]);
@@ -225,14 +235,15 @@ export async function run({ p, errors }){
     return { pass:false, why:`no house died of debt in ${r.weeks} weeks — the arm has nothing to measure`, lines };
 
   { const f = r.floor;
-    if(!f.n) bad.push(`arm 7 saw no debt death that ever heard the money row, so #247's leftover is not being measured at all`);
+    if(!f.n) lines.push(`#247's leftover: of ${f.all||0} debt deaths that heard the row, ${f.bare||0} were BARE — no buildings, works, liturgy or household, `
+      + `so there was no floor to shed in this run at all. That is half of v3.246.0's finding and not a failure; the inequality is not asserted on nothing.`);
     else {
-      lines.push(`#247's leftover, on ${f.n} real debt deaths at their last red week: bill p50 ${f.bill}d/wk, locked ${f.lock}d `
+      lines.push(`#247's leftover, on the ${f.n} BUILT debt deaths of ${f.all} (${f.bare} bare, with no floor to shed at all): bill p50 ${f.bill}d/wk, locked ${f.lock}d `
         + `· doors — buildings ${f.allB}, works ${f.allW}, household ${f.allH}, a rank step ${f.step} = ${f.doors}d/wk`);
       lines.push(`   shed for all ${f.weeks} weeks the row gives: ${f.over}d against \`liquidate\`'s ${f.fund}d already on the table, `
         + `and the floor outruns the sale on ${f.beat} of ${f.n} `
         + `[measured over 52 deaths: every door saves 98.1%, which is what the fire-sale saves without them; taken early, 0 of 52 are saved ONLY by the floor]`);
-      if(!(f.doors > 0)) bad.push(`every door in the locked floor priced at nought — \`weeklyBill\` has stopped reading the components`);
+      if(!(f.doors > 0)) bad.push(`every door priced at nought on ${f.n} deaths that DO carry a locked floor of ${f.lock}d a week — \`weeklyBill\` has stopped reading its own components`);
       if(!(f.over < f.fund))
         bad.push(`the whole locked floor shed for ${f.weeks} weeks is worth ${f.over}d against a fire-sale's ${f.fund}d — `
           + `the stock-against-flow arithmetic #247's leftover was declined on has inverted, and a door in the floor `
