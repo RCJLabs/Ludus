@@ -457,6 +457,43 @@ export async function installRope(p){
       const fin = (f, args) => { try { return f(...args); } catch(e){ bump("threw"); return null; } };
       if(d.over) return did;
       const spare = () => d.gold - LAN.reserve(d);
+      /* ---- AND HE SELLS WHEN HE IS TOLD TO — #259, OPT-IN ----
+         `men.sold` reads 0 across every measurement this project has ever taken — 518 men over 3,538
+         weeks in `probes/survey.mjs` — and not because the reference player declines. THERE WAS NO
+         LEVER. `sellMan` has been on the handle for many releases; `court`, `gambit`, `loan` and
+         `works` all have opt-in levers and selling had none.
+
+         That matters because v3.246.0 and v3.247.0 both concluded **98.1% of debt deaths were
+         coverable**, and the remedy in both is `liquidate(d).total` — an arithmetic figure. The
+         price is right (`sellPrice` is `gladValue(g)*0.55`, the same term `liquidate` sums) and the
+         COST is missing: `sellMan` puts `2 + 3 per sore brother` on unrest and 3 on every remaining
+         man's defiance, and the other thing that kills these houses is the rising.
+
+         The policy is `liquidate`'s own set in the order the money row names it — the paper, the
+         steel, then the men cheapest-first, never the last man — sold only far enough to clear the
+         line and a fortnight's bill. OPT-IN on `works`'s precedent: switching it on re-phases every
+         seeded fixture, and making it the default is its own release with every figure re-measured. */
+      if(o.sell && !d.over){
+        let red = false; try { red = !!A.moneyRow(d); } catch(e){}
+        if(red){
+          const want = () => { let b = 0; try { b = A.weeklyBill(d); } catch(e){} return b * 2; };
+          for(const x of (fin(A.owedList,[d]) || [])){
+            if(d.gold >= want()) break;
+            if(fin(A.sellDebt,[d, x.id])) bump("soldPaper");
+          }
+          for(const id of Object.keys(d.gear || {})){
+            if(d.gold >= want()) break;
+            if(fin(A.sellGearOne,[d, id])) bump("soldSteel");
+          }
+          const men = (fin(A.activeG,[d]) || [])
+            .filter(g=>!(A.isDamn && A.isDamn(g)) && !(A.isAuctor && A.isAuctor(g)))
+            .sort((x,y)=>A.gladValue(x) - A.gladValue(y));
+          for(const g of men.slice(0, Math.max(0, men.length - 1))){
+            if(d.gold >= want()) break;
+            if(fin(A.sellMan,[d, g.id, null])) bump("soldMan");
+          }
+        }
+      }
       /* ---- AND HE DOES NOT BUY WHILE HIS OWN ALARM IS RINGING — MEASURED, #247's leftover ----
          A `solvent:true` lever was added here to test whether the reference player buys men into a
          red money row, on the suspicion that the young house's death at week 25-41 was the rope

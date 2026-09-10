@@ -13446,7 +13446,17 @@ const weeklyBill = d => Math.round(
    sharper than the item's: "the locked floor beats what a dying house nets in a week" is TRUE and
    says nothing about survival, because the thing that closes a five-week gap was never a weekly
    saving. 98.1% of these deaths already have an approach. What they lack is a player who takes it,
-   which is #247a's ground and already shipped. `checks/cliff.mjs` arm 7 holds the inequality on the
+   which is #247a's ground and already shipped.
+
+   AND THE PLAYER WHO TAKES IT WAS MEASURED AT LAST, v3.249.0 — the sentence above overstates it.
+   "98.1% coverable" is arithmetic: `liquidate`'s total against the gap. Nothing had ever SOLD a man,
+   because the rope had no lever to (`probes/survey.mjs`: 0 sold across 518 men and 3,538 weeks).
+   With one, selling at the red week over 384 houses takes debt deaths **160 to 89** — it removes 71
+   of 160, not 98% — and of those 71, **31 become survivors and 21 become the rising**, the rest ruin
+   and banned. The coin is exactly what was promised (`sellPrice` is the same `gladValue*0.55` term)
+   and the cost is not in the figure: `sellMan` puts 2 on unrest a man, 3 a sore brother, and 3 on
+   every remaining man's defiance. The remedy is real and worth having; "coverable" was a word about
+   arithmetic. `checks/sale.mjs`. `checks/cliff.mjs` arm 7 holds the inequality on the
    real population, and if the flow ever outruns the sale this is worth re-reading. */
 /* ---- WHAT THE CREDITORS WILL CARRY ----
    The run ended at gold below −250 (−420 with a loan open) — constants from the

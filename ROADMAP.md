@@ -4389,6 +4389,56 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.249.0 — #259: the fire-sale, taken at last, and "coverable" was a word about arithmetic
+
+`probes/survey.mjs` reads **0 men sold across 518 men and 3,538 weeks**, and not because the
+reference player declines: **the rope had no lever to sell one.** `sellMan` has been on the handle
+for many releases; `court`, `gambit`, `loan` and `works` all had opt-in levers and selling had none.
+
+That matters because of what was built on top of it. v3.246.0 and v3.247.0 both concluded **98.1% of
+debt deaths were coverable**, and the remedy in both is `liquidate(d).total` — the spare steel, the
+paper owed, and every man but one at `gladValue * 0.55`. **An arithmetic figure that nobody had ever
+taken.**
+
+**The price is right and the cost was missing.** `sellPrice` is `rnd(gladValue(g)*0.55)`, the same
+term `liquidate` sums, so the coin is exactly what was promised — driven, one man priced at 294d put
+294d in the box. What `sellMan` ALSO does, and `liquidate` does not count: `d.unrest += 2 + 3 per
+sore brother`, `defiance += 3` on every man left, `favourLost`, `loseFavourite`, and the brothers
+remember it. Driven, one sale: **unrest +2, defiance +6 across the men left.**
+
+**MEASURED with the lever** (`probes/sale.mjs`, **three seed prefixes × 128 houses × 420 weeks**, 384
+an arm), selling at the red week — the paper, then the steel, then the men cheapest-first, never the
+last man, only far enough to clear the line and a fortnight's bill:
+
+| | ref (cannot sell) | sell | |
+|---|---|---|---|
+| **debt** | 160 | **89** | −44% |
+| **rebellion** | 100 | **121** | +21% |
+| **alive** | 67 | **98** | +46% |
+| men sold | 0 | **675** in 210 of 384 houses | |
+
+**So the remedy is real and "coverable" overstated it by about a factor of two.** The sale removes
+**71 of 160** debt deaths — not 98% of them — and of those 71, **31 become survivors and 21 become
+the rising**, the rest ruin, banned and emptied. **Less than half of what it prevents turns into a
+house that lives.** The coin arrives; survival does not follow, because the roster it can no longer
+carry was #247's own diagnosis and selling the roster is not the same as fixing it.
+
+**Consistent on all three prefixes** (debt 51/47/62 → 31/29/29; alive 24/26/17 → 36/33/29), which is
+why three were run: the house-by-house pairing is NOT the claim, because the first sale moves the
+`R()` stream and from that week house *i* is two different worlds. The probe says so where it prints
+it.
+
+**The record is corrected in three places rather than restated** — the `src` note beside
+`weeklyBill`, v3.246.0's release entry, and `checks/cliff.mjs` arm 7's header — each keeping what it
+said and adding what taking the remedy actually does.
+
+**The lever is opt-in**, on `works`'s precedent: switching it on re-phases every seeded fixture, and
+making it the default is its own release with every affected figure re-measured. **`checks/sale.mjs`
+holds that the reference player still sells nothing without it.**
+
+**Shipped:** the `sell` lever in `test/harness.mjs`, `probes/sale.mjs`, `checks/sale.mjs` (four arms,
+39s), and the three corrections. **No game code touched.**
+
 ### v3.248.0 — #257: she was never his wife, and it was on two panels of the same screen
 
 Found while measuring #243 phase 3 and recorded rather than fixed at the time. `HOUSEHOLD.wife` is a
@@ -4536,6 +4586,12 @@ than repeating it. *"The locked floor beats what a dying house nets in a week"* 
 here, 91.4% of built houses) and says nothing about survival, because what closes a five-week gap was
 never a weekly saving. **98.1% of these deaths already have an approach.** What they lack is a player
 who takes it, which is #247a's ground and shipped at v3.208.0.
+
+> **CORRECTED v3.249.0.** The player who takes it was measured, and this overstates it. "Coverable"
+> is arithmetic — `liquidate`'s total against the gap — and nothing had ever sold a man because the
+> rope had no lever to. With one, selling at the red week takes debt deaths **160 → 89** over 384
+> houses: it removes 71 of 160, not 98%, and of those 71 **31 become survivors and 21 become the
+> rising**. The remedy is real; the figure was never a survival rate. See #259.
 
 **One figure revised.** v3.225.0 measured 81% of debt deaths coverable; twenty releases on, the same
 instrument reads **88.9%** on one seed set and **98.1%** on another. The direction is the same and
@@ -9836,7 +9892,9 @@ net in 95% of these deaths — which is how a debt death becomes a `ruin`. Shipp
 carries `liquidate`'s figure, which it had never said. **SHEDDING THE LOCKED FLOOR WAS PRICED AND
 DECLINED, v3.246.0:** works have no subject at all (0 of 52 dying houses ever finished one), the
 doors are worth p50 110d a week all together, and `wouldHaveSaved` reads 98.1% for every one of them
-— the same 98.1% the fire-sale already reaches without them; taken from the first red week, a median
+— the same 98.1% the fire-sale already reaches without them **(and "reaches" is arithmetic: taken,
+that sale removes 44% of the debt deaths and a fifth of what it removes comes back as the rising —
+#259, v3.249.0)**; taken from the first red week, a median
 of 98 weeks out, the houses saved ONLY by the floor are 0 of 52. The gap is a stock and a door is a
 flow. **AND THE YOUNG HOUSE'S DEATH WAS ANSWERED AND DECLINED, v3.247.0 — #247 IS CLOSED.** Over
 three seed prefixes x 128 houses, a reference player loses 10.9% of houses to debt inside sixty weeks
@@ -10307,6 +10365,135 @@ standing in it was told *"a man alone at the head of a ludus leaves nothing behi
 now — which is what every word of her own entry already said, and it survives a succession as a wife
 deliberately does not. The key stays `wife` because it is saved state; `HH_FREE` is what the code
 says. `checks/matron.mjs`, five arms.
+
+---
+
+## A SECOND AUDIT PASS — v3.248.0, and it turned on the instrument first
+
+The fifteen are closed. This pass was run the way the first one was — measure, then write items — and
+the first thing it measured was the measuring. `probes/survey.mjs` (16 x 420, **3,538 played weeks**)
+is this project's flagship "what a player MEETS" instrument, and five of its rows do not report what
+their names say. **Two seams were swept and both came back empty, which is itself the finding.** A static sweep for
+write-only state fields turned up two candidates and **both were false positives** — `k.armor` is
+returned inside a kit, `g.lasting` has eleven readers. And `probes/dark.mjs` re-run over 2,550
+house-weeks reports **no dark action at all**: of the sixteen driven, every one either changed the
+save on 72-100% of the weeks its gate was open, or was ARMED — the four armed rows (`applyKit`,
+`dropKit`, `breakPlan`, `repay`) are the reference player's own policy closing the gate, not the
+game's. The rarest, `nemCallOut` at 1% of weeks and `skipWeeks` at 5%, both work every time they are
+open.
+
+So after 248 releases the dead-field and dead-button seams are worked out, and the yield has moved to
+the labels — and to what the reference player has never been able to do (#259, #260, and `repay`
+above is the same finding from a second instrument).
+
+---
+
+**#258 — The Survey Reports Five Things It Does Not Measure** *(instrument · medium · single step)*
+
+Every one of these is read at the END OF A RUN, in one block, and reported as though it counted
+engagement over the run:
+
+| row | reads | what it actually says |
+|---|---|---|
+| `munera` | `sum.munera += d.honoured` | **a duplicate of `rites.honoured`** — the same field, under a second name. `d.honoured` is men given funeral games, not munera staged. |
+| `monuments` | nothing | initialised to 0 at line 58 and **never incremented anywhere**. It reads 0 for ever, whatever the game does. |
+| `piety.offerings` | `+= (d.week - (-9) - 0) && 0` | **`x && 0` is always 0**, with a comment beside it admitting the field is "not readable". |
+| `rome.gone` / `.offered` | `if(d.rome)` at the end of the run | houses that were *in Rome on their final week* — 1 of 16 — while `did.toRome` on the same run reads **49**. The probe's own header publishes this as *"Rome offers 0"* and *"Rome offers still 0"*. |
+| `court`, `pacts`, `powLot` (and `laws`, `doctrines`, `brand`, `collegium`, `elections`) | `d.court ? 1 : 0` at the end | whether the thing was OPEN on the last week, not whether it was ever engaged. `court: 0` does not mean nobody courted. |
+
+*What to do:* count engagement where engagement is the question (a flag set once when a system is
+first entered), delete the rows that cannot be counted rather than publishing a zero, and re-read
+anything in this document quoted from them. **Verify first is already done — the reading above IS the
+item**, and it should be confirmed against the file before a line is changed.
+
+**Risk.** Some of these zeros have been quoted for many releases. Correcting them may move published
+figures, and every one that moves needs its release entry annotated rather than silently restated.
+
+---
+
+**#259 — The Fire-Sale Has Never Been Made** *(overhaul · medium–large · verify-first heavy)* —
+**CLOSED v3.249.0. THE ANSWER IS THAT IT WORKS AND "COVERABLE" OVERSTATED IT BY ABOUT A FACTOR OF
+TWO:** with a `sell` lever the debt deaths go **160 → 89** over 384 houses, and of the 71 removed
+**31 become survivors and 21 become the rising**. The coin is exactly what `liquidate` promises; the
+cost — 2 unrest a man, 3 a sore brother, 3 defiance on everyone left — is not in the figure. Original
+text follows.
+
+`men.sold` reads **0 across 3,538 weeks and 518 men**, and the reason is not that the reference player
+declines: **the rope has no lever to sell a man at all.** `sellMan` is on the handle; `o.court`,
+`o.gambit`, `o.loan` and `o.works` exist as opt-in levers and there is no `o.sell`.
+
+That matters because of what has just been built on top of it. v3.246.0 and v3.247.0 both concluded
+that **98.1% of debt deaths were coverable**, and the remedy in both is `liquidate(d).total` — an
+arithmetic figure, `gladValue(m) * 0.55` summed over the spare men. `sellMan` is what taking it
+actually costs, and the arithmetic contains **none** of it:
+
+    d.unrest += 2 + sore.length*3            every sold man, and every sore brother
+    every active man  defiance += 3
+    favourLost(d, g, "sold"); loseFavourite(d, g, "sold")
+    brothers  remember(d, o, "soldKin")
+
+A four-man fire-sale is **+8 unrest at a minimum** before a single brother is counted, and **+12
+defiance on every man left**. The other thing that kills these houses is the rising.
+
+*Verify first.* Add a `sell` lever, take the fire-sale at the week the money row goes red, and count
+two things on identical seeds: how many of the debt deaths actually survive, and how many become
+`rebellion` instead. If the second number is close to the first, "coverable" was a word about
+arithmetic and #247's leftover is open again.
+
+**Risk.** It re-phases everything, and it may refute two releases shipped this week. That is the
+point of running it.
+
+---
+
+**#260 — The Reference Player Is a Partial Player** *(instrument · medium · 2 phases)*
+
+Four systems have opt-in levers that are **off by default** — `court`, `gambit`, `loan`, `works` —
+and three have **no lever at all**: selling a man (#259), `holdMunera`, and `makeOffering`. All seven
+therefore read as never-engaged in every figure this project publishes, and the survey's own zeros
+above cannot tell the two cases apart.
+
+*Verify first.* Turn each on, one at a time, against the reference on identical seeds, and report
+which of the numbers this project quotes actually move. The ones that do not move are content the
+player can take or leave; the ones that do are figures that have been conditioned on a partial player
+without saying so.
+
+**Risk.** `works:true` already carries a note saying switching it on "re-bases what a long-lived house
+owns and earns". Expect the same of the others, and expect the answer to be a list of release entries
+needing a sentence added.
+
+---
+
+**#261 — A Hundred And Seventy-Five Unburied, And Nobody Honoured** *(gameplay · small–medium)*
+
+`survey`: **`honoured 0, unburied 175`** over 3,538 weeks. `src` records the same thing beside the
+code — *"`d.honoured` read 0 across every measurement this project has taken"* — and #224's own gap,
+found again in v3.234.0, is that at the regard floor silence ties the pit on regard and costs no
+unrest, so it dominates. The dead pile up and the rite is never taken.
+
+*Verify first.* Whether this is the rope or the game, which #260's lever settles first: `honoured` is
+written by two call sites, and if neither is reachable by any policy the reference player can run,
+the zero is the instrument's. If a policy CAN reach it, measure what taking it is worth against the
+175 it would answer.
+
+**Risk.** #224 is closed. This re-opens a gap it recorded rather than the item.
+
+---
+
+**#262 — The Thin Tail Of The Die** *(content · medium)*
+
+Over the same 3,538 weeks, the drawn events split hard. The head: `ambition` 191, `refusal` 190,
+`ludusNight` 179, `leagueYear` 180, `kinReturn` 112. The tail: **`primacy` 4, `licence` 8, `uprising`
+8, `doctore` 9, `stolenSteel` 12, `crowdCalls` 12, `mentor` 13, `patronGone` 13.** #245 phase 2
+weighted the die by measured reach and phase 3 gave an unmet event triple tickets; both worked, and
+the tail is what is left after them.
+
+*Verify first.* For each of the eight, whether it is rare because its GATE is rare or because its
+tickets are few — `EV_DIE` holds the tickets and `pace.mjs` already reads the eligible set every
+week. A gate nobody passes is not answered by more tickets, and #245's own note says the ORDER is
+weighted and never the outcome.
+
+**Risk.** Re-weighting the die re-phases every seeded fixture in the suite, which is why #245 took
+that decision at its phase 2 rather than drifting into it.
 
 ---
 
