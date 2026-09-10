@@ -10310,6 +10310,130 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
+## A SECOND AUDIT PASS — v3.248.0, and it turned on the instrument first
+
+The fifteen are closed. This pass was run the way the first one was — measure, then write items — and
+the first thing it measured was the measuring. `probes/survey.mjs` (16 x 420, **3,538 played weeks**)
+is this project's flagship "what a player MEETS" instrument, and five of its rows do not report what
+their names say. **Two seams were swept and both came back empty, which is itself the finding.** A static sweep for
+write-only state fields turned up two candidates and **both were false positives** — `k.armor` is
+returned inside a kit, `g.lasting` has eleven readers. And `probes/dark.mjs` re-run over 2,550
+house-weeks reports **no dark action at all**: of the sixteen driven, every one either changed the
+save on 72-100% of the weeks its gate was open, or was ARMED — the four armed rows (`applyKit`,
+`dropKit`, `breakPlan`, `repay`) are the reference player's own policy closing the gate, not the
+game's. The rarest, `nemCallOut` at 1% of weeks and `skipWeeks` at 5%, both work every time they are
+open.
+
+So after 248 releases the dead-field and dead-button seams are worked out, and the yield has moved to
+the labels — and to what the reference player has never been able to do (#259, #260, and `repay`
+above is the same finding from a second instrument).
+
+---
+
+**#258 — The Survey Reports Five Things It Does Not Measure** *(instrument · medium · single step)*
+
+Every one of these is read at the END OF A RUN, in one block, and reported as though it counted
+engagement over the run:
+
+| row | reads | what it actually says |
+|---|---|---|
+| `munera` | `sum.munera += d.honoured` | **a duplicate of `rites.honoured`** — the same field, under a second name. `d.honoured` is men given funeral games, not munera staged. |
+| `monuments` | nothing | initialised to 0 at line 58 and **never incremented anywhere**. It reads 0 for ever, whatever the game does. |
+| `piety.offerings` | `+= (d.week - (-9) - 0) && 0` | **`x && 0` is always 0**, with a comment beside it admitting the field is "not readable". |
+| `rome.gone` / `.offered` | `if(d.rome)` at the end of the run | houses that were *in Rome on their final week* — 1 of 16 — while `did.toRome` on the same run reads **49**. The probe's own header publishes this as *"Rome offers 0"* and *"Rome offers still 0"*. |
+| `court`, `pacts`, `powLot` (and `laws`, `doctrines`, `brand`, `collegium`, `elections`) | `d.court ? 1 : 0` at the end | whether the thing was OPEN on the last week, not whether it was ever engaged. `court: 0` does not mean nobody courted. |
+
+*What to do:* count engagement where engagement is the question (a flag set once when a system is
+first entered), delete the rows that cannot be counted rather than publishing a zero, and re-read
+anything in this document quoted from them. **Verify first is already done — the reading above IS the
+item**, and it should be confirmed against the file before a line is changed.
+
+**Risk.** Some of these zeros have been quoted for many releases. Correcting them may move published
+figures, and every one that moves needs its release entry annotated rather than silently restated.
+
+---
+
+**#259 — The Fire-Sale Has Never Been Made** *(overhaul · medium–large · verify-first heavy)*
+
+`men.sold` reads **0 across 3,538 weeks and 518 men**, and the reason is not that the reference player
+declines: **the rope has no lever to sell a man at all.** `sellMan` is on the handle; `o.court`,
+`o.gambit`, `o.loan` and `o.works` exist as opt-in levers and there is no `o.sell`.
+
+That matters because of what has just been built on top of it. v3.246.0 and v3.247.0 both concluded
+that **98.1% of debt deaths were coverable**, and the remedy in both is `liquidate(d).total` — an
+arithmetic figure, `gladValue(m) * 0.55` summed over the spare men. `sellMan` is what taking it
+actually costs, and the arithmetic contains **none** of it:
+
+    d.unrest += 2 + sore.length*3            every sold man, and every sore brother
+    every active man  defiance += 3
+    favourLost(d, g, "sold"); loseFavourite(d, g, "sold")
+    brothers  remember(d, o, "soldKin")
+
+A four-man fire-sale is **+8 unrest at a minimum** before a single brother is counted, and **+12
+defiance on every man left**. The other thing that kills these houses is the rising.
+
+*Verify first.* Add a `sell` lever, take the fire-sale at the week the money row goes red, and count
+two things on identical seeds: how many of the debt deaths actually survive, and how many become
+`rebellion` instead. If the second number is close to the first, "coverable" was a word about
+arithmetic and #247's leftover is open again.
+
+**Risk.** It re-phases everything, and it may refute two releases shipped this week. That is the
+point of running it.
+
+---
+
+**#260 — The Reference Player Is a Partial Player** *(instrument · medium · 2 phases)*
+
+Four systems have opt-in levers that are **off by default** — `court`, `gambit`, `loan`, `works` —
+and three have **no lever at all**: selling a man (#259), `holdMunera`, and `makeOffering`. All seven
+therefore read as never-engaged in every figure this project publishes, and the survey's own zeros
+above cannot tell the two cases apart.
+
+*Verify first.* Turn each on, one at a time, against the reference on identical seeds, and report
+which of the numbers this project quotes actually move. The ones that do not move are content the
+player can take or leave; the ones that do are figures that have been conditioned on a partial player
+without saying so.
+
+**Risk.** `works:true` already carries a note saying switching it on "re-bases what a long-lived house
+owns and earns". Expect the same of the others, and expect the answer to be a list of release entries
+needing a sentence added.
+
+---
+
+**#261 — A Hundred And Seventy-Five Unburied, And Nobody Honoured** *(gameplay · small–medium)*
+
+`survey`: **`honoured 0, unburied 175`** over 3,538 weeks. `src` records the same thing beside the
+code — *"`d.honoured` read 0 across every measurement this project has taken"* — and #224's own gap,
+found again in v3.234.0, is that at the regard floor silence ties the pit on regard and costs no
+unrest, so it dominates. The dead pile up and the rite is never taken.
+
+*Verify first.* Whether this is the rope or the game, which #260's lever settles first: `honoured` is
+written by two call sites, and if neither is reachable by any policy the reference player can run,
+the zero is the instrument's. If a policy CAN reach it, measure what taking it is worth against the
+175 it would answer.
+
+**Risk.** #224 is closed. This re-opens a gap it recorded rather than the item.
+
+---
+
+**#262 — The Thin Tail Of The Die** *(content · medium)*
+
+Over the same 3,538 weeks, the drawn events split hard. The head: `ambition` 191, `refusal` 190,
+`ludusNight` 179, `leagueYear` 180, `kinReturn` 112. The tail: **`primacy` 4, `licence` 8, `uprising`
+8, `doctore` 9, `stolenSteel` 12, `crowdCalls` 12, `mentor` 13, `patronGone` 13.** #245 phase 2
+weighted the die by measured reach and phase 3 gave an unmet event triple tickets; both worked, and
+the tail is what is left after them.
+
+*Verify first.* For each of the eight, whether it is rare because its GATE is rare or because its
+tickets are few — `EV_DIE` holds the tickets and `pace.mjs` already reads the eligible set every
+week. A gate nobody passes is not answered by more tickets, and #245's own note says the ORDER is
+weighted and never the outcome.
+
+**Risk.** Re-weighting the die re-phases every seeded fixture in the suite, which is why #245 took
+that decision at its phase 2 rather than drifting into it.
+
+---
+
 **#232 — The Training-Square Duel** *(new system)* — **SHIPPED, v3.182.0 + v3.183.0 + v3.184.0.** `simulateSpar` (the fifth engine, structurally unable to kill: no appeal/missio block, damage capped after every multiplier, a hard floor of `SPAR_YIELD - SPAR_CAP`) and the `EVENTS.feud` rewiring shipped, with the odds measured against the branch they replace and held to 1.4 points. The beat-viewer wiring shipped in v3.183.0 with `SPAR_CRUX`'s own three orders — and confirmed the item's own predicted hazard, that the viewer's `solo` flag would hand a spar the single sand's whole menu. `holdTourney`'s final shipped in v3.184.0 — the seed loses it 38.6% of the time — closing the item. **Phase 5 shipped in v3.189.0** — its mastery half, after the measurement showed its prerequisite was missing: there was no way to spar on purpose (40 spars in 2,815 played weeks, all from feuds) and mastery was already thin (15 of 435 men). The square is a door the player opens now, and `canMaster` wants a man beaten in it who the house prices at or above him. The pair-lead half was declined with a reason. Phase 5's hooks were never fudge-replacements; the primacy challenge found beside Phase 4 was written up as a design decision rather than a defect, because fixing it properly means letting you kill your own champion — **decided and shipped in v3.188.0**: it goes through `simulateFight` at standard stakes with the appeal live, and somebody dies in 2.8-4.5% of them.
 The only round-by-round fight resolver in the game (simulateFight, plus doFight's pause/resume) has never been pointed at a fight inside the walls: EVENTS.feud's i===0 branch settles a named duel between two of your own men with one power() call per side scaled by an independent 0.8–1.3 roll and a flat 16% injury check, and holdTourney (line 1452) ranks the whole eligible roster by a score() formula and crowns a yard-tournament winner having fought zero rounds. A trimmed sibling resolver — simulateSpar, built the way simulatePair was explicitly built "apart from simulateFight on purpose" (line 17077) — gives the two scenes the game's own prose already stages as a stopped-yard spectacle an actual animated bout, with no missio-to-death path.
 
