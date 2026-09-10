@@ -12,6 +12,12 @@
    Rome offers 0 · blessed weeks 2.3% · feud standing on 79% of weeks (12 x 360 arm) · rites
    honoured 0 against 164 unburied · the mercy line told on 16% of ALL weeks.
 
+   ---- AND "ROME OFFERS 0" WAS THIS FILE'S OWN SCOPE FAULT, v3.250.0 ----
+   It was counted once per house in the end-of-run block, so it said how many houses were IN ROME on
+   the night they ended. Corrected, the same shape of run reads **49 trips and 50 offers**, which is
+   exactly what `did.toRome` had been reporting alongside it all along. Eleven rows were in that
+   block; see the note at the top of the house loop. `checks/probe.mjs` FAULT NINE holds the shape.
+
    ---- THE CHRONICLE ROWS ABOVE WERE READ THROUGH A FILTER THAT SELECTED, v3.232.0 ----
    Every chronicle figure this file has ever published came off `if(c.week !== d.week) continue`.
    `chron` UNSHIFTS, so the comment that stood here was right that length cannot count new lines and
@@ -33,8 +39,9 @@
 
    TODAY'S FRAME, same seed and shape (16 x 420, 2,890 house-weeks, 467 men): endings debt 8 /
    rebellion 5 / ruin 2 / survived 1 · gold p50 999 / 4,452 / 5,447 / 3,787 · fame p50 164 / 1,770 /
-   3,398 / 4,817 · career p50 3 bouts (p90 14) · saga finales 2 of 14 · Rome offers still 0 · rites
-   honoured still 0, against 189 unburied · 7.7 chronicle lines a week.
+   3,398 / 4,817 · career p50 3 bouts (p90 14) · saga finales 2 of 14 · ~~Rome offers still 0~~
+   (the scope fault, see above) · rites honoured still 0, against 189 unburied · 7.7 chronicle lines
+   a week.
 
    STANDING CAVEAT, from dark.mjs: these are the ROPE's weeks. A system the reference player never
    pursues reads as dark and that is a fact about the policy, not the game. The audit marks those
@@ -65,6 +72,17 @@ const out = await p.evaluate(([H, W, SEED])=>{
     const d = A.newGameState("Survey", "clean", SEED+"-"+h);
     const seenMen = new Set(); let wasAway = false; let hadLoan = false; let lastNem = null;
     let sawSaga = false, sagaMax = 0, wasRebel = false;
+    /* ---- AND ELEVEN MORE ROWS WERE IN THE WRONG SCOPE — #258 ----
+       The note further down records `rebellion` being counted once per house in the end-of-run
+       block, so "rebellion 3" meant three houses with a rising STANDING on their last night. That
+       was found and fixed. ELEVEN OTHER ROWS WERE LEFT IN EXACTLY THE SAME PLACE, and read the same
+       way: `court: 0` meant no house had a courtship OPEN on its final week, and `rome.gone: 1`
+       meant one house was in Rome on the night it ended while `did.toRome` on the same run read 49.
+       Every one of them is a transition now, counted in the week, on `wasAway`'s pattern. */
+    let hadRome = false, hadOffer = false, hadCourt = false, hadPact = false, hadLot = false,
+        hadColl = false, hadLaw = false, hadDoc = false, hadBrand = false, hadAed = false;
+    let lastMunus = d.munusLast == null ? -99 : d.munusLast;
+    let lastOffer = d.lastOffering == null ? -9 : d.lastOffering;
     for(let w=0; w<W; w++){
       if(d.over){ break; }
       let did;
@@ -111,6 +129,24 @@ const out = await p.evaluate(([H, W, SEED])=>{
          finding. `probes/rising.mjs` settled it by tracing every arc week by week: 18 risings over
          2,878 weeks, a median of NINE weeks each, stage 3 reached by 11 of 18. The arc plays out
          exactly as designed; only this line was broken. Counted here, in the week, now. */
+      if(d.rome){ if(!hadRome){ sum.arcs.rome.gone++; hadRome = true; } } else hadRome = false;
+      if(d.romeOffer){ if(!hadOffer){ sum.arcs.rome.offered++; hadOffer = true; } } else hadOffer = false;
+      if(d.court){ if(!hadCourt){ sum.court++; hadCourt = true; } } else hadCourt = false;
+      if(d.pact){ if(!hadPact){ sum.pacts++; hadPact = true; } } else hadPact = false;
+      if(d.powLot){ if(!hadLot){ sum.powLot++; hadLot = true; } } else hadLot = false;
+      if(d.collegium && !hadColl){ sum.collegium++; hadColl = true; }
+      if(d.law && !hadLaw){ sum.laws++; hadLaw = true; }
+      if(d.doctrine && !hadDoc){ sum.doctrines++; hadDoc = true; }
+      if(d.brand && d.brand.licensed && !hadBrand){ sum.brand++; hadBrand = true; }
+      if(d.aedile && !hadAed){ sum.elections++; hadAed = true; }
+      /* THE MUNUS AND THE OFFERING are stamps, not flags: `d.munusLast = d.week` and
+         `d.lastOffering = d.week`. A change is one taken. The old `munera` row read `d.honoured`,
+         which is men given funeral games and is already the `rites.honoured` row under its own name
+         — the same field published twice under two labels. */
+      { const m = d.munusLast == null ? -99 : d.munusLast;
+        if(m !== lastMunus){ sum.munera++; lastMunus = m; } }
+      { const o = d.lastOffering == null ? -9 : d.lastOffering;
+        if(o !== lastOffer){ sum.piety.offerings++; lastOffer = o; } }
       if(d.rebellion){ sum.arcs.rebellion.weeks++;
         sum.arcs.rebellion.stage[d.rebellion.stage] = (sum.arcs.rebellion.stage[d.rebellion.stage]||0)+1;
         if(!wasRebel){ sum.arcs.rebellion.any++; wasRebel = true; } }
@@ -123,25 +159,21 @@ const out = await p.evaluate(([H, W, SEED])=>{
     if(d.nemHouse) sum.arcs.nem.houses++; if(d.nemesis) sum.arcs.nem.men++;
     if(wasRebel) sum.arcs.rebellion.standing++;      /* a rising still on the night the run ended */
     if(d.war){ sum.arcs.war.seen++; if(d.war.done) sum.arcs.war.done++; }
-    if(d.rome) sum.arcs.rome.gone++; if(d.romeOffer || (d.flags&&d.flags.romeOffered)) sum.arcs.rome.offered++;
+    /* rome, court, pacts, powLot, collegium, laws, doctrines, brand and elections are counted in
+       the week now — see the note at the top of the house loop. */
     if((d.forebears||[]).length) sum.arcs.succession += d.forebears.length;
     sum.feud.won += (d.flags && d.flags.nemWon) || 0;
     sum.rites.honoured += d.honoured || 0; sum.rites.unburied += (d.unburied||[]).length;
     sum.patrons.push((d.patrons||[]).length);
-    sum.piety.offerings += (d.week - (-9) - 0) && 0; /* not readable; offerings counted via blessing weeks */
     if(d.vow) sum.piety.vows++;
-    sum.works += Object.keys(d.works||{}).length;
-    sum.collegium += d.collegium ? 1 : 0;
+    /* `monuments` was initialised to 0 and NEVER INCREMENTED ANYWHERE — a row that read nought for
+       ever whatever the game did. `d.works` holds both tables (`workDef` is `WORKS[k] || MONUMENTS[k]`),
+       so the split is by key. */
+    { const wk = Object.keys(d.works||{}), MK = A.MONU_KEYS || [];
+      sum.works += wk.filter(k=>!MK.includes(k)).length;
+      sum.monuments += wk.filter(k=>MK.includes(k)).length; }
     sum.household.push(Object.keys(d.household||{}).filter(k=>d.household[k]).length);
-    sum.elections += d.aedile ? 1 : 0;
     sum.gambits += Object.keys(d.gambits||{}).length;
-    sum.laws += d.law ? 1 : 0;
-    sum.doctrines += d.doctrine ? 1 : 0;
-    sum.brand += (d.brand && d.brand.licensed) ? 1 : 0;
-    sum.munera += d.honoured || 0;
-    sum.court += d.court ? 1 : 0;
-    sum.pacts += d.pact ? 1 : 0;
-    sum.powLot += d.powLot ? 1 : 0;
     /* ---- CAREERS, CORRECTED UNDER AUDIT ITEM #208, and the correction indicts this file's own first figures ----
        The audit's "median career: ONE bout, zero wins" came from here, and it was an artifact.
        A dead man does not leave `d.gladiators` and does not carry `g.dead` — he stays, with
