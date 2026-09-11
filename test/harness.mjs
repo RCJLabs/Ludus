@@ -110,7 +110,10 @@ export async function installRope(p){
     /* `refused` is keyed by the reason `takeBout` gave, and `wrongStakes` counts bouts fought at
        stakes other than the ones asked for. Both exist because a refusal was legible in the return
        and nothing forced a caller to look — see the note over `takeBout`. */
-    const R = { bouts:0, held:0, rounds:0, unresolved:0, threw:0, refused:{}, wrongStakes:0 };
+    /* `booked` is #260's: `booking:true` is a lever with no counter anywhere, so an arm that
+       switched it on and measured nothing could not tell "the door changes nothing" from "the door
+       never opened". It counts the bouts where the booked man actually stood. */
+    const R = { bouts:0, held:0, rounds:0, unresolved:0, threw:0, refused:{}, wrongStakes:0, booked:0 };
     const fin = (fn, args) => { try { return fn(...args); } catch(e){ R.threw++; return { __err:e.message }; } };
 
     /* answer until the sand is quiet, up to the three words the sim can ask for and one spare */
@@ -301,6 +304,7 @@ export async function installRope(p){
          of offers, under its floor, on a release whose game code was an export block. */
       const bookMan = o.booking === true && offer.booking != null
         && men.some(g=>g.id === offer.bookedGid) ? offer.bookedGid : null;
+      if(bookMan != null) R.booked++;
       const ids = offer.melee ? men.slice(0,3).map(g=>g.id)
                 : offer.pair  ? men.slice(0,2).map(g=>g.id)
                 :               [bookMan != null ? bookMan : men[0].id];
@@ -677,6 +681,28 @@ export async function installRope(p){
         if(!d.vow && typeof A.vowStake === "function" && A.vowStake(d) <= spare()
            && fin(A.swearVow,[d, Object.keys(A.GODS||{})[(d.week) % Object.keys(A.GODS||{}).length]]))
           bump("vow");
+      }
+      /* ---- AND HE BURIES HIS DEAD — #260, THE ONE DOOR WITH NO LEVER AT ALL ----
+         `holdMunera` is on the handle and nothing in this file has ever called it. #260's premise
+         listed three doors the rope could not open; two of them were wrong — `stageMunus` has
+         `munus` and `makeOffering` has `rites`, both since before the item was written — and this
+         is the third, which was right. It is also the whole of #261: `survey` reads `honoured 0`
+         against 175 unburied over 3,538 weeks, and a zero from a policy that cannot reach the call
+         is the instrument's zero, not the game's.
+         The window is six weeks (`RITE_WINDOW`) and `riteLapse` closes it. This takes the DEAREST
+         rite spare() covers, per man, inside the window — `games` if it can, `rite` if it cannot,
+         and silence otherwise. `none` is deliberately not offered: it is the explicit pit, costs
+         +4 unrest where saying nothing costs 0, and #224 measured it dominated by the lapse it is
+         supposed to improve on. A lever that took it would measure that gap and not this door.
+         OPT-IN on `rites`'s precedent: honouring the dead moves regard, morale, unrest, fame and
+         the mercy line at once, which is every quantity the reachability checks lean on. */
+      if(o.bury === true && typeof A.holdMunera === "function" && typeof A.unhonoured === "function"){
+        for(const m of (fin(A.unhonoured,[d]) || [])){
+          if(!m || m.done) continue;
+          const pick = ["games","rite"]
+            .filter(k=>(A.RITES||{})[k] && A.RITES[k].cost(m) <= spare())[0];
+          if(pick && fin(A.holdMunera,[d, m.gid, pick])) bump("buried:" + pick);
+        }
       }
       /* the census must be CLAIMED — `riseWeek` only fills the meter, and this is one of the two
          gates on Rome. No policy of mine called it until v2.93.0, which is why every earlier sweep

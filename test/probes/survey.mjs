@@ -12,6 +12,15 @@
    Rome offers 0 · blessed weeks 2.3% · feud standing on 79% of weeks (12 x 360 arm) · rites
    honoured 0 against 164 unburied · the mercy line told on 16% of ALL weeks.
 
+   ---- AND "N UNBURIED" WAS A CEILING, NOT A COUNT, v3.251.0 ----
+   Every `unburied` figure above and below is `d.unburied.length` on the night the house ended, and
+   `markUnburied` caps that list at FOURTEEN. Sixteen houses could not print a number over 224 and
+   printed 175; the row was measuring the cap. Counted by identity instead — every object that ever
+   entered the list — the same 16 x 420 frame reads **387 men marked, 377 of them (97.4%) lapsed
+   unanswered, 0 answered, 0 honoured**, and `probes/grave.mjs` independently reads 288 marked and
+   96% lapsed over 3,235 weeks, which is the same rate. #261 is written on the old row; the real
+   number is more than twice it.
+
    ---- AND "ROME OFFERS 0" WAS THIS FILE'S OWN SCOPE FAULT, v3.250.0 ----
    It was counted once per house in the end-of-run block, so it said how many houses were IN ROME on
    the night they ended. Corrected, the same shape of run reads **49 trips and 50 offers**, which is
@@ -40,8 +49,8 @@
    TODAY'S FRAME, same seed and shape (16 x 420, 2,890 house-weeks, 467 men): endings debt 8 /
    rebellion 5 / ruin 2 / survived 1 · gold p50 999 / 4,452 / 5,447 / 3,787 · fame p50 164 / 1,770 /
    3,398 / 4,817 · career p50 3 bouts (p90 14) · saga finales 2 of 14 · ~~Rome offers still 0~~
-   (the scope fault, see above) · rites honoured still 0, against 189 unburied · 7.7 chronicle lines
-   a week.
+   (the scope fault, see above) · rites honoured still 0, against ~~189 unburied~~ (the ceiling, see
+   above — 387 men marked and 377 lapsed) · 7.7 chronicle lines a week.
 
    STANDING CAVEAT, from dark.mjs: these are the ROPE's weeks. A system the reference player never
    pursues reads as dark and that is a fact about the policy, not the game. The audit marks those
@@ -66,7 +75,17 @@ const out = await p.evaluate(([H, W, SEED])=>{
     elections:0, gambits:0, laws:0, doctrines:0, brand:0, munera:0, court:0, pacts:0, powLot:0 };
 
   const mark = (o,k,n=1) => { o[k] = (o[k]||0) + n; };
-  sum.feud = { weeks:0, declared:0, won:0 }; sum.rites = { honoured:0, unburied:0 }; sum.mercyLine = 0;
+  sum.feud = { weeks:0, declared:0, won:0 }; sum.mercyLine = 0;
+  /* ---- AND A TWELFTH ROW WAS THE SAME FAULT IN A DIFFERENT COSTUME — #260 ----
+     #258 corrected eleven end-of-run reads in this file. `unburied` was left, because it is not an
+     open/shut flag and did not look like one. It is worse: `markUnburied` CAPS the list at fourteen
+     (`d.unburied.slice(-14)`), so `sum.rites.unburied += d.unburied.length` on the last night could
+     never report more than 14 a house whatever the game did — 16 houses could not have printed a
+     number above 224, and it printed 189. The row #261 is written on was a ceiling, not a count.
+     Counted properly — every object that ever entered the list, held by identity so the cap cannot
+     hide one — and split by what became of each man. The old row is kept under a name that says
+     what it is. */
+  sum.rites = { marked:0, honoured:0, answered:0, lapsed:0, openAtEnd:0, listOnLastNight:0 };
 
   for(let h=0; h<H; h++){
     const d = A.newGameState("Survey", "clean", SEED+"-"+h);
@@ -81,6 +100,10 @@ const out = await p.evaluate(([H, W, SEED])=>{
        Every one of them is a transition now, counted in the week, on `wasAway`'s pattern. */
     let hadRome = false, hadOffer = false, hadCourt = false, hadPact = false, hadLot = false,
         hadColl = false, hadLaw = false, hadDoc = false, hadBrand = false, hadAed = false;
+    /* every man ever marked unburied, held by identity: `markUnburied` slices the list back to
+       fourteen but keeps the objects, so an array of references outlives the cap and `m.done` /
+       `m.lapsed` can be read off it at the end. */
+    const marked = []; let prevUnb = [];
     let lastMunus = d.munusLast == null ? -99 : d.munusLast;
     let lastOffer = d.lastOffering == null ? -9 : d.lastOffering;
     for(let w=0; w<W; w++){
@@ -94,6 +117,9 @@ const out = await p.evaluate(([H, W, SEED])=>{
       for(const k of Object.keys(did||{})){
         if(k === "events"){ sum.events = sum.events || {}; for(const e of Object.keys(did.events||{})) mark(sum.events, e, did.events[e]); }
         else mark(sum.did, k, did[k]); }
+      { const cur = d.unburied || [], was = new Set(prevUnb);
+        for(const m of cur) if(!was.has(m)) marked.push(m);
+        prevUnb = cur.slice(); }
       const e = ERA(w);
       sum.era[e].gold.push(Math.round(d.gold));
       sum.era[e].fame.push(Math.round(d.fame));
@@ -163,7 +189,12 @@ const out = await p.evaluate(([H, W, SEED])=>{
        the week now — see the note at the top of the house loop. */
     if((d.forebears||[]).length) sum.arcs.succession += d.forebears.length;
     sum.feud.won += (d.flags && d.flags.nemWon) || 0;
-    sum.rites.honoured += d.honoured || 0; sum.rites.unburied += (d.unburied||[]).length;
+    sum.rites.honoured += d.honoured || 0;
+    sum.rites.marked += marked.length;
+    sum.rites.answered += marked.filter(m=>m.done && !m.lapsed).length;
+    sum.rites.lapsed += marked.filter(m=>m.lapsed).length;
+    sum.rites.openAtEnd += marked.filter(m=>!m.done).length;
+    sum.rites.listOnLastNight += (d.unburied||[]).length;   /* the old row, under an honest name */
     sum.patrons.push((d.patrons||[]).length);
     if(d.vow) sum.piety.vows++;
     /* `monuments` was initialised to 0 and NEVER INCREMENTED ANYWHERE — a row that read nought for
