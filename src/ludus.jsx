@@ -8707,6 +8707,61 @@ const RITES = {
 const RITE_KEYS = ["none","rite","games"];
 const RITE_WINDOW = 6;
 const unhonoured = d => (d.unburied||[]).filter(m=>d.week - m.week <= RITE_WINDOW);
+/* ---- WHAT A RITE ACTUALLY DOES, SAID OUT LOUD — #264 ----
+   The panel that offers these three rendered `name`, `desc` and `cost` and NOT ONE of the four
+   numbers the table carries. That was a style choice while the numbers were small; v3.252.0 made it
+   something else by finding that the unrest credit below is the main brake on the rebellion arc —
+   12.0%/8.0% of a house's weeks down to 1.3%/0.6% — and v3.253.0 by finding that the free door's
+   lack of one is the whole of why it buys nothing. The most consequential number in the late game
+   was behind a panel that did not print it.
+
+   This is #166's fix applied to a second table. Its note stands for both: *"A blurb that reads as a
+   trade-off in front of the largest free edge in the arena panel is not flavour, it is a hidden
+   number. Every non-cosmetic term now names itself, off the table, so a term cannot be added
+   without the player being told."* `checks/rites.mjs` holds the same shape `checks/stage.mjs` holds
+   for `ENT_TERM` — every carried term is named, and a term with no phrase is a failure and not a
+   silence.
+
+   ---- AND `regard` IS NOT THE NUMBER, WHICH IS WHY THIS IS A FUNCTION AND NOT A FORMAT STRING ----
+   `holdMunera` spends the field two different ways depending on its SIGN. Positive goes through
+   `remember(d, g, "munera", (regard/10) * (close?1.7:1))`, and `remember` adds `REGARD.munera.n`
+   — **13** — times that multiplier. Negative is applied directly, at `regard * (close?1.8:1)`. So
+
+       rite   regard 5   ->  +7 to a yard man, +11 to a brother      (13 x 0.5, 13 x 0.85)
+       games  regard 14  ->  +18,              +31                   (13 x 1.4, 13 x 2.38)
+       none   regard -6  ->  -6,               -11                   (direct, x1.8 for kin)
+
+   Printing the raw field would have been wrong by 30-40% on the two rites that matter, which is
+   #150's rule (a displayed number and the roll behind it are the same call) failing in the most
+   ordinary way there is. `riteMult` is shared with `holdMunera` so the multiplier cannot drift;
+   what is NOT shared is that `remember` rounds the SUM rather than the delta, so a man on a
+   fractional regard can land a point either side of the figure shown. That is a rounding note, not
+   a second number.
+
+   MORALE IS LEFT TO THE PROSE on purpose: it is not a field of this table at all but a branch on
+   `regard`'s sign (+9/+5 for a rite, -9/-3 for the pit), and naming a fifth term derived from a
+   fourth is the #101 wallpaper fault the item's own risk note warns about. FAME AND MERCY ARE
+   NAMED, where that risk note said to leave them to the description: a check that lets two of four
+   terms stay silent cannot hold "a term cannot be added without the player being told", which is
+   the durable half of this. The cards carry two terms each and appear only inside a six-week
+   window, so the furniture argument that governs the agenda does not reach them. */
+const riteMult = (R2, close) => (R2.regard/10) * (close ? 1.7 : 1);
+const riteRegardOf = (R2, close) => R2.regard > 0
+  ? Math.round(REGARD.munera.n * riteMult(R2, close))
+  : Math.round(R2.regard * (close ? 1.8 : 1));
+const RITE_TERM = {
+  unrest: (v)     => v < 0 ? `${-v} off the unrest in the cells` : `+${v} unrest in the cells`,
+  regard: (v, R2) => { const y = riteRegardOf(R2, false), k = riteRegardOf(R2, true);
+    return `${y>0?"+":""}${y} with every man in the yard, ${k>0?"+":""}${k} with the men who called him brother`; },
+  fame:   (v)     => `+${v} to the house's name`,
+  mercy:  (v)     => `+${v} on the mercy line`,
+};
+const RITE_TERM_KEYS = ["unrest","regard","fame","mercy"];
+function riteSays(key){
+  const R2 = RITES[key]; if(!R2) return "";
+  const said = RITE_TERM_KEYS.filter(k=>R2[k]).map(k=>RITE_TERM[k](R2[k], R2));
+  return said.length ? said.join(" · ") : "Nothing bought, nothing spent.";
+}
 function markUnburied(d, g){
   d.unburied = d.unburied || [];
   d.unburied.push({ gid:g.id, name:fullName(g), week:d.week,
@@ -8847,7 +8902,8 @@ function holdMunera(d, gid, key){
   if(M.mercy) addRep(d, "mercy", M.mercy);
   activeG(d).forEach(g=>{
     const close = (m.kin||[]).includes(g.id);
-    if(M.regard > 0) remember(d, g, "munera", (M.regard/10) * (close ? 1.7 : 1));
+    /* the multiplier is `riteMult` so the panel and the sand cannot drift — see the note there */
+    if(M.regard > 0) remember(d, g, "munera", riteMult(M, close));
     else g.regard = clamp(regardOf(g) + M.regard*(close?1.8:1), 0, 100);
     g.morale = clamp(g.morale + (M.regard>0 ? (close?9:5) : (close?-9:-3)), 0, 100);
   });
@@ -26721,6 +26777,9 @@ const SECT = {
                   <span className="rowval" style={{fontSize:"var(--fs-sm)",color:c>S.gold?"var(--blood)":c?"var(--gold)":"var(--ink-faint)"}}>{c? c+"d" : "costs nothing"}</span>
                 </div>
                 <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{R2.desc}</div>
+                {/* the entrance panel's idiom exactly (`entranceSays`, ~34169): the blurb, then one
+                    line of what it costs and buys, off the table — see the note over `RITE_TERM` */}
+                <div style={{fontSize:"var(--fs-sm)",marginTop:4,color:"var(--gold-line)"}}>{riteSays(k)}</div>
               </button>
             ); })}
         </div>
@@ -34868,6 +34927,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        was not reachable either — so nothing could see that the two disagree about the window. */
     rivalStone, RIV_WORK_BAR, RIV_WORK_FAME,
     weekWeight, weeksToSomething, unhonoured, holdMunera, markUnburied, RITES, RITE_KEYS, RITE_WINDOW, riteLapse,
+    RITE_TERM, RITE_TERM_KEYS, riteSays, riteMult, riteRegardOf,   /* #264 — the rite's terms, said out loud */
     /* ---- NINETEEN MORE THE SWEEP FOUND, v3.23.0 ----
        `test/probes/handle.mjs` differences every function the UI calls inside a `mut(d => …)`
        closure — which IS the definition of a player action — against this object. Sixteen of these

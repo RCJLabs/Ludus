@@ -266,4 +266,6 @@
 {"v":"3.257.0","checks":190,"failed":[]},
 {"v":"3.257.0","checks":190,"failed":["faces","thin","grave"]},
 {"v":"3.258.0","checks":190,"failed":[]},
-{"v":"3.259.0","checks":190,"failed":[]}]
+{"v":"3.259.0","checks":190,"failed":[]},
+{"v":"3.260.0","checks":191,"failed":["bulk"]},
+{"v":"3.260.0","checks":191,"failed":[]}]

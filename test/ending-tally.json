@@ -1403,5 +1403,45 @@
   "risingMin": 7,
   "jumped": 0,
   "pass": true
+ },
+ {
+  "v": "3.260.0",
+  "houses": 24,
+  "weeks": 5483,
+  "ends": {
+   "rebellion": 6,
+   "survived": 5,
+   "ruin": 3,
+   "debt": 8,
+   "banned": 1,
+   "emptied": 1
+  },
+  "debtWarned": 5,
+  "debtRed": 6,
+  "debts": 8,
+  "risingLead": 14,
+  "risingMin": 7,
+  "jumped": 0,
+  "pass": true
+ },
+ {
+  "v": "3.260.0",
+  "houses": 24,
+  "weeks": 5483,
+  "ends": {
+   "rebellion": 6,
+   "survived": 5,
+   "ruin": 3,
+   "debt": 8,
+   "banned": 1,
+   "emptied": 1
+  },
+  "debtWarned": 5,
+  "debtRed": 6,
+  "debts": 8,
+  "risingLead": 14,
+  "risingMin": 7,
+  "jumped": 0,
+  "pass": true
  }
 ]
