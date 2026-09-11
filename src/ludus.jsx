@@ -12637,6 +12637,23 @@ const LESSONS = [
    panel, because by then you know who he is and what he is for. */
 const LESSON_QUIET = 3;
 const lessonsRead = d => Object.keys((d.flags && d.flags.learned) || {}).length;
+/* ---- AND HE CAN BE ASKED AGAIN ABOUT SOMETHING HE ALREADY SAID — #265 ----
+   `lessonFor` withholds a lesson on TWO conditions and only one of them is "you have been told":
+   `(d.flags.learned||{})[l.id]` is the reading, and `l.done && l.done(d)` is a WINDOW that closes
+   on the state of the house whether or not anybody read anything. 33 of the 35 carry a `done`. So
+   a lesson is not shown once — it is shown if you are standing on the right tab inside its window,
+   and otherwise it is gone, and "Ask the gatekeeper again" cannot reopen a window that has closed.
+
+   MEASURED (`probes/keeper.mjs`, 32 houses, 6,669 house-weeks, every tab walked every week — the
+   generous case, since a real player is on one tab a week and not five): clearing `flags.learned`
+   at week 40 brings back a median of **11 of the 35**, at week 120 **7**, at week 300 **7**. The
+   rest are shut for good.
+
+   This is the recall the item asked for and not a manual: what the gatekeeper HAS said, in the
+   order he says it, re-openable. It adds no content and reaches nothing he never got to — those
+   are `probes/keeper.mjs`'s business and #275's. */
+const lessonsTold = d => { const got = (d.flags && d.flags.learned) || {};
+  return LESSONS.filter(l => got[l.id]); };
 const lessonFolds = d => lessonsRead(d) >= LESSON_QUIET;
 const lessonFor = (d, tab) => LESSONS.find(l => {
   if(l.tab!==tab || (d.flags.learned||{})[l.id]) return false;
@@ -29772,6 +29789,30 @@ export default function App(){
                 onToggle={()=>mut(d=>{ const off = !S.flags.noLessons; d.flags.noLessons = off?1:0; if(!off) d.flags.learned = {}; })}/>
               <button className="btn btn-ghost" style={{width:"100%",marginBottom:7}}
                 onClick={()=>{ setShowSettings(false); setGuideStep(0); setShowGuide(true); }}>Replay the opening guide</button>
+              {/* #265 — what he has already said, re-openable. The list is built in the domain code
+                  (`lessonsTold`) and this only prints it, the division `wifeWord` set. */}
+              {(()=>{ const told = lessonsTold(S);
+                if(!told.length) return (
+                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>
+                    He has not had occasion to say anything yet.
+                  </div>
+                );
+                return (<>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:5}}>
+                    What he has told you — {told.length} of {LESSONS.length}. He says each thing once, when it is any use; this is where to hear it again.
+                  </div>
+                  {told.map(L=>(
+                    <details key={L.id} className="sect" style={{marginBottom:5}}>
+                      <summary style={{padding:"8px 10px",minHeight:"var(--tap)"}}>
+                        <span className="dim" style={{fontSize:"var(--fs-base)"}}>
+                          <span style={{color:"var(--gold-hi)"}}>{L.title}</span> · {TAB_NAMES[L.tab]||L.tab}
+                        </span>
+                      </summary>
+                      <div style={{padding:"0 10px 10px",fontSize:"var(--fs-base)"}}>{L.text}</div>
+                    </details>
+                  ))}
+                </>);
+              })()}
             </Group>
           )}
 
@@ -35100,6 +35141,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     teachSigTo, makeMasterOf, startSecond, switchStyle, techsFor, sigFee, sigOf, TECHNIQUES,
     canMaster, makeMaster, MASTERY_GATE, MASTERY, masterOf, masterNeed,   /* #232 phase 5 — masterOpen/MASTER_ACCLAIM are already on the handle */
     challengeSquare, squareReady, squareWhy, provedIt, proveInSquare,   /* #232 phase 5 — the square as a door */
+    lessonsTold,   /* #265 — what the gatekeeper has already said, for the recall list */
     setPupilTo, beginRetrain, endRetrain, hireDoctore, dismissDoctore, takeDoctoreOffer, makeDoctore, docSecond, onSquare, squareMen, squareWord, squareWeek, squareTook, squareTie, SQUARE_WEAR, SQUARE_TIE, doctoreWeek, docLesson, DOC_LESSONS, tieBetween, tieWord, addTie,   /* #197 — the square's second seat, and the tie words the arena panel already uses */
     hireStaffMember, letStaffGoOf, setEarTo,
     haveWatchedOffer, stopPrepFor, buyFromHouse, startCourt, setPrep, nameHim, scoutMan, makePeace,
