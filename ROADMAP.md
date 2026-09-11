@@ -4389,6 +4389,34 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.259.0 — a third audit pass: eleven items, written off the partial-player sweep
+
+Asked for in a shape — three items on usability and interactivity, three enhancements, five new
+features — and written the way the other two passes were: measure first. The screen was inventoried
+before a word was written, because #260-#263 had spent nine releases measuring the game underneath it.
+
+**What the screen inventory found, and each is an item:** the rites panel renders **name, description
+and cost and none of the four numbers a rite carries** (#264 — and v3.252.0 found the unrest credit it
+does not print is the main brake on the rising); **53 lessons delivered once each, with no index, no
+per-lesson recall, no glossary**, and a settings toggle that replays all 53 as the only way back (#265);
+**a rival house is four fields wide and cannot be opened** — `makeRivalFighter` conjures its men per
+bout (#266).
+
+**What the sweep left standing:** the temple is a switch — 0.8% of weeks blessed against 62-68%, and
+one unconfirmed single-set read that it halves the rising (#267); the road is cards and nothing else
+— `ludusNight` 179 → 11, feuds 1,120 → 348, and no parties since v3.257.0 (#268); four of twelve
+endings are never reached by the reference and never named to anyone in advance, and `closed` is the
+only one that is an achievement (#269).
+
+**Five new systems, each grounded in a number from the run:** the veteran's bench (#270 — the complete
+player retires 214 men and frees 115 and keeps none); wagers on other men's blood (#271 — `bet` is
+own-bout only and 6% of weeks have no bout); handing over by choice (#272 — `oldAge` is unreachable
+and the dynasty is playable only through death); the second yard (#273 — the die already sells a
+`yard` and nobody has read what it buys); a champion's following (#274 — `known` is per house and a
+man's name is one number everywhere).
+
+**Shipped:** the pass and its eleven items, in `ROADMAP.md`. **No code touched.**
+
 ### v3.258.0 — #261: the free door is not a brake because it was never meant to be one
 
 #261's last question was whether forgetting your dead should cost what saying so costs. It was
@@ -10908,6 +10936,295 @@ standing in it was told *"a man alone at the head of a ludus leaves nothing behi
 now — which is what every word of her own entry already said, and it survives a succession as a wife
 deliberately does not. The key stays `wife` because it is saved state; `HH_FREE` is what the code
 says. `checks/matron.mjs`, five arms.
+
+---
+
+## A THIRD AUDIT PASS — v3.259.0, written off the partial-player sweep
+
+The second pass closed on #263. This one was asked for in a shape — **three items on usability and
+interactivity, three enhancements to what exists, five new features** — and it was written the way
+the other two were: measure first, then write. What it measured first was the SCREEN, because the
+#260–#263 run had measured the game underneath it for nine releases and found the numbers a player
+is never shown.
+
+Four things came back from the screen inventory and each is an item below. **The rites panel prints
+name, description and cost and not one of the four numbers a rite carries** — and v3.252.0 found that
+the unrest credit it does not print is the main brake on the rebellion arc. **Fifty-three lessons are
+delivered once each and the only way back is a settings toggle that wipes `flags.learned` and replays
+all of them**; there is no index and no glossary for `regard`, `defiance`, `standing`, `favour`,
+`acclaim`, `known` or `welcome`. **A rival house is a name, a wins count, a men count and a grudge, and
+cannot be opened.** And the roster has no sort and the block no side-by-side — smaller, same class,
+folded into #266.
+
+And three things the sweep left standing are the enhancements. **The temple is a switch**: 0.8% of
+weeks blessed under the reference, 62-68% for a house that prays, and the six-prefix sweep found no
+published figure moved either way. **The road is cards and nothing else**: a touring house meets
+`ludusNight` 179 → 11, `feud.weeks` 1,120 → 348, half the saga arcs, and since v3.257.0 cannot throw a
+party there. **Four of the twelve endings are never seen by the reference player and never named to
+any player in advance** — `closed` is the dominant ending of a complete player and nothing tells you
+it is a door.
+
+The five new features are each grounded in a number from the same run rather than in a wish, and
+each says which number.
+
+---
+
+**#264 — The Rite Panel Hides The Only Number That Matters** *(usability · small)*
+
+`RITES` prices three answers to a dead man: `none` (unrest **+4**, regard -6), `rite` (unrest **-7**,
+regard +5, fame 2, mercy 5), `games` (unrest **-19**, regard +14, fame 11, mercy 14). The panel that
+offers them (`RITE_KEYS.map`, ~line 26635) renders **`R2.name`, `R2.desc` and `R2.cost` — nothing
+else.** The player chooses between three doors on prose and a price.
+
+That would be a style choice if the numbers were small. They are the finding of v3.252.0: the rite's
+unrest credit is what takes the rebellion arc from 12.0%/8.0% of a house's weeks to 1.3%/0.6%, and
+the free door's lack of one is why it is worthless against the rising (v3.253.0). **The most
+consequential number in the late game is behind a panel that does not print it.** The party panel
+beside it does print its own — *"+{p.warm} with every patron · +{p.fame} fame"* — so the house style is
+to show the effect, and the rites panel is the outlier.
+
+*Verify first.* Read the panel and confirm the three fields; then confirm the change cannot move a
+fixture — the rope reads `RITES` and never the panel, so this is a legibility change with zero
+re-phase, which is rare here and worth stating.
+
+**Risk.** The #101 wallpaper fault: a line of numbers on every rite card is the same furniture the
+agenda audit spent a release removing. Print the two that decide — unrest and regard — in the party
+panel's idiom, and leave fame and mercy to the description.
+
+---
+
+**#265 — Fifty-Three Lessons, Read Once, And No Way Back** *(usability · small–medium)*
+
+`LESSONS` holds **53** entries. Each is shown once by the gatekeeper when its gate first opens, sets
+`flags.learned[id]`, and is never offered again. The only path back is the settings toggle at
+~29712, which sets `noLessons` and — when switched back on — **does `d.flags.learned = {}` and
+replays every one of the fifty-three from the beginning.** There is no index (`LESSONS.map` appears
+in the UI **0** times), no per-lesson recall, and no glossary: the game runs on `regard`, `defiance`,
+`standing`, `favour`, `acclaim`, `known`, `welcome`, `unrest` and `morale`, each a derived quantity with
+its own decay and its own readers, and the two hits for "glossary" in the source are both prose.
+
+A player who was told what `regard` is in week 9 and needs it in week 200 has one option, and it is
+to be told all fifty-three things again.
+
+*Verify first.* Over the reference player's run, how many of the 53 are ever raised (`flags.learned`
+at the end), and how late does the last new one arrive — if the late game surfaces a lesson at week
+300 that a player last saw the prerequisite for at week 40, the recall gap is the size of the run.
+Then count the derived quantities the sheets print without defining.
+
+**Risk.** An index becomes a manual nobody reads. The ask is recall of a thing already shown, not a
+reference work: a lesson re-openable from where its subject is printed, and a one-line definition
+where the number is.
+
+---
+
+**#266 — A House You Cannot Open** *(interactivity · medium)*
+
+The rivals panel (*"The other houses"*) reads `r.name`, `r.wins`, `r.men` and `h.grudge` and nothing
+else. There is no rival sheet — `openRival` does not exist, no rival roster is rendered anywhere in
+the UI, and `makeRivalFighter(d, h.name, 55)` **conjures a rival's man on demand** when a bout needs
+one. The three houses that poach your men, hold grudges against you, feud with you and are named in
+the league table are, to the player, four fields wide.
+
+This is the flattest surface in the game for what it carries. #246 built the poach; the player who
+was poached cannot look at where the man went.
+
+*Verify first.* Whether a rival's roster EXISTS to show — if `makeRivalFighter` is the only source of
+rival men and nothing persists them, then "open a rival house" is a new system (a persistent rival
+roster) and not a panel, and the item changes class. Count what is persisted on a rival record today
+(`id, man, name, nick, sex, weeks` and the grudge) against what a sheet would need.
+
+*Smaller, same class, folded in:* the roster has no sort (a fixed order, no `sortBy` anywhere) and the
+block no side-by-side against your own men. Both are one panel each and should ride with this item
+rather than stand alone.
+
+**Risk.** A persistent rival roster is a real system with its own ageing, injuries and deaths, and it
+would be the first time a rival's man outlived the bout he was made for. Scope it as the sheet the
+existing record supports, and let the verify-first say whether that is enough to be worth opening.
+
+---
+
+**#267 — The Temple Is A Switch** *(enhancement · medium)*
+
+Under the reference player **0.8%** of weeks carry a blessing. Under a house that prays (`rites:true`)
+it is **62-68%** — two seed sets, 3,283 and 3,777 of ~5,400 weeks. There is no third state: the
+temple is furniture or it is permanent.
+
+And the six-prefix sweep (#260, 96 x 420 an arm) found that **no published figure moved** with it —
+not the endings, not the coin, not the fame — which would make it furniture even when used. But one
+single-set reading in v3.252.0's attribution run put `rites` alone at **6.4% rebellion-weeks against
+the reference's 12.0%**, and it was never confirmed on a second set. That is exactly the shape
+`court` had before its second set read 6.9% and 25 risings. So the temple is either a switch that
+does nothing, or a second brake on the rising as strong as the rite — and one measurement cannot say
+which.
+
+*Verify first.* Run `rites` alone on the eight paired `PYRE` sets, the way `bury` was, and read the
+rebellion share, the wound weeks and the missio rate — the three things the harness note says
+blessings touch ("mend wounds half again as fast, fatten purses and buy mercy"). If it replicates,
+the temple is a brake nobody uses and the enhancement is to make it visible; if it does not, the
+enhancement is to make it matter — a god who is jealous, or a blessing with diminishing returns, so
+that "pray every week to the cheapest god" is not the whole of the system.
+
+**Risk.** Either answer re-bases something. A temple that matters re-phases every seeded fixture; a
+temple made visible turns 0.8% into whatever the reference player does once it can see it.
+
+---
+
+**#268 — The Road Has Cards And Nothing Else** *(enhancement · medium–large)*
+
+v3.256.0 priced the road: a town week pays 3.6x a Capua week at the same bout rate. v3.252.0 priced
+what it costs, and the price is the game. A touring house meets `ludusNight` **179 → 11**,
+`feud.weeks` **1,120 → 348**, `did.feast` **284 → 12**, `did.walk` **364 → 8**, half the saga arcs, and
+— since v3.257.0 gated `hostParty` on being home — no parties either. `events.inspector` 75 → 13,
+`events.crowdCalls` 12 → 0, `events.roomFire` 7 → 0. The towns have a purse multiplier, a crowd
+temperament and a road length, and that is what they have.
+
+The reference player is away 3.5-6.5% of its weeks, so this has cost nothing yet. #263 declined to
+brake the road. The other half of that decision is that the road should be a different game rather
+than a thinner one.
+
+*Verify first.* Count the die: of the 36 drawn events, how many `make()` gates return null on
+`d.city` — the number of cards that simply cannot fire away. `probes/tail.mjs` already reads the
+eligible set every week and can be run under `tour:true`. That number is the size of the hole, and
+whether it is filled by lifting gates (cheap) or by town-specific cards (content) depends on how many
+of the home-only events are home-only for a reason.
+
+**Risk.** Content on the road makes the road better still, on top of 3.6x. If #268 ships before
+anyone decides whether the road needs a ceiling, it has decided.
+
+---
+
+**#269 — Four Endings The Player Is Never Told Are Doors** *(enhancement · small–medium)*
+
+The source can set twelve `d.over.kind` values. Under the reference player, over 3,538 weeks, four
+never occur: `closed`, `emptied`, `banned`, `ruin`. Under a complete player `closed` is **9 and 11 of
+16 houses** — the dominant ending — and #118 had recorded it as unreachable before v2.92.0 showed it
+was merely never chosen.
+
+Nothing tells the player any of this. `closed` is an ending you play TOWARD — free five men, then
+have nobody left — and it is the only ending in the twelve that is an achievement rather than a
+failure or a clock. It has no lesson, no agenda row, no line in the endings text until it fires.
+Neither does `foreclosed`, which #118 found "reachable and simply never tried". A player who wants to
+know how a house can end has to end one.
+
+*Verify first.* Grep the 53 lessons, the agenda and the feats for each of the twelve ending names and
+confirm which are foreshadowed at all. Then read `ends.mjs`'s own table of which endings each policy
+reaches, which already exists, and decide which of the four unreached ones are worth pointing at.
+
+**Risk.** Telling the player about `closed` turns it into a goal, and a house run toward it is the
+empty-yard house of v3.251.0 — roster p50 0. That is arguably the point of the ending, and it is the
+one design decision in this item.
+
+---
+
+**#270 — The Veteran's Bench** *(new system · medium)*
+
+The complete player ends with an EMPTY yard: roster p50 **0 in all five seed sets** (v3.251.0),
+because `free`, `retire` and `sell` shed every eligible man and nothing in the game keeps one. Under
+the complete player `men.retired` goes 16 → **214** and `men.freed` 3 → **115** — three hundred men
+who leave the house that made them, and the house is a stranger to every one of them the week
+after.
+
+A doctore is a hired stranger (`hireDoctore`, a market of candidates). A man who won thirty times on
+this sand and was given the rudis cannot stay as anything. The new system: a freed or retired
+champion may be kept on as the house's own man — the doctore's second, a trainer of one style, a
+face at the gate whose regard the yard reads — paid a wage, with the tie he had to the men he came
+up with carried into the role.
+
+*Verify first.* How many men per run reach `rudisEligible` or `retireEligible` under the reference
+(it frees 3 and retires 16 across 16 houses, so about one a house), and what the doctore's market
+actually offers against what those men would be — if a house's own champion is a better doctore than
+the market's median, the bench prices itself.
+
+**Risk.** A second doctore-shaped role overlaps the doctore. The distinction has to be that this man
+is YOURS — his regard, his ties, his record are the house's — and that has to show in what he does.
+
+---
+
+**#271 — Wagers On Other Men's Blood** *(new system · small–medium)*
+
+The rope has `bet` and `betAgainst`, the lanista can earn `shrewd` ("five wagers won — the
+bookmakers' cut drops from 12% to 6%"), and `checks/odds.mjs` holds the book. **Every wager is on
+your own man.** A week with no bout for the house — `noBout` reads **1,303 of 21,585** reference
+weeks, 6% — has nothing on the sand for the player at all, and a card full of other houses' men is
+scenery.
+
+The new system: the book takes wagers on the card whether or not you are on it. The odds exist, the
+cut exists, the trait exists; what is missing is the counter-party. A house that scouts a rival's man
+(#266) and backs him is a house with a reason to watch a bout it is not in.
+
+*Verify first.* Confirm `bet` is own-bout only, and read what `odds.mjs` needs to price a bout the
+house is not in — the rival fighters are conjured per bout (`makeRivalFighter`), so the odds on a
+stranger-versus-stranger card may have nothing to stand on until #266's roster exists.
+
+**Risk.** Coin from nothing. A book the player can beat is a purse with no bout attached, and the
+#263 sweep has just shown how fast a free purse re-bases everything.
+
+---
+
+**#272 — Handing Over By Choice** *(new system · medium)*
+
+The dynasty is playable only through death. `succeed` fires when the lanista dies or breaks; `oldAge`
+wants `age>=62 && health>=45 && d.heir` and #118 measured it **unreachable** — over 3,070
+lanista-weeks the man was 62 or over in 907 and healthy enough in none. The heir is raised for ten
+years (#237), and then the game waits for his father to fall.
+
+The new system: hand the house over on purpose. A lanista past a threshold — age, or a rung, or a
+named heir who has come of age — may retire to the villa and play the heir, with the old man alive
+in the household as something (the widower row from #243 is the shape) and the succession's own
+mechanics (the family's standing carried, the patrons' opinion of the boy) taken up by choice
+instead of by a funeral.
+
+*Verify first.* Read `succeed` and `takeUpTheHouse` for what they assume about the old man — a dead
+one, in every branch? — and measure how many reference houses ever hold a named heir of age at the
+same time as a lanista over 52 (`LAN_AGE_FROM`). If that state is rare, the door opens on nobody.
+
+**Risk.** `oldAge` is an ending. A voluntary handover is the same moment made a beginning, and the
+endings table, the annals and the forebears record all have to agree about which it was.
+
+---
+
+**#273 — The Second Yard** *(new system · large)*
+
+#263 found a town week worth 3.6x a Capua week, and declined to brake it because the source calls
+the tour untouched on purpose. The road's other half is that it is somewhere you visit: `setOut`,
+`comeHome`, one roster on wagons. But the die already deals a **`yard`** card — *"Take the yard"* — that
+#242 priced at a median 7,567 denarii and declined by default because *"a dark yard costs the men on
+it"*. Something is for sale.
+
+*Verify first — and this is the whole item until it is answered.* What does `yard` actually buy?
+Read `EVENTS.yard.run` and every reader of what it sets. If it is a second facility with its own
+cells, the second house half-exists and the new system is the roster split — men who stay in Puteoli
+and fight the port's cards while the house fights Capua's, with the road's purse on one side and the
+patrons' decay on the other. If it is a one-off purchase with no facility behind it, the item is the
+facility.
+
+**Risk.** Two rosters is the largest state change since the domus, and every check that counts
+`activeG(d)` counts one yard. Scope the verify-first to the question of what exists; do not open the
+build without it.
+
+---
+
+**#274 — A Champion's Following** *(new system · medium)*
+
+`known` is per house per town — `knownIn(d, k)`, capped at 60, decaying 0.55 a week in every town
+you are not standing in — and it prices the road: a house known the length of the bay reaches Rome
+sooner. A MAN has `pfame`, one number, everywhere. The crowd in Pompeii that saw him take a man's
+head sine missione and the crowd in Neapolis that never saw him are the same crowd to the game.
+
+The new system: a following per man per town. A champion draws a bigger purse where he is known and
+a colder crowd where he is not; a house that tours builds its men's names the way it builds its own;
+and the missio roll away — which already uses *local* standing — reads the man's local name as well as
+the house's.
+
+*Verify first.* Read what already keys on `pfame` per bout (the purse, the odds, the crowd), and
+measure how concentrated a touring house's bouts are by town under `tour:true` — `probes/capua.mjs`
+has the location split. If a tourer fights evenly across the three towns, a per-town following is
+three numbers that move together and buys nothing over `pfame`; if it concentrates, the system has a
+place to live.
+
+**Risk.** A second fame per man per town is nine numbers a roster of fifteen carries around, and the
+sheet has to show them or they are dark. The #101 rule applies: show the one that differs from
+`pfame`, not the table.
 
 ---
 
