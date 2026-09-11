@@ -4389,6 +4389,65 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.258.0 — #261: the free door is not a brake because it was never meant to be one
+
+#261's last question was whether forgetting your dead should cost what saying so costs. It was
+built, it worked, and it was still wrong — and the check that caught it had been holding the answer
+since #224.
+
+**FIRST, THE FAIRNESS OBJECTION WAS RETIRED.** Charging for silence is only fair if silence is a
+CHOICE. `probes/vigil.mjs` reads the panel's own selection — `agenda(S)`, men's rows dropped,
+`.slice(0, 7)` — over 9,019 house-weeks:
+
+| | |
+|---|---|
+| weeks with a man in the six-week window | 3,901 |
+| weeks the rite row was in the visible seven | **3,901 — 100.0%** |
+| men who entered the window | 919 |
+| men whose own row was shown at least once | **919 — 100.0%** |
+| men who went into the ground unmentioned | **0** |
+| where the row sat in the sorted list | **p50 position 1**, p90 3, worst 6 of 7 |
+
+The panel overflowed on 57.8% of those weeks and the row was never what got cut. #192 had already
+fixed the half of this that was broken — the row used to vanish for the *second* half of the window,
+"the opposite of what a deadline is for". Silence over your dead is an informed choice.
+
+**SO IT WAS BUILT, AND IT DID BOTH THINGS THE ITEM ASKED.** `riteLapse` applying `RITES.none` in full
+— its unrest (+4) and its yard morale (-3) as well as the regard it already read. Eight paired seed
+sets: the reference's share of weeks in rebellion **8.2% → 10.0%**, and the free door stopped being
+dominated — worse than forgetting on 5 of 8 sets before, **2 of 8 after**.
+
+**`checks/grave.mjs` WENT RED AND WAS RIGHT TO.** Its arm 3 is #224's, reached after four wrong
+answers, and it asks for more than the invariant I was quoting:
+
+> *"Neither answer dominates. Choosing the pit takes unrest and less regard; silence takes more
+> regard and no unrest. If one is strictly cheaper on both, the choice is not a choice"* — written
+> both ways round, "because either option dominating is the same fault".
+
+**The invariant I built on is scoped to REGARD.** v3.168.0's *"silence is never cheaper than the pit
+for any man, by construction rather than by tuning"* sits inside the regard calculation and is about
+the floor. I generalised it across unrest and morale and made the pit strictly dominate — the mirror
+of the fault #224 fixed. `grave.mjs`'s own note draws the distinction explicitly and I had read past
+it.
+
+**So the answer to #261 is that the free door is not a brake because it was never meant to be one.**
+The pit costs unrest and saves regard; silence costs regard and no unrest. That asymmetry IS the
+choice. *Nothing* is the regard-preserving answer, not a cheap way to calm the cells, and v3.253.0's
+finding that it "buys nothing against the rising" was measuring it against a job it does not have.
+
+**Two other checks went red with it and both recovered on the revert** — `thin` (a thin house truly
+broke on 15.9% of its weeks against a 15% bar, up from 3-4%) and `faces` (a fixture that no longer
+hires a doctore). The blast radius was real, not re-phase noise: charging for silence makes houses
+measurably poorer.
+
+**#261 IS CLOSED, with its build half refused twice for two different reasons** — v3.253.0 because
+the pit's price was not what was wrong with it, and this release because the asymmetry it wanted to
+remove is the design. Both refusals are recorded beside the code refused, and the visibility
+measurement is kept: if anyone revisits this, arm 3 is the whole of what stands in the way.
+
+**Shipped:** `test/probes/vigil.mjs`, and the refusal written into `src` beside `riteLapse`. **The
+game's behaviour is unchanged.**
+
 ### v3.257.0 — #263: the brake was never weak, it was walked round
 
 v3.256.0 ruled out all three levers #263 proposed and left one design call: should a house that
@@ -10992,10 +11051,20 @@ The reference and `rite` arms were byte-identical across both builds. **The pric
 wrong with the door**; the brake is the rite's unrest credit (-7, -19) and `none` has none to give.
 Reverted, with the refusal recorded beside `RITES.none` in `src`.
 
-*What is left is a design decision rather than a tuning pass*: whether silence should be answerable
-at all — i.e. whether the pit should be given something to SPEND rather than something to cost. That
-is a new mechanic on a door that currently has no effect, and it would re-phase every seeded fixture
-in the suite, so it belongs to a deliberately-taken item and not to this one.
+**CLOSED v3.258.0.** The remaining question — should silence be answerable at all — was built and
+refused a second time. `riteLapse` applying `RITES.none` in full did both things the item asked (the
+reference's rebellion share 8.2% → 10.0%, and the free door no longer dominated: worse than
+forgetting on 5 of 8 sets before and 2 of 8 after) and `checks/grave.mjs` went red and was right to.
+Arm 3 is #224's and asks that **neither answer dominate**; v3.168.0's "silence is never cheaper than
+the pit" is scoped to REGARD, and generalising it across unrest and morale made the pit strictly
+dominate — the mirror of the fault #224 fixed. **The free door is not a brake because it was never
+meant to be one**: the pit costs unrest and saves regard, silence costs regard and no unrest, and
+that asymmetry is the choice.
+
+*The fairness objection was retired on the way*, and is worth keeping: `probes/vigil.mjs` finds the
+agenda's rite row in the visible seven on **100.0% of the 3,901 weeks a man stood in the window**,
+all 919 men named at least once, none unmentioned, at **median position 1 of seven**. Silence here is
+informed. If this is ever revisited, arm 3 is the whole of what stands in the way.
 
 **Risk.** #224 is closed. This re-opened a gap it recorded — and found its recorded MECHANISM wrong
 too: the regard floor binds about one lapse in five, not never and not always, and it is not what
