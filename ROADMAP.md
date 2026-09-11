@@ -4389,6 +4389,72 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.260.0 — #264: the rite panel prints its terms, and the field was not the number
+
+The panel that offers the three answers to a dead man rendered `name`, `desc` and `cost` and not one
+of the four numbers the table carries. That was a style choice while the numbers were small;
+v3.252.0 made it something else by finding the unrest credit it did not print is the main brake on
+the rebellion arc — 12.0%/8.0% of a house's weeks down to 1.3%/0.6% — and v3.253.0 by finding the
+free door's LACK of one is the whole of why it buys nothing. **The most consequential number in the
+late game was behind a panel that did not print it.**
+
+**THE VERIFY-FIRST HELD ON BOTH COUNTS.** `RITES[...]` is read in exactly two places — `holdMunera`
+and the panel — so the rope never reads the panel and this cannot move a fixture. And the fix had a
+precedent: #166 solved the identical problem for the entrance buttons, and its note governs both —
+*"a blurb that reads as a trade-off in front of the largest free edge in the arena panel is not
+flavour, it is a hidden number. Every non-cosmetic term now names itself, off the table, so a term
+cannot be added without the player being told."* `RITE_TERM` / `RITE_TERM_KEYS` / `riteSays` are
+`ENT_TERM`'s shape, and the panel renders the line in `entranceSays`'s exact idiom.
+
+**AND `regard` IS NOT THE NUMBER, WHICH IS THE FINDING.** `holdMunera` spends the field two ways
+depending on its SIGN. Positive goes through `remember(d, g, "munera", (regard/10)*(close?1.7:1))`,
+and `remember` adds `REGARD.munera.n` — **13** — times that multiplier. Negative applies directly at
+`regard*(close?1.8:1)`:
+
+| | table says | a yard man gets | a brother gets |
+|---|---|---|---|
+| `none` | −6 | **−6** | −10.8 |
+| `rite` | 5 | **+7** | +11.05 |
+| `games` | 14 | **+18** | +30.94 |
+
+**Printing the raw field would have been wrong by 30-40% on the two rites that matter** — #150's rule
+(a displayed number and the roll behind it are the same call) failing in the most ordinary way there
+is. `riteMult` is now shared with `holdMunera` so the multiplier cannot drift; the arithmetic is
+byte-identical, so the change re-phases nothing.
+
+**Verified against the sand**, one house of three men cloned per rite (victim, brother, bystander),
+unrest set to 50 so neither clamp is in the way: unrest 4 / −7 / −19, fame 0 / 2 / 11, mercy 0 / 5 /
+14 — all exact — and regard −6, +7, +18 to the yard against cards reading −6, +7, +18.
+
+**The one point of slack on regard is the contract, not a fudge.** `riteRegardOf` rounds the DELTA;
+`remember` rounds the SUM, so a man on a fractional regard lands a point either side. The first cut
+of the fixture read that as a MISMATCH — observed 19 against a said 18, on a man at 51.3 — and it was
+the harness rounding the observed delta, not the card being wrong. Unrest, fame and mercy carry no
+slack and are asserted exactly.
+
+**`checks/rites.mjs`** holds both halves, each sabotage-verified: adding a `defiance` term to `rite`
+goes red naming it *and* reporting `RITE_TERM` has no phrase for it; making `riteRegardOf` print the
+raw field goes red with *"moved the yard's regard by 7 and the card says 5"*.
+
+**WHERE THE ITEM'S OWN RISK NOTE WAS WIDENED, and why.** It said print the two that decide and leave
+fame and mercy to the description, on the #101 wallpaper argument. All four are named instead: a
+check that lets two of four terms stay silent cannot hold *"a term cannot be added without the
+player being told"*, which is the durable half of this. The cards carry two terms each and appear
+only inside a six-week window, so the furniture argument that governs the agenda does not reach
+them. **Morale is left to the prose** as the note intended — it is not a field of the table at all
+but a branch on `regard`'s sign, and naming a fifth term derived from a fourth is the wallpaper
+fault itself.
+
+**One check went red and it was the expected one:** `bulk`'s SECT cap, 1489 → 1492, for three lines
+of panel — a two-line comment naming the entrance panel this borrows its idiom from, and the one
+`riteSays(k)` div. 190 of 191 on the first run after a change to the game file, and the one was an
+allowance rather than a finding, which is what a zero-re-phase change should look like.
+
+**Shipped:** `RITE_TERM`, `RITE_TERM_KEYS`, `riteSays`, `riteMult` and `riteRegardOf` in `src`, the
+panel's terms line, `test/checks/rites.mjs`, and `bulk`'s SECT allowance raised with its why. **The
+game's behaviour is unchanged** — the only mechanical edit is `holdMunera` calling `riteMult` for an
+expression it already computed inline.
+
 ### v3.259.0 — a third audit pass: eleven items, written off the partial-player sweep
 
 Asked for in a shape — three items on usability and interactivity, three enhancements, five new
@@ -10969,7 +11035,13 @@ each says which number.
 
 ---
 
-**#264 — The Rite Panel Hides The Only Number That Matters** *(usability · small)*
+**#264 — The Rite Panel Hides The Only Number That Matters** *(usability · small)* — **SHIPPED,
+v3.260.0, AND THE FIELD WAS NOT THE NUMBER.** The panel names all four terms now, off a `RITE_TERM`
+table in `ENT_TERM`'s shape, and `checks/rites.mjs` holds that a term cannot be added without the
+player being told. The finding underneath: `regard` is spent through `remember` at
+`REGARD.munera.n` (13) times `regard/10`, so `rite`'s 5 is **+7** to a yard man and `games`' 14 is
+**+18** — printing the raw field would have been wrong by 30-40%. Zero re-phase, as the verify-first
+predicted. Original text follows.
 
 `RITES` prices three answers to a dead man: `none` (unrest **+4**, regard -6), `rite` (unrest **-7**,
 regard +5, fame 2, mercy 5), `games` (unrest **-19**, regard +14, fame 11, mercy 14). The panel that
