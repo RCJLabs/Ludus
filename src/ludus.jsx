@@ -25670,8 +25670,32 @@ function answerRomeWith(d, accept){
    What a party is worth is the per-patron bump below — 5 / 9 / 15, which is what the villa's menu
    has always advertised. Measured: one party alone IS a treadmill, repaid by decay in about fifteen
    weeks; one every other week pins favour at 100 by the thirtieth week for about 457 a week. */
+/* ---- AND IT IS THROWN AT THE VILLA, WHICH IS IN CAPUA — #263, v3.257.0 ----
+   `patronWeek` stops the patrons asking while the house is down the bay (`!d.city && !d.travel`
+   gates `askWant`) and decays their favour at two and a half times the rate, and its own note says
+   why in as many words: *"standing decays without attention — AND ATTENTION CANNOT BE PAID FROM
+   PUTEOLI."* That decay is keyed to being AWAY rather than to which town, so unlike `welcomeOf` it
+   does not reset when the wagons move on, and a house that lives on the road pays it every week.
+   This function had no location gate at all — gold, and a fortnight's cooldown, and nothing else —
+   so it raised every Capua patron's favour, printed "Capua's better sort attend", and did it from
+   two hundred miles away.
+
+   MEASURED, 16 x 420 on four seed sets (`probes/capua.mjs`, and the party arm beside it): a
+   deliberate tourer threw **1,077-1,378 parties a run and 87-96% of them while out of Capua**, and
+   came home with MORE standing than a house that never left — favour 84.4-86.0 against the
+   reference's 71.0-79.4, census rung 4.5-4.9 against 3.2-3.9. With the parties taken away the same
+   tourer reads **favour 32.5-46.4 and rung 1.2-2.3**, which is roughly half the reference's and is
+   the penalty the decay was built to impose. The counterweight was never weak. It was walked round.
+
+   The gate is `d.city || d.travel` — the same condition `askWant` and the decay already use, rather
+   than a new rule of my own. Rome is deliberately NOT in it: the decay does not charge Rome weeks
+   either, and a trip to Rome is its own system with its own rules.
+   This does not flatten the road. Parties cost coin, so the tourer that cannot throw them ends
+   RICHER (50k-165k against 6.7k-99.7k). What comes back is the trade the source describes: the road
+   pays in coin, the yard pays in standing, and it stops paying in both. */
 function hostParty(d, kind){ const p=PARTY[kind];
   if(!p || d.gold<p.cost || d.week-d.lastParty<2) return false;
+  if(d.city || d.travel) return false;
   d.gold-=p.cost; d.fame+=p.fame; d.lastParty=d.week;
   let extra="";
   const show = activeG(d).sort((a,b)=>b.sho-a.sho)[0];
@@ -26895,8 +26919,12 @@ const SECT = {
           <span className="gold">{p.cost}d</span>
         </div>
         <div className="dim" style={{fontSize:"var(--fs-md)",margin:"4px 0 8px"}}>{p.desc} <span style={{color:"var(--violet)"}}>+{p.warm} with every patron</span> · <span style={{color:"var(--gold-hi)"}}>+{p.fame} fame</span></div>
-        <button className="btn" style={{width:"100%"}} disabled={S.gold<p.cost || S.week-S.lastParty<2} onClick={()=>host(k)}>
-          {S.week-S.lastParty<2? `The villa recovers — ${2-(S.week-S.lastParty)} week${2-(S.week-S.lastParty)>1?"s":""}` : S.gold<p.cost? "Not enough coin" : "Send invitations"}
+        {/* away is a REASON and not a silent refusal — `hostParty` returns false down the bay
+            (#263), and a button that looks live and does nothing is the worse of the two */}
+        <button className="btn" style={{width:"100%"}} disabled={!!(S.city||S.travel) || S.gold<p.cost || S.week-S.lastParty<2} onClick={()=>host(k)}>
+          {S.travel? "The villa is behind you on the road"
+            : S.city? `The villa is in Capua and you are in ${(CITIES[S.city]||{}).name||"another town"}`
+            : S.week-S.lastParty<2? `The villa recovers — ${2-(S.week-S.lastParty)} week${2-(S.week-S.lastParty)>1?"s":""}` : S.gold<p.cost? "Not enough coin" : "Send invitations"}
         </button>
       </div>
     ))}

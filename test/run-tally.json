@@ -261,4 +261,6 @@
 {"v":"3.253.0","checks":187,"failed":[]},
 {"v":"3.254.0","checks":188,"failed":[]},
 {"v":"3.255.0","checks":189,"failed":[]},
-{"v":"3.256.0","checks":190,"failed":[]}]
+{"v":"3.256.0","checks":190,"failed":[]},
+{"v":"3.256.0","checks":190,"failed":["bulk","tour"]},
+{"v":"3.257.0","checks":190,"failed":[]}]
