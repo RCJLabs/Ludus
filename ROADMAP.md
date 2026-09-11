@@ -4389,6 +4389,76 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.255.0 — #262: the tail is not the die's, and neither is the head
+
+#262 asked the one question that decides what to do about a thin tail: for each of eight rare
+events, is it rare because its **gate** is rare or because its **tickets** are few? `probes/tail.mjs`
+answered it over 7,900 house-weeks, and the answer is that the question was being asked of the wrong
+machine.
+
+**SEVEN EVENTS HAVE THEIR OWN RAISER AND NEVER NEEDED THE DIE.** `pickEvent` is rolled on
+`R()<0.45`, and only when no question is already standing — 26% of askable weeks in practice.
+Alongside it:
+
+| event | its own raiser | off the die | raised in all |
+|---|---|---|---|
+| `ludusNight` | its own `R()<0.5` every week | 63 | **453** |
+| `ambition` | its own `R()<0.14` every week | 64 | **393** |
+| `stash` | unconditionally when nothing is pending | 0 | 84 |
+| `poached` | `poachWeek` | 0 | 48 |
+| `whispers` | the rebellion | 0 | 36 |
+| `stolenSteel` | the rebellion | 0 | 28 |
+| `uprising` | the rebellion | 5 | 25 |
+
+**So the "head" of #262's list is not the die's head.** Off the die itself `ambition` and
+`ludusNight` get 64 and 63 — mid-pack, and **0.98x and 0.90x** their own share of the weight. Their
+dominance of the tally is two dedicated rolls running beside the die at 14% and 50% a week. The
+event tally every figure in this project quotes is the SUM OF TWO MACHINES, which nothing had
+written down.
+
+**AND THE DIE IS PAYING WHAT ITS WEIGHTS PROMISE.** Comparing each event's share of the die's draws
+against its share of the expected weight on the weeks it was eligible, **thirty of thirty-six sit
+between 0.7 and 1.4.** Nothing is starved by the ordering. The eight the item names:
+
+| | verdict |
+|---|---|
+| `licence` | **not a die event at all** — no `EV_DIE` entry, not in the drawn pool |
+| `stolenSteel` | **not the die** — 0 draws in 7,900 weeks; the rebellion raises it |
+| `primacy` | **gate** — eligible on **0.2%** of weeks, already 8 tickets, already paid 2.20x its share |
+| `uprising` | **gate** — eligible on **0.9%**, already 8 tickets |
+| `doctore` | the die pays it **1.06x** — eligible 11.1%, 2 tickets |
+| `crowdCalls` | the die pays it **1.02x** — eligible 7.8%, 4 tickets |
+| `mentor` | the die pays it **1.17x** — eligible 15.1%, 2 tickets |
+| `patronGone` | the die pays it **1.05x** — eligible 10.4%, 2 tickets |
+
+Two are not the die's, two are gate-limited and already over-weighted, and four are the weights
+doing exactly what they were set to do. **Re-weighting the die — the item's proposed action, at its
+own stated cost of re-phasing every seeded fixture — would move four events and would not touch the
+split the item is about. #262 is closed without a re-weight.**
+
+**`checks/tail.mjs`** holds the part nothing else watches: `die.mjs` already covers the table, the
+sampler's proportionality and the cooldown, but no check knew the dedicated raisers existed. If one
+of them changes rate every event figure in this project moves and the die checks stay green.
+Sabotage-verified by disabling `ludusNight`'s own roll — it drops from 6.4x to **exactly 1.0x**, 23
+drawn and 23 raised, which is also the cleanest possible confirmation that the gap IS that roll.
+
+**TWO INSTRUMENT FAULTS OF MY OWN, and the first cut announced both of them loudly enough to catch.**
+
+- **The wrong population, again.** The probe read `did.events` — every card the rope ANSWERED — as
+  though it were the die's draws. `stolenSteel` then reported *"eligible on 0.0% of weeks"* and 28
+  appearances, which is impossible for anything the die picks. Fixed exactly rather than modelled:
+  `pickEvent` writes `d.flags.evLast[k]` and **nothing else in the program writes that field**, so
+  watching it transition counts the die's own draws and excludes every raiser.
+- **One constant wearing thirty-six hats.** The expected share assumed the die was rolled every
+  eligible week, so almost every event on the board read a ratio of 0.18-0.32. That is not
+  thirty-six findings, it is `R()<0.45` at the call site. Taking the ratio on SHARES — each event's
+  share of the draws against its share of the expected weight — divides the roll rate out instead of
+  estimating it.
+
+**Shipped:** `test/probes/tail.mjs` (eligibility on clones with `rngGet`/`rngSet` bracketing the
+sweep, on `pace.mjs`'s precedent, plus the weights and the draws so all three read against each
+other), `test/checks/tail.mjs`. **No game code touched.**
+
 ### v3.254.0 — #260's sweep: one half dissolved on counting, the other is the biggest lever in the game
 
 What was left of #260 was a narrower documentation pass with two halves: *the coin and fame p50s
@@ -10846,21 +10916,24 @@ point of it but means this item cannot be shipped without re-reading that file.
 
 ---
 
-**#262 — The Thin Tail Of The Die** *(content · medium)*
+**#262 — The Thin Tail Of The Die** *(content · medium)* — **CLOSED v3.255.0, WITHOUT A RE-WEIGHT.**
 
-Over the same 3,538 weeks, the drawn events split hard. The head: `ambition` 191, `refusal` 190,
-`ludusNight` 179, `leagueYear` 180, `kinReturn` 112. The tail: **`primacy` 4, `licence` 8, `uprising`
-8, `doctore` 9, `stolenSteel` 12, `crowdCalls` 12, `mentor` 13, `patronGone` 13.** #245 phase 2
-weighted the die by measured reach and phase 3 gave an unmet event triple tickets; both worked, and
-the tail is what is left after them.
+The verify-first was run and the question turned out to be aimed at the wrong machine. **Seven
+events have their own raiser and never needed the die** — `ludusNight` on its own `R()<0.5` a week
+and `ambition` on its own `R()<0.14`, plus `stash`, `poached`, `whispers`, `stolenSteel` and
+`uprising`. Off the die itself the two "head" events get 63 and 64 draws, mid-pack, at 0.90x and
+0.98x their own share of the weight; the tally's head is those two rolls. **The die pays what its
+weights promise**: 30 of 36 events sit between 0.7x and 1.4x their weight share.
 
-*Verify first.* For each of the eight, whether it is rare because its GATE is rare or because its
-tickets are few — `EV_DIE` holds the tickets and `pace.mjs` already reads the eligible set every
-week. A gate nobody passes is not answered by more tickets, and #245's own note says the ORDER is
-weighted and never the outcome.
+Of the eight named: `licence` is not a die event at all, `stolenSteel` is never drawn, `primacy`
+(0.2% eligible) and `uprising` (0.9%) are gate-limited and already hold 8 tickets, and `doctore`,
+`crowdCalls`, `mentor` and `patronGone` are paid 1.02-1.17x exactly as weighted. **Re-weighting
+would move four events and would not touch the split the item is about.**
 
-**Risk.** Re-weighting the die re-phases every seeded fixture in the suite, which is why #245 took
-that decision at its phase 2 rather than drifting into it.
+*The one lever that remains*, if anyone wants those four commoner, is their tickets — `doctore`,
+`mentor` and `patronGone` hold 2 and `crowdCalls` holds 4, against eligibility of 7.8-15.1%. That is
+a content decision with the item's own re-phase cost attached and nothing here recommends it.
+`checks/tail.mjs` holds the arrangement, sabotage-verified.
 
 ---
 
