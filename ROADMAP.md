@@ -4389,6 +4389,63 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.254.0 — #260's sweep: one half dissolved on counting, the other is the biggest lever in the game
+
+What was left of #260 was a narrower documentation pass with two halves: *the coin and fame p50s
+(nothing in the suite tours, and `tour` moves gold fifty-fold) and the eight checks that pass
+`loan:`.* Both were swept. One of them stopped existing when counted and the other got larger.
+
+**THE LENDER HALF WAS A NUMBER I NEVER COUNTED.** "Eight checks in this suite pass `loan:`" was
+written into `checks/player.mjs`, into v3.251.0's entry, into the #260 item and into two pull
+requests, and it is wrong. **No check in this suite runs a borrowing rope at all.** Four touch the
+lender and every one is scoped to it:
+
+| check | how it uses the lender | scoped? |
+|---|---|---|
+| `debt` | writes `d.loan = { who:"gratus", ... }` as a fixture | yes — the check is about the debt |
+| `ledger` | writes `shedLoan.loan` as a fixture for a display test | yes |
+| `ends` | calls `borrow` to reach the `foreclosed` ending (#118) | yes, deliberately |
+| `quote` | calls `borrow` twice to prove `canBorrow` gates the second | yes |
+
+Three PROBES run the policy — `credit`, `fuse`, `standing` — and all three are about borrowing. So
+the worry the phrase carried (*"they are all measuring the default rope under another name"*) does
+not exist, and the figure that carried it was invented in the act of writing the warning. Corrected
+in all three places, struck through rather than quietly edited where it was published.
+
+**THE TOURING HALF IS WORSE THAN PUBLISHED, AND UNANIMOUS.** `tour` — break camp the week the
+welcome wears, go to whichever town knows the house least, never touch Capua — was published off one
+sweep at "gold p50 284 → 14,612". Re-run paired, 16 houses x 420 weeks on **eight independent seed
+sets**:
+
+| | per set | median |
+|---|---|---|
+| reference gold p50 | 181, 84, 4271, 15, 1258, 46, 86, 1020 | **181** |
+| tour gold p50 | 8670, 11283, 147480, 59586, 10080, 140818, 7968, 10949 | **11,283** |
+
+**Eight of eight richer, by 7,882 to 143,209 denarii. Eight of eight higher on fame**, by 263 to
+9,096. Census rung 4-6 against 5-7. The reference spends 129-359 of its ~3,500 weeks out of Capua;
+the tourer 2,001-3,654 of ~4,000, and breaks camp on purpose **0 times in every seed set measured**.
+
+So every coin figure this project publishes is a stay-at-home figure, and the gap is about sixtyfold
+at the median. `road` is on by default and is the REACTIVE half — take the invitation `bayCall`
+happens to send, come home when the welcome wears. `tour` is the same functions used on purpose.
+Both are ordinary player actions.
+
+**What it costs is content, not outcome.** From v3.252.0's survey diff a touring house sees
+`ludusNight` 179 → 11, `feud.weeks` 1,120 → 348, `did.feast` 284 → 12, `did.walk` 364 → 8 and half
+the saga arcs. It is richer, more famous and higher-ranked, and it meets less of the game. Whether
+that is the intended reward for a committed strategy or a dominant line nobody priced is a design
+question, and it is written up as **#263** rather than decided here.
+
+**`checks/tour.mjs`** holds the measurement that question would have to start from, sabotage-verified
+by disabling the lever. Its coin bar is an **absolute gap, not a ratio**, which the first cut got
+wrong: the reference's gold p50 crosses zero (-282, -253, 10, 1708, 2042 over five sets at the
+check's own frame) so the ratio reads 6.3 on one set and 75,450 on the next. The gap is 10,898 to
+75,703 and behaves.
+
+**Shipped:** `test/checks/tour.mjs`, the invented lender figure corrected in `checks/player.mjs` and
+in v3.251.0's entry, and **#263** opened. **No game code touched.**
+
 ### v3.253.0 — #261: the free door was built, measured, and put back
 
 #261's build half asked for one thing: *"price the free door so that saying nothing is not the best
@@ -4540,8 +4597,9 @@ counted as moved unless it clears the spread of the reference's own prefixes):
 So the answer to the item is: **thirteen of nineteen are content a player can take or leave.** Six
 are not, and two of those six are the lender — which is not a door like the others at all. It takes
 the house's life: half the weeks, a quarter of the fame, and 0 of 16 houses left standing in every
-one of five seed sets. Eight checks in this suite pass `loan:`, and they are measuring a different
-game from the one every other check measures.
+one of five seed sets. ~~Eight checks in this suite pass `loan:`~~ — **that number was never counted
+and is wrong; see v3.254.0.** No check runs a borrowing rope; three probes do, and all three are
+about borrowing.
 
 **`d.honoured` is the instrument's zero, which is #261's verify-first answered.** Two call sites
 write it — `stageMunus` on a funeral occasion and `holdMunera` with `games` — and the rope had a
@@ -10717,9 +10775,15 @@ attributes to the single door that had no lever at all until v3.251.0. `checks/b
 **Both hypotheses tested along the way were false** (the empty yard; `court` as a second brake), and
 only a second seed set separated the real finding from the fluke.
 
-*What is left of the item* is the narrower documentation pass the measurement now makes cheap: the
-coin and fame p50s (nothing in the suite tours, and `tour` moves gold fifty-fold) and the eight
-checks that pass `loan:`. Neither has been swept.
+**THE SWEEP IS DONE, v3.254.0.** The lender half **dissolved on counting** — "eight checks pass
+`loan:`" was a figure I never counted and no check in this suite runs a borrowing rope; four touch
+the lender as fixtures or direct API tests, all scoped, and the three probes that run the policy are
+all about borrowing. The touring half got larger: **8 of 8 paired seed sets richer under `tour`**,
+median gold p50 **181 against 11,283**, 8 of 8 higher on fame, and the reference breaks camp on
+purpose **0 times in every set**. `checks/tour.mjs` holds it. The design question that follows — is
+that the reward for a committed strategy or a dominant line? — is **#263**.
+
+**#260 IS CLOSED.**
 
 ---
 
@@ -10756,6 +10820,29 @@ in the suite, so it belongs to a deliberately-taken item and not to this one.
 **Risk.** #224 is closed. This re-opened a gap it recorded — and found its recorded MECHANISM wrong
 too: the regard floor binds about one lapse in five, not never and not always, and it is not what
 makes the door worthless.
+
+---
+
+**#263 — The Road Is Worth Sixty Times The Yard** *(balance · medium)* — opened by #260's sweep.
+
+`tour` is an ordinary sequence of player actions — `setOut` to the town that knows you least, the
+week `welcomeOf` says the welcome has worn — and over eight paired seed sets it is worth **8 of 8
+sets richer, a median gold p50 of 11,283 against 181, and 8 of 8 higher on fame.** Census rung 4-6
+against 5-7. It is not close.
+
+What it costs is CONTENT: `ludusNight` 179 → 11, `feud.weeks` 1,120 → 348, `did.feast` 284 → 12,
+`did.walk` 364 → 8, and half the saga arcs. A touring house is richer, more famous, higher-ranked,
+and meets less of the game than one that stays.
+
+*Verify first.* Whether the gap is the ROAD or the RETURN. `road` (reactive, default on) already
+takes the invitations `bayCall` sends and comes home; `tour` differs only in going somewhere on
+purpose and never coming back to Capua. Price those two apart before touching anything: if the money
+is in the going, the town purses or `BAY_DECAY` are the lever; if it is in the NOT RETURNING, then
+Capua's own draw is what is underpriced and the fix is there instead.
+
+**Risk.** Every figure in this project is a stay-at-home figure (v3.254.0), so a change here re-bases
+all of them at once — and `checks/tour.mjs` is written to go red if the gap closes, which is the
+point of it but means this item cannot be shipped without re-reading that file.
 
 ---
 

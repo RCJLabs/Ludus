@@ -45,8 +45,16 @@
    complete either.
 
    3 — THE LENDER IS NOT A DOOR LIKE THE OTHERS. Borrowing is the one lever that takes the house's
-   life rather than adding to it, and any check that passes `loan:` is measuring a different game
-   from the one every other check measures. That is worth a bar of its own.
+   life rather than adding to it, and anything that runs it is measuring a different game from the
+   one every other check measures. That is worth a bar of its own.
+
+   AND THE ALARM THAT FIRST STOOD HERE WAS A NUMBER I NEVER COUNTED — "eight checks in this suite
+   pass `loan:`". #260's own sweep counted it at v3.254.0: **no check in this suite runs a borrowing
+   rope at all.** Four touch the lender and every one of them is scoped to it — `debt` and `ledger`
+   write `d.loan` as a fixture, `ends` calls `borrow` to reach the `foreclosed` ending, `quote`
+   calls it twice to prove `canBorrow` gates the second. Three PROBES run the policy (`credit`,
+   `fuse`, `standing`) and all three are about borrowing. The worry the phrase carried does not
+   exist, and the figure that carried it was invented in the act of writing the warning.
 
    THE FRAME IS DELIBERATELY THE CHEAP ONE. Per-lever liveness for all nineteen needs 19 arms and
    belongs to the probe; the three rare ones (`yard`, `lot`, `mastery` — about 0.9 pulls a thousand
@@ -172,7 +180,8 @@ export async function run({ p }){
   const ratio = ref.weeks ? loan.weeks / ref.weeks : 1;
   lines.push(`the lender alone: ${loan.weeks} house-weeks against the reference's ${ref.weeks} (${(100*ratio).toFixed(0)}%) · borrowed ${loan.fired.borrowed||0}, cleared ${loan.fired.cleared||0} · fame p50 ${loan.fameP50} against ${ref.fameP50} · census rung p50 ${loan.riseP50} against ${ref.riseP50} · ${loan.alive} alive against ${ref.alive} [five sets: 26%, 31%, 66%, 59%, 45% of the reference's weeks, fame 8-47% of it, and 0 alive in every one]`);
   if(!(loan.fired.borrowed > 0))
-    bad.push(`the lender arm never borrowed — `+"`loan:\"murena\"`"+` is the lever eight checks in this suite pass, and if it has stopped firing they are all measuring the default rope under another name`);
+    bad.push(`the lender arm never borrowed — `+"`loan:\"murena\"`"+` is the rope's only borrowing policy and three probes run it (`+"`credit`, `fuse`, `standing`"+`), `
+      + `so if it has stopped firing they are all measuring the default rope under another name`);
   if(!(ratio <= LOAN_SHORTER))
     bad.push(`a house that borrows lived ${(100*ratio).toFixed(0)}% of the reference's weeks against a bar of ${100*LOAN_SHORTER}% [measured 26-66% over five seed sets] — `
       + `the lender has stopped being the one door that costs a house its life, and every check that passes `+"`loan:`"+` should be re-read against the reference rather than beside it`);
