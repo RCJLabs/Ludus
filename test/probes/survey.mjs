@@ -54,17 +54,75 @@
 
    STANDING CAVEAT, from dark.mjs: these are the ROPE's weeks. A system the reference player never
    pursues reads as dark and that is a fact about the policy, not the game. The audit marks those
-   rows (rope). */
+   rows (rope).
+
+   ---- AND v3.252.0 PUT A PRICE ON THAT CAVEAT INSTEAD OF LEAVING IT AS PROSE ----
+   `most` against `ref` on the same 16 x 420 houses: **57 rows read zero under the reference and
+   non-zero under seventeen doors.** Most are the levers' own counters and are tautological. Three
+   groups are not, and they are what the caveat was hiding:
+
+     ENDINGS      `closed` is 0 under the reference, under the shedding levers and under the other
+                  fourteen — and **9 and 11 of 16 houses** under all seventeen together, on two seed
+                  sets. It is the DOMINANT ending of a complete player and this file had never once
+                  seen it. `emptied`, `banned` and `ruin` likewise appear only off the reference.
+     THE RISING   rebellion-weeks are **12.0% / 8.0%** of the reference's weeks and **0.0% / 0.0%**
+                  under seventeen doors, monotone through the arms in between. See `checks/bury.mjs`:
+                  ONE door, the rite over your own dead, does most of it.
+     THE TEMPLE   "blessed weeks 2.3%" in the frame at the top of this file reads **0.8%** under
+                  today's reference and **62-68%** for a house that prays. It is not a fact about the
+                  temple; it is a fact about a rope that never made an offering.
+
+   So the rows to distrust are not the ones marked (rope). They are the ones nobody thought to mark,
+   and the policy argument above is how to find out which. */
 import { serve, open, clearAll, found, installRope } from "../harness.mjs";
 const H = +(process.argv[2] || 16), W = +(process.argv[3] || 420), SEED = process.argv[4] || "SURVEY";
+/* ---- AND WHOSE WEEKS, WHICH #260 MADE A QUESTION WORTH ASKING ---- (v3.252.0)
+   Every figure this file has ever published is the DEFAULT rope's, and the standing caveat at the
+   foot of the header has said so in prose for a dozen releases. #260 measured what that costs: of
+   nineteen doors the default rope leaves shut, six move a figure this project quotes. So the
+   caveat gets an argument.
+
+     node test/probes/survey.mjs 16 420 SURVEY ref              the reference player — every figure above
+     node test/probes/survey.mjs 16 420 SURVEY most             the same houses, seventeen doors open
+     node test/probes/survey.mjs 16 420 SURVEY free,retire,sell just those levers
+     node test/probes/survey.mjs 16 420 SURVEY most-free,retire,sell   seventeen minus those three
+
+   `most` is #260's complete-player arm, minus the lender: `loan` is not a door like the others —
+   it takes half the house's life and crowds the rare cards out of the run entirely — so an arm
+   carrying it would answer "what does borrowing cost" rather than "what is this file's caveat
+   worth". Same seeds, same frame, same accumulator: the DIFF is the caveat's price, row by row.
+
+   AND THE ARM IS ARBITRARY BECAUSE ONE ARM CANNOT ATTRIBUTE. `most` reported the rebellion arc at
+   ZERO — 26 risings and 423 rebellion-weeks gone — which would be the largest finding this file has
+   ever made and is not safe to publish from it, because `most` also carries `free`, `retire` and
+   `sell` and ends with an empty yard, and a house with no men cannot rise. So the policy argument
+   takes a lever list, and `most-a,b` is every lever but those. */
+const MOST = { court:true, gambit:true, works:true, sell:true, munus:true, rites:true, bury:true,
+  yard:true, booking:true, favours:true, lot:true, overture:true, free:true, mastery:true,
+  signature:true, retire:true, tour:true };
+const POLICY = process.argv[5] || "ref";
+const opts = (() => {
+  if(POLICY === "ref") return {};
+  if(POLICY === "most") return MOST;
+  if(POLICY.startsWith("most-")){
+    const drop = POLICY.slice(5).split(",").filter(Boolean);
+    const bad = drop.filter(k=>MOST[k] == null);
+    if(bad.length){ console.error(`not levers: ${bad.join(", ")}`); process.exit(1); }
+    const o = Object.assign({}, MOST); for(const k of drop) delete o[k]; return o;
+  }
+  const want = POLICY.split(",").filter(Boolean);
+  const bad = want.filter(k=>MOST[k] == null);
+  if(bad.length){ console.error(`not levers: ${bad.join(", ")} — pick from ${Object.keys(MOST).join(", ")}`); process.exit(1); }
+  const o = {}; for(const k of want) o[k] = true; return o;
+})();
 const { server, port } = await serve({ page:"dist/test.html" });
 const { browser, p } = await open(port);
 await found(p); await clearAll(p, 20); await installRope(p);
 
-const out = await p.evaluate(([H, W, SEED])=>{
+const out = await p.evaluate(([H, W, SEED, OPTS, POLICY])=>{
   const A = window.__LVDVS, R = window.__ROPE;
   const ERA = w => Math.min(3, Math.floor(w / (W/4)));
-  const sum = { houses:H, weeks:0, endings:{}, endedAt:[],
+  const sum = { policy:POLICY, houses:H, weeks:0, endings:{}, endedAt:[],
     era: [0,1,2,3].map(()=>({ gold:[], fame:[], roster:[], fit:[] })),
     men: { seen:0, died:0, sold:0, freed:0, fled:0, retired:0, bouts:[], wins:[], survivedRun:0 },
     modes: {}, sys: {}, did: {}, arcs: { saga:{started:0,st2:0,st3:0,st4:0}, nem:{houses:0,men:0},
@@ -110,7 +168,7 @@ const out = await p.evaluate(([H, W, SEED])=>{
       if(d.over){ break; }
       let did;
       const wasFront = (d.log||[])[0] || null;
-      try { did = R.lanista(d); } catch(e){ mark(sum.sys, "lanistaThrew"); break; }
+      try { did = R.lanista(d, OPTS); } catch(e){ mark(sum.sys, "lanistaThrew"); break; }
       sum.weeks++;
       /* `did.events` is an object of per-event counts, not a number — summing it with `+` made a
          string of "[object Object]"s and the audit's event column read as noise. Folded in by key. */
@@ -240,6 +298,6 @@ const out = await p.evaluate(([H, W, SEED])=>{
   const top = Object.entries(sum.chron.distinct).sort((a,b)=>b[1]-a[1]).slice(0,12);
   sum.chron.top = top; delete sum.chron.distinct;
   return sum;
-}, [H, W, SEED]);
+}, [H, W, SEED, opts, POLICY]);
 console.log(JSON.stringify(out, null, 1));
 await browser.close(); server.close();

@@ -4389,6 +4389,68 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.252.0 — #260 phase 2: whose weeks these are, and the door that was also the brake
+
+Phase 1 mapped the nineteen doors the reference rope leaves shut. Phase 2 was written down as a
+documentation pass — "a list of release entries needing a sentence added" — and a prose audit of
+forty entries is unfalsifiable, so it was made measurable first. **`probes/survey.mjs` takes a policy
+argument now**: `ref`, `most`, or any lever list (`most-free,retire,sell` is every door but those
+three). Same seeds, same frame, same accumulator. The diff is the standing caveat's price, row by
+row.
+
+**57 rows read zero under the reference and non-zero under seventeen doors.** Most are the levers'
+own counters and are tautological. Three groups are not.
+
+**1 — Four endings the reference has never reached.** `closed` is 0 under the reference, 0 under the
+shedding levers, 0 under the other fourteen — and **9 and 11 of 16 houses** under all seventeen
+together, on two independent seed sets. It is the *dominant* ending of a complete player. `emptied`,
+`banned` and `ruin` appear only off the reference too. #118 recorded `closed` as unreachable; v2.92.0
+corrected that to "1 house in 12 on a policy written for it". It is 56-69% of houses for a player who
+simply uses the doors.
+
+**2 — The rising is, in large part, a fact about the reference player.** Rebellion-weeks as a share
+of house-weeks, two seed sets, monotone through the arms:
+
+| arm | set 1 | set 2 | stage 3 |
+|---|---|---|---|
+| reference | **12.0%** | **8.0%** | 55 / 51 |
+| the three shedding levers alone | 4.5% | 4.1% | 7 / 10 |
+| the other fourteen | 1.2% | 0.6% | 0 / 0 |
+| all seventeen | **0.0%** | **0.0%** | 0 / 0 |
+
+The README's own one-line description of this game names "a three-stage rebellion arc". A player who
+opens the doors mostly does not meet it.
+
+**3 — And it attributes to ONE door: the rite over your own dead.** `bury:true` alone takes the
+rebellion share from 12.0%/8.0% to **1.3%/0.6%**. `RITES` prices a rite at unrest **-7** and full
+games at **-19**, per man, inside a six-week window; `riteLapse` closes that window costing nothing
+in unrest, so silence is not punished, it just forgoes the discount — and the reference player lapses
+**377 of 387** dead men because until v3.251.0 nothing in this suite could call the function. **The
+one door with no lever at all was also the game's main brake on its headline system.**
+
+`checks/bury.mjs` holds it, and its sabotage names the mechanism rather than merely proving the check
+can fail: make the lever take the game's own free door (`none` — the pit, unrest **+4**) instead of a
+rite and the factor falls from 4.9 to **1.4**, with eight of sixteen houses back at stage 3. The
+brake is the unrest the rite spends, not the call. That is #224's gap as an experiment rather than an
+argument, and it is why `bury` declines to offer `none` at all.
+
+**4 — "Blessed weeks 2.3%"** reads **0.8%** under today's reference and **62-68%** for a house that
+prays. Not a fact about the temple.
+
+**THE FIRST ATTRIBUTION WAS WRONG AND ONLY THE SECOND SEED SET CAUGHT IT.** Five levers were run
+singly and two looked like the brake — `bury` at 1.3% and `court` at 0.6% against 12.0%. `court` was
+a fluke: on the second set it reads **6.9% with 25 risings against the reference's 26**, no effect at
+all, while `bury` replicated at 0.6%. One seed set produced one real finding and one false one. **The
+empty-yard hypothesis was wrong too**, and was the reason the whole isolation was run: the complete
+player reads 0.0% and also ends with no gladiators, and a house with no men cannot rise — but the
+three shedding levers alone keep **22 of 26 risings on both sets**. Two hypotheses tested, both
+false, and the finding that survived is the one neither of them predicted.
+
+**Shipped:** `probes/survey.mjs` (a policy argument, and its standing caveat given a measured price
+in place of prose), `test/checks/bury.mjs`. **No game code touched.** The design consequences —
+whether the free door should stay dominated, and whether the rebellion arc should be this answerable
+by one cheap rite — are #261's build half and are not taken here.
+
 ### v3.251.0 — #260 phase 1: nineteen doors, thirteen of them furniture, and the one with no lever at all
 
 #260 asked which of the game's doors the reference rope never opens, and which of the numbers this
@@ -10586,15 +10648,20 @@ noise floor, and **thirteen of nineteen move nothing this project publishes.** T
 +66%), and `munus` and `bury` — the only two routes to `d.honoured`. `checks/player.mjs` holds the
 reference at zero pulls, both routes to `honoured`, and the lender's cost, each sabotage-verified.
 
-*Phase 2 — the sentence each release entry needs.* The sweep says WHICH figures are conditioned on
-the partial player; it does not say which release entries quote them. Three candidates, in order of
-how much they claim: anything quoting a coin or fame p50 (`tour` moves gold fifty-fold and nothing in
-the suite tours), anything resting on how long a house lives (eight checks pass `loan:` and measure a
-house with half the weeks), and anything that reads a reachability zero as the game's rather than the
-rope's — `dark.mjs`'s own standing caveat already says this and is the right place to start.
+**PHASE 2 SHIPPED, v3.252.0, AND IT FOUND THE SECOND OUTCOME.** The phase was written down as a
+documentation pass; a prose audit of forty entries is unfalsifiable, so `probes/survey.mjs` took a
+policy argument instead and the diff did the work. **57 rows read zero under the reference and
+non-zero under seventeen doors.** Four endings the reference has never reached, `closed` among them
+at 9 and 11 of 16 houses; "blessed weeks 2.3%" is 62-68% for a house that prays; and **the rising is
+largely a fact about the reference player** — 12.0%/8.0% of house-weeks against 0.0%/0.0% — which
+attributes to the single door that had no lever at all until v3.251.0. `checks/bury.mjs` holds it.
 
-**Risk.** Phase 2 is a documentation pass over ~40 release entries and will find figures that are
-simply wrong rather than merely narrow. Budget for the second outcome.
+**Both hypotheses tested along the way were false** (the empty yard; `court` as a second brake), and
+only a second seed set separated the real finding from the fluke.
+
+*What is left of the item* is the narrower documentation pass the measurement now makes cheap: the
+coin and fame p50s (nothing in the suite tours, and `tour` moves gold fifty-fold) and the eight
+checks that pass `loan:`. Neither has been swept.
 
 ---
 
