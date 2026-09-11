@@ -8779,6 +8779,35 @@ function riteLapse(d){
     if(m.done || m.lapsed) continue;
     if(d.week - m.week <= RITE_WINDOW) continue;
     m.lapsed = true; m.done = "none";
+    /* ---- AND SILENCE IS NOT CHARGED WHAT THE PIT IS CHARGED — #261, REFUSED v3.258.0 ----
+       #261's last question was whether forgetting your dead should cost what saying so costs. Built:
+       this function applying `RITES.none` IN FULL — its unrest (+4) and its yard morale (-3) as well
+       as the regard it already reads — on the reading that v3.168.0's note here promises *"silence
+       is never cheaper than the pit for any man, by construction rather than by tuning."*
+
+       IT WORKED, AND IT WAS STILL WRONG. Eight paired seed sets, 16 x 420: the reference's share of
+       weeks in rebellion went **8.2% -> 10.0%**, and the free door stopped being dominated — taking
+       it every time was worse than forgetting on 5 of 8 sets before and **2 of 8 after**. Both of
+       the things #261 asked for.
+
+       `checks/grave.mjs` went red and was right to. Its arm 3 is #224's, arrived at after four
+       wrong answers, and it asks for MORE than the invariant I was quoting: *"neither answer
+       dominates ... if one is strictly cheaper on both, the choice is not a choice"*, written both
+       ways round because either option dominating is the same fault. v3.168.0's promise is scoped
+       to REGARD, per man, at the floor — I generalised a regard-scoped note across unrest and morale
+       and made the pit strictly dominate, which is the mirror of the fault #224 fixed. The pit costs
+       unrest and saves regard; silence costs regard and no unrest. That asymmetry IS the choice, and
+       the free door was never meant to be a brake on the rising — it is the regard-preserving answer.
+
+       AND THE FAIRNESS QUESTION WAS SETTLED ON THE WAY, which is worth keeping. `probes/vigil.mjs`,
+       9,019 house-weeks: the agenda's rite row was in the visible seven on **100.0% of the 3,901
+       weeks a man stood in the window**, all 919 men were named at least once, none went into the
+       ground unmentioned, and the row sat at median position 1 of the seven. Silence here is an
+       informed choice, not an unnoticed one — so if this is ever revisited, that objection is gone
+       and arm 3 is the whole of what stands in the way.
+       Two other checks went red with it — `thin` (a thin house truly broke on 15.9% of its weeks
+       against a 15% bar, from 3-4%) and `faces` (a fixture that no longer hires a doctore) — and
+       both recovered on the revert, so the blast radius was real rather than re-phase noise. */
     const M = RITES.none;
     const KIN_NEGLECT = 2.4, YARD_NEGLECT = 1.15, KIN_BOTTOM = 8, YARD_BOTTOM = 20;
     activeG(d).forEach(g=>{
