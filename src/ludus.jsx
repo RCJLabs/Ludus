@@ -8653,6 +8653,33 @@ function applyRefusal(d, g, method){
    and does not draw on the simulation's stream — see the note over `sayOf`. */
 const riteKin = m => (m.kin||[]).length;
 const RITES = {
+  /* ---- THE FREE DOOR IS NOT WORTH TAKING, AND ITS PRICE IS NOT WHY — #261, REFUSED v3.253.0 ----
+     `none` is the cheapest answer the panel offers. `riteLapse` is the same thing unsaid, and
+     v3.168.0 set the invariant it was meant to satisfy: *"Silence is never cheaper than the pit for
+     any man, by construction rather than by tuning."* It holds on regard (a lapse takes 6.9 against
+     the pit's 6.0 above the floor, and ties at it) and is backwards on the other two fields this
+     row prices — unrest **+4** where silence charges 0, and morale **-3** on a yard man where
+     silence takes 1. #261 asked to "price the free door so that saying nothing is not the best
+     answer available", and those two fields are the price.
+
+     BOTH WERE CORRECTED AND IT CHANGED NOTHING. Built (unrest 4 -> 0, yard morale -3 -> -1), and
+     measured against the shipped build on the SAME eight seed sets, 16 houses x 420 weeks each
+     (`probes/pyre.mjs`): the rebellion share of a house that takes this door every time reads a
+     mean of **9.4% before the fix and 9.4% after**, and the paired gap against a house that simply
+     forgets its dead goes from **+1.91 points to +1.89**. Two independent eight-set runs, and the
+     reference and `rite` arms came back byte-identical in both — nothing here is read by any path
+     but an explicit `holdMunera(d, gid, "none")`, which is the control that says the build was
+     really in the build.
+
+     SO THE PRICE IS NOT THE PROBLEM AND THE CHANGE IS REVERTED. What the measurement does support
+     is the shape of the door rather than its cost: across those eight sets the cheap RITE takes the
+     rebellion share from 7.5% to **2.6%** and this door takes it to **9.4%** — the brake is the
+     rite's own unrest credit (-7, and -19 for games), and `none` has none to give. A door whose
+     price is zero and whose effect is zero is not mispriced; it is the absence of an answer wearing
+     the costume of one, which is what its own text says it is.
+     A fix worth building would give the pit something to spend — and that is a design decision
+     about whether silence should be answerable at all, not the tuning pass #261 asked for. It is
+     left open there with these numbers attached. `checks/bury.mjs` holds the gap. */
   none:   { key:"none", name:"Nothing", cost:()=>0, unrest:4, regard:-6, fame:0, mercy:0,
     desc:"He goes into the ground and the week goes on. Nobody says anything about it, which is how you know.",
     line:(d,m)=>sayOf([
