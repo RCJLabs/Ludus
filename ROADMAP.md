@@ -4389,6 +4389,57 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.256.0 — #263: it is the ratio of weeks, and the source says so on purpose
+
+#263 asked where a fix for the sixtyfold road-versus-yard gap would go: is the money in the GOING
+(town purses, `BAY_DECAY`) or in the NOT RETURNING (Capua's own draw underpriced)?
+`probes/capua.mjs` splits every week of six policies by where the house was standing. **It is
+neither, and two of the three candidate levers were ruled out by controls rather than by argument.**
+
+**NOT CAPUA'S DRAW — THAT WAS THE SPENDING.** The first cut read the reference earning **-39.8d a
+week standing in Capua** against +250.5 in a town, and nearly published "the home city is a cost
+centre". Capua is also where every denarius is SPENT: a house on the road cannot build a room, hire
+a cook or throw a party. With buy, build, folk, staff, gear, party and doctore all off, Capua pays
+**+144.8d a week** and is perfectly solvent. The probe's own header had written that confound down
+before the run; it still nearly went out as a finding.
+
+**NOT FRESHNESS.** Both the reference and the tourer are out of Capua; only the tourer keeps moving
+to stay inside `STAY_FRESH`. The spending arms put their away weeks at 250.5 against 496.0, which
+reads as freshness paying double. With the spending taken out it is **523.5 against 541.2** — three
+per cent. Moving on every time buys almost nothing over leaving when the welcome wears.
+
+**AND THE FADE IS NOT BROKEN EITHER.** `stay` — go once, to the town that knows you least, and never
+move again — is the only policy in this harness that eats `BAY_DECAY`. It earns **187.5d a week away
+against a mover's 523.5**, on 63 bouts a hundred weeks against 88. The brake the game built for the
+emigrant works, and the sabotage that proves this check can see it is to let the resident come home:
+the ratio goes from 47% to **99%**.
+
+| the same thrifty house | Capua | a town | ratio |
+|---|---|---|---|
+| per week | 144.8d | 523.5d | **3.6x** |
+| per bout | 173d | 593d | **3.4x** |
+| bouts per hundred weeks | 84 | 88 | — |
+
+**SO IT IS THE RATIO OF WEEKS.** The per-BOUT ratio tracks the per-week ratio almost exactly, so it
+is the size of the purse and not the number of cards. The reference spends **3.5-6.5%** of its weeks
+away; a deliberate tourer spends **68.5%**. That ratio is the entire sixtyfold gap.
+
+**And the source states the intent in as many words.** `src` line 14140: *"Capua's patrons neither
+ask nor credit wants while you are down the bay — their standing decays as it always has ... **A tour
+is untouched; an emigration bleeds.**"* The nomad paying nothing is the design, carried out exactly.
+What the measurement adds is that "untouched" **has no ceiling**, and a house can spend two thirds of
+its life collecting the untouched rate.
+
+**NOTHING IS REBALANCED HERE, and #263 stays open for that decision.** Putting a ceiling on it is a
+new brake on a behaviour the source deliberately left free; it would re-base every figure in this
+project at once, and `checks/tour.mjs` is written to go red when the gap closes. That is a decision
+to take on its own release, the way #245 took the die's weighting.
+
+**Shipped:** `test/probes/capua.mjs` (six policies, every week split by where the house stood, with
+thrift arms so earning can be told from spending), `test/checks/abroad.mjs` (the three measurements a
+rebalance would have to start from, sabotage-verified), and the `stay` lever — the resident, the only
+policy in the harness that pays the fade. **No game code touched.**
+
 ### v3.255.0 — #262: the tail is not the die's, and neither is the head
 
 #262 asked the one question that decides what to do about a thin tail: for each of eight rare
@@ -10904,11 +10955,24 @@ What it costs is CONTENT: `ludusNight` 179 → 11, `feud.weeks` 1,120 → 348, `
 `did.walk` 364 → 8, and half the saga arcs. A touring house is richer, more famous, higher-ranked,
 and meets less of the game than one that stays.
 
-*Verify first.* Whether the gap is the ROAD or the RETURN. `road` (reactive, default on) already
-takes the invitations `bayCall` sends and comes home; `tour` differs only in going somewhere on
-purpose and never coming back to Capua. Price those two apart before touching anything: if the money
-is in the going, the town purses or `BAY_DECAY` are the lever; if it is in the NOT RETURNING, then
-Capua's own draw is what is underpriced and the fix is there instead.
+**VERIFY-FIRST ANSWERED v3.256.0, AND ALL THREE CANDIDATE LEVERS WERE RULED OUT.** Not Capua's draw
+(with the spending switched off it pays +144.8d a week and is solvent — the -39.8d first reading was
+the fact that Capua is where money is SPENT). Not freshness (away weeks, spending out, are 523.5
+against the tourer's 541.2 — three per cent). Not a broken fade (the resident who eats `BAY_DECAY`
+earns 187.5d away against a mover's 523.5, and the sabotage that lets him come home takes the ratio
+from 47% to 99%).
+
+**It is the ratio of weeks.** A town week pays **3.6x** a Capua week and a town bout **3.4x** a Capua
+bout, at the same bout rate — so it is the purse and not the card count. The reference spends 3.5-6.5%
+of its weeks away and a deliberate tourer spends 68.5%. And `src` line 14140 states the intent
+outright: *"A tour is untouched; an emigration bleeds."* The nomad paying nothing is deliberate. What
+the measurement adds is that **"untouched" has no ceiling.**
+
+*What is left is one design decision*, and it is genuinely open: should the game brake a house that
+spends two thirds of its life on the road, when it deliberately declines to brake a house that
+spends two months there? A ceiling on cumulative weeks away, or a Capua-side standing cost that does
+not reset when you change town, are the two shapes. `checks/abroad.mjs` holds the three measurements
+either would have to start from.
 
 **Risk.** Every figure in this project is a stay-at-home figure (v3.254.0), so a change here re-bases
 all of them at once — and `checks/tour.mjs` is written to go red if the gap closes, which is the

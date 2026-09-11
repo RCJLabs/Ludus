@@ -1530,8 +1530,19 @@ export async function installRope(p){
          of my own, so it tracks the constant instead of drifting from it.
          AFTER the bout, because `comeHome` nulls `d.games` — deciding to leave before fighting
          throws away the card that was the reason to be there. */
-      if(on("road") && !o.tour && d.city && !d.travel && !d.rome && A.welcomeOf(d) < 1){
+      if(on("road") && !o.tour && !o.stay && d.city && !d.travel && !d.rome && A.welcomeOf(d) < 1){
         if(fin(A.comeHome,[d])) bump("cameHome");
+      }
+      /* ---- THE RESIDENT — #263, and the house ludus.jsx:9632 was written about ----
+         `road` leaves when the welcome wears and `tour` moves on to the next town; BOTH of them are
+         gone before `STAY_FRESH` runs out, so neither ever pays the fade the game built to stop a
+         house living away from home. `stay:true` is the arm that does: go once, to the town that
+         knows the house least, and never move again. It is the only policy in this harness that
+         eats `BAY_DECAY`, which is what makes it the control for whether the fade does anything. */
+      if(o.stay === true && !d.city && !d.travel && !d.rome && !d.over){
+        const towns = (A.CITY_KEYS||[]).filter(k=>k !== d.city);
+        const next = towns.sort((a,b)=>A.knownIn(d,a) - A.knownIn(d,b))[0];
+        if(next && fin(A.setOut,[d, next])) bump("setOut");
       }
       /* ---- THE HOUSE THAT WORKS THE WHOLE BAY (#160) ----
          `road` is REACTIVE: it takes the invitation `bayCall` happens to send and comes home when
