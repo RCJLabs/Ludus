@@ -4389,6 +4389,63 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.257.0 — #263: the brake was never weak, it was walked round
+
+v3.256.0 ruled out all three levers #263 proposed and left one design call: should a house that
+spends two thirds of its life on the road pay something? The measurement that decides it is whether
+Capua's own counterweight bites a NOMAD, and it turned the call into a defect.
+
+**THE COUNTERWEIGHT IS REAL AND CORRECTLY KEYED.** `patronWeek` stops the patrons asking while the
+house is away (`!d.city && !d.travel` gates `askWant`) and decays their favour at **2.5x**. That is
+keyed to being away rather than to which town, so unlike `welcomeOf` it does not reset when the
+wagons move on — a nomad pays it every week. Its own note says why, and records the measurement it
+was tuned on: *"standing decays without attention — and attention cannot be paid from Puteoli ... a
+house sixty weeks resident down the bay ended with MORE favour than it left with."*
+
+**AND IT WORKS — STRIP THE PARTIES AND THE NOMAD COLLAPSES.** Four seed sets, 16 x 420:
+
+| | favour | census rung |
+|---|---|---|
+| reference | 71.0-79.4 | 3.2-3.9 |
+| tourer | **84.4-86.0** | **4.5-4.9** |
+| tourer, parties off | **32.5-46.4** | **1.2-2.3** |
+
+Without parties a nomad's standing is roughly HALF the reference's and its rung a third. The penalty
+is severe. With them it comes home with more standing than a house that never left.
+
+**`hostParty` HAD NO LOCATION GATE.** Gold, a fortnight's cooldown, and nothing else — then `+fame`,
+`+warm with every patron`, and the line *"You host a party. Capua's better sort attend."* A deliberate
+tourer threw **1,077-1,378 parties a run and 87-96% of them while out of Capua.** The brake was never
+weak. It was walked round by a function contradicting a rule the source states twenty thousand lines
+away.
+
+**GATED, on `d.city || d.travel`** — the same condition `askWant` and the decay already use, rather
+than a new rule. Rome is deliberately excluded: the decay does not charge Rome weeks either. The
+button says which town you are standing in instead of looking live and doing nothing.
+
+**Measured after, same four sets:** the tourer's favour **84.4-86.0 → 40.3-63.5**, census rung
+**4.5-4.9 → 1.9-3.7** — now BELOW the reference's 71.4-80.0 and 3.3-4.0, which is itself unchanged.
+Parties thrown away from Capua: **0%**.
+
+**It does not flatten the road, and that is the point.** Parties cost coin, so the tourer that cannot
+throw them ends richer: over eight paired seed sets the gold gap is **8 of 8 richer by 897 to 300,282
+denarii**, stronger than before. What comes back is the trade the source describes — the road pays in
+coin, the yard pays in standing, and it stops paying in both.
+
+**AND IT CORRECTS v3.254.0's OTHER HALF.** That release read "8 of 8 higher on fame, by 263 to 9,096"
+and `checks/tour.mjs` carried a bar on it. It was measuring a build where a tourer could throw a
+thousand parties from Puteoli, each worth `+p.fame`. Re-measured on the gated build: **6 of 8, with
+one delta of zero and one negative (-947).** The fame bar is removed and the figure is reported. A
+claim that does not survive a change to the thing producing it was never about what it named.
+
+**Two checks went red and both were right to.** `bulk`'s SECT cap (1485 → 1489, four lines of button
+label, documented in the entry) and `tour`'s fame bar. 188 of 190 on the first run after a game-code
+change that re-phases every seeded fixture — the re-phase itself broke nothing.
+
+**Shipped:** `hostParty` gated on being away and its button given the reason, `checks/tour.mjs`
+re-based on the gated build with its fame claim retired, `probes/capua.mjs` extended with the patron
+instrumentation, and `bulk`'s SECT allowance raised with its why. **#263 is closed.**
+
 ### v3.256.0 — #263: it is the ratio of weeks, and the source says so on purpose
 
 #263 asked where a fix for the sixtyfold road-versus-yard gap would go: is the money in the GOING
@@ -4543,8 +4600,10 @@ sets**:
 | reference gold p50 | 181, 84, 4271, 15, 1258, 46, 86, 1020 | **181** |
 | tour gold p50 | 8670, 11283, 147480, 59586, 10080, 140818, 7968, 10949 | **11,283** |
 
-**Eight of eight richer, by 7,882 to 143,209 denarii. Eight of eight higher on fame**, by 263 to
-9,096. Census rung 4-6 against 5-7. The reference spends 129-359 of its ~3,500 weeks out of Capua;
+**Eight of eight richer, by 7,882 to 143,209 denarii.** ~~Eight of eight higher on fame~~ — **the
+fame half was the parties and is corrected at v3.257.0**: re-measured on the gated build it is 6 of
+8, with one delta of zero and one negative. Census rung 4-6 against 5-7 (and after the gate the
+tourer reaches a LOWER rung than the reference). The reference spends 129-359 of its ~3,500 weeks out of Capua;
 the tourer 2,001-3,654 of ~4,000, and breaks camp on purpose **0 times in every seed set measured**.
 
 So every coin figure this project publishes is a stay-at-home figure, and the gap is about sixtyfold
@@ -10968,11 +11027,14 @@ of its weeks away and a deliberate tourer spends 68.5%. And `src` line 14140 sta
 outright: *"A tour is untouched; an emigration bleeds."* The nomad paying nothing is deliberate. What
 the measurement adds is that **"untouched" has no ceiling.**
 
-*What is left is one design decision*, and it is genuinely open: should the game brake a house that
-spends two thirds of its life on the road, when it deliberately declines to brake a house that
-spends two months there? A ceiling on cumulative weeks away, or a Capua-side standing cost that does
-not reset when you change town, are the two shapes. `checks/abroad.mjs` holds the three measurements
-either would have to start from.
+**CLOSED v3.257.0, AND THE ANSWER WAS A FOURTH OPTION.** The Capua-side standing cost that does not
+reset when you change town ALREADY EXISTS — `patronWeek` decays patron favour at 2.5x while away and
+stops the patrons asking at all — and it is severe: strip the parties out and a nomad's standing is
+half the reference's and its census rung a third. It was being walked round by `hostParty`, which had
+no location gate and let a tourer throw 1,077-1,378 parties a run, 87-96% of them from down the bay,
+each raising every Capua patron's favour. Gated on the same `d.city || d.travel` the decay already
+uses. The road still pays in coin (8 of 8 paired sets, by 897-300,282d) and no longer pays in
+standing: the tourer's rung goes from above the reference's to below it.
 
 **Risk.** Every figure in this project is a stay-at-home figure (v3.254.0), so a change here re-bases
 all of them at once — and `checks/tour.mjs` is written to go red if the gap closes, which is the

@@ -61,6 +61,13 @@ const out = await p.evaluate(([H, W, SETS, ARMS])=>{
     const at = { capua:{ w:0, gold:0, bouts:0, wins:0 }, away:{ w:0, gold:0, bouts:0, wins:0 },
                  travel:{ w:0, gold:0, bouts:0, wins:0 }, rome:{ w:0, gold:0, bouts:0, wins:0 } };
     const endGold=[], endFame=[]; let weeks=0, setOuts=0, homes=0;
+    /* ---- #263's design call: does Capua's own cost actually bite a NOMAD? ----
+       `patronWeek` gates `askWant` on `!d.city && !d.travel` and decays favour at
+       `((d.city||d.travel)?2.5:1)` — keyed to being AWAY and not to which town, so unlike
+       `welcomeOf` it does not reset when the wagons move on. Whether it is big ENOUGH is the
+       question the ceiling-or-nothing decision turns on, so it is measured rather than reasoned:
+       the house favour every week, the patrons held, and the wants a patron ever got to ask. */
+    const favW=[], patW=[]; let wantsAsked=0, wantsSeen=0, hadWant=0, riseSum=0;
     for(let i=0;i<H;i++){
       const d = A.newGameState("Cp","clean",`${seed}-${i}`);
       for(let w=0;w<W;w++){
@@ -73,6 +80,11 @@ const out = await p.evaluate(([H, W, SETS, ARMS])=>{
         weeks++;
         const b = at[where];
         b.w++; b.gold += d.gold - g0;
+        { const ps = (d.patrons||[]);
+          favW.push(d.favor||0); patW.push(ps.length); riseSum += A.riseOf(d);
+          const open = ps.filter(x=>x && x.want).length;
+          if(open > hadWant) wantsAsked += open - hadWant;
+          hadWant = open; wantsSeen += open; }
         if(did){ if(typeof did.bout === "number") b.bouts += did.bout;
           if(typeof did.won === "number") b.wins += did.won;
           if(typeof did.setOut === "number") setOuts += did.setOut;
@@ -80,7 +92,9 @@ const out = await p.evaluate(([H, W, SETS, ARMS])=>{
       }
       endGold.push(Math.round(d.gold)); endFame.push(Math.round(d.fame||0));
     }
-    return { at, weeks, setOuts, homes, goldP50:med(endGold), fameP50:med(endFame) };
+    return { at, weeks, setOuts, homes, goldP50:med(endGold), fameP50:med(endFame),
+      favMean: mean(favW), favP50: med(favW), patMean: mean(patW),
+      wantsAsked, wantWeeks: wantsSeen, riseMean: weeks ? riseSum/weeks : 0 };
   };
 
   const res = {};
@@ -113,6 +127,13 @@ for(const nm of out.arms){
       + `${rp((b.gold/b.w).toFixed(1),9)}${rp((100*b.bouts/b.w).toFixed(1),12)}`
       + `${rp(b.bouts ? (100*b.wins/b.bouts).toFixed(0) : "—",7)}`);
   }
+  { const R2 = out.res[nm];
+    const avg = f => R2.reduce((n,r)=>n+f(r),0)/R2.length;
+    const tw = R2.reduce((n,r)=>n+r.weeks,0);
+    console.log(`  ${pad(nm,6)}${pad("patrons",8)} favour mean ${avg(r=>r.favMean).toFixed(1)} (p50 ${avg(r=>r.favP50).toFixed(0)})`
+      + ` · ${avg(r=>r.patMean).toFixed(2)} held · census rung ${avg(r=>r.riseMean).toFixed(2)}`
+      + ` · ${R2.reduce((n,r)=>n+r.wantsAsked,0)} wants asked in ${tw} weeks`
+      + ` (${(100*R2.reduce((n,r)=>n+r.wantWeeks,0)/tw).toFixed(1)}% of weeks with one open)`); }
   const g = out.res[nm].map(r=>r.goldP50), f = out.res[nm].map(r=>r.fameP50);
   console.log(`  ${pad(nm,6)}${pad("—",8)} end gold p50 per set ${g.join(", ")} · fame p50 ${f.join(", ")} · setOut ${pool(nm).setOuts}, cameHome ${pool(nm).homes}\n`);
 }
