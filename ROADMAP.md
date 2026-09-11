@@ -4389,6 +4389,85 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.251.0 — #260 phase 1: nineteen doors, thirteen of them furniture, and the one with no lever at all
+
+#260 asked which of the game's doors the reference rope never opens, and which of the numbers this
+project publishes are conditioned on that. `probes/player.mjs` answers it: **19 levers, one at a
+time, 96 houses x 420 weeks an arm, six seed prefixes**, with the reference run on the same six so
+its own between-prefix spread is the noise floor.
+
+**The item's own premise was wrong in two of three places.** It named three doors with "no lever at
+all" — selling a man, `holdMunera`, `makeOffering`. Selling shipped as `sell` at v3.249.0;
+`makeOffering` has had `rites` since v3.130.0 and `stageMunus` has had `munus`. (v3.250.0's entry
+repeats the error one line above this one — "the reference player has no lever for a munus or an
+offering" — and it is corrected by this release, not by an edit to that one.) **Only `holdMunera`
+was really shut.** It is opened here as `bury`, and the count of shut doors is not seven: it is
+**nineteen**, and all nineteen fire.
+
+**What moves, and what does not** (delta against the reference on the same six prefixes; nothing
+counted as moved unless it clears the spread of the reference's own prefixes):
+
+| lever | what moves |
+|---|---|
+| `tour` | gold p50 **284 → 14,612** · fund 3,441 → 6,908 · fame 2,764 → 5,584 · census rung 5 → 7 |
+| `loan` | alive **21 → 1** · weeks 21,585 → 11,261 · fame 2,764 → **641** · rung 5 → 2 |
+| `payoff` | alive 21 → 2 · weeks 21,585 → 10,538 · fame 2,764 → 588 · rung 5 → 2 |
+| `court` | fame 2,764 → **4,584** |
+| `munus` | `honoured` **0 → 1,405** |
+| `bury` | `honoured` **0 → 1,017** |
+| the other thirteen | nothing clears the band |
+
+So the answer to the item is: **thirteen of nineteen are content a player can take or leave.** Six
+are not, and two of those six are the lender — which is not a door like the others at all. It takes
+the house's life: half the weeks, a quarter of the fame, and 0 of 16 houses left standing in every
+one of five seed sets. Eight checks in this suite pass `loan:`, and they are measuring a different
+game from the one every other check measures.
+
+**`d.honoured` is the instrument's zero, which is #261's verify-first answered.** Two call sites
+write it — `stageMunus` on a funeral occasion and `holdMunera` with `games` — and the rope had a
+lever for the first and none for the second, so it read 0 in every figure this project has ever
+published. What that zero has been hiding is a **feat and a lesson**: `munera` wants three held
+games for 45 fame and the `order` perk, and the villa lesson is `done` at one. Every reachability
+figure in this project was taken on a house that could not complete either.
+
+**And #261's headline number was a ceiling.** `survey` published *"175 unburied"*; `markUnburied`
+**caps `d.unburied` at fourteen**, and the row was `d.unburied.length` on the night the house died,
+summed. Sixteen houses could not have printed above 224. Counted by identity — every object that
+ever entered the list, so the cap cannot hide one — the same 3,538 weeks read **387 men marked, 377
+of them (97.4%) lapsed unanswered, 0 answered, 0 honoured.** `probes/grave.mjs` independently reads
+288 marked and 96% lapsed over 3,235 weeks, which is the same rate from a second instrument. This is
+#258's fault class with a twelfth instance in a different costume — not an open/shut flag read late,
+but a capped list read as a running total — which is why FAULT NINE did not catch it.
+
+**`checks/player.mjs` holds three things**, each sabotage-verified:
+
+1. **The reference pulls none of the nineteen.** Not a statistic — the definition of the reference
+   player, and it has been broken before: v3.236.0 found `booking` silently fielding the booked man
+   for every rope in the suite, caught only by an unrelated tell going red. Sabotage-verified by
+   making `bury` default-on: red, naming the lever and its count.
+2. **`d.honoured` is 0 for the reference and reachable by both routes** (measured 245-273 and
+   165-247 over five seed sets). Sabotage-verified by killing the `bury` lever: red.
+3. **The lender takes the house's life** — one bar on weeks, at 90% against a measured 26-66%, with
+   fame and the census rung reported beside it rather than asserted, because all three wander
+   together and three bars is three chances to go red on one house's luck.
+
+**The complete player has an empty yard.** Seventeen doors open at once and roster p50 is **0 in all
+five seed sets** — `free`, `retire` and `sell` shed every eligible man — while gold p50 goes 4,034 →
+21,659 and fame 3,167 → 10,187. It is not a policy anybody would run; it is the arm a gate check can
+afford, and it is why the lender is measured separately: with `loan` in it a house lives 3,212 weeks
+against the reference's 10,800 and the `yard` card never comes up at all.
+
+**Two instrument faults of my own, both the label class this project keeps meeting.** The probe read
+`d.rank`, which does not exist — the census rung is `d.rise.rank` — and published a column of zeros
+for every arm; and it summed `did.events`, an object of per-event counts, into the counter row and
+printed a wall of `[object Object]`. The first cut also took its bars from a single prefix, where a
+zero spread made every delta significant and the `ruin` row "moved" in fifteen of eighteen arms on
+three events; six prefixes and a `2*sqrt(N)` floor under the band fixed it.
+
+**Shipped:** `test/harness.mjs` (the `bury` lever, and `R.booked` so `booking:true` has a counter at
+all), `test/probes/player.mjs`, `test/checks/player.mjs`, `probes/survey.mjs`'s `unburied` row split
+into `marked` / `answered` / `lapsed` / `openAtEnd` / `listOnLastNight`. **No game code touched.**
+
 ### v3.250.0 — #258: eleven rows of the survey were counted on the night the house died
 
 `probes/survey.mjs` is this project's "what a player MEETS" instrument, and its own header already
@@ -10497,35 +10576,49 @@ point of running it.
 
 ---
 
-**#260 — The Reference Player Is a Partial Player** *(instrument · medium · 2 phases)*
+**#260 — The Reference Player Is a Partial Player** *(instrument · medium · 2 phases)* — **PHASE 1
+SHIPPED, v3.251.0.** The premise was wrong in two of three places: only `holdMunera` had no lever
+(`sell` shipped at v3.249.0, `makeOffering` has had `rites`, `stageMunus` has had `munus`), and the
+count of shut doors is **nineteen**, not seven. All nineteen fire. `probes/player.mjs` swept them one
+at a time, 96 x 420 an arm on six seed prefixes with the reference's own between-prefix spread as the
+noise floor, and **thirteen of nineteen move nothing this project publishes.** The six that do:
+`tour` (gold p50 284 → 14,612), `loan` and `payoff` (alive 21 → 1, fame quartered), `court` (fame
++66%), and `munus` and `bury` — the only two routes to `d.honoured`. `checks/player.mjs` holds the
+reference at zero pulls, both routes to `honoured`, and the lender's cost, each sabotage-verified.
 
-Four systems have opt-in levers that are **off by default** — `court`, `gambit`, `loan`, `works` —
-and three have **no lever at all**: selling a man (#259), `holdMunera`, and `makeOffering`. All seven
-therefore read as never-engaged in every figure this project publishes, and the survey's own zeros
-above cannot tell the two cases apart.
+*Phase 2 — the sentence each release entry needs.* The sweep says WHICH figures are conditioned on
+the partial player; it does not say which release entries quote them. Three candidates, in order of
+how much they claim: anything quoting a coin or fame p50 (`tour` moves gold fifty-fold and nothing in
+the suite tours), anything resting on how long a house lives (eight checks pass `loan:` and measure a
+house with half the weeks), and anything that reads a reachability zero as the game's rather than the
+rope's — `dark.mjs`'s own standing caveat already says this and is the right place to start.
 
-*Verify first.* Turn each on, one at a time, against the reference on identical seeds, and report
-which of the numbers this project quotes actually move. The ones that do not move are content the
-player can take or leave; the ones that do are figures that have been conditioned on a partial player
-without saying so.
-
-**Risk.** `works:true` already carries a note saying switching it on "re-bases what a long-lived house
-owns and earns". Expect the same of the others, and expect the answer to be a list of release entries
-needing a sentence added.
+**Risk.** Phase 2 is a documentation pass over ~40 release entries and will find figures that are
+simply wrong rather than merely narrow. Budget for the second outcome.
 
 ---
 
-**#261 — A Hundred And Seventy-Five Unburied, And Nobody Honoured** *(gameplay · small–medium)*
+**#261 — Three Hundred And Eighty-Seven Unburied, And Nobody Honoured** *(gameplay · small–medium)*
+— **VERIFY-FIRST ANSWERED, v3.251.0; THE BUILD IS STILL OPEN.**
 
-`survey`: **`honoured 0, unburied 175`** over 3,538 weeks. `src` records the same thing beside the
-code — *"`d.honoured` read 0 across every measurement this project has taken"* — and #224's own gap,
-found again in v3.234.0, is that at the regard floor silence ties the pit on regard and costs no
-unrest, so it dominates. The dead pile up and the rite is never taken.
+The headline was a ceiling. `survey` published *"`honoured 0, unburied 175`"* over 3,538 weeks;
+`markUnburied` **caps `d.unburied` at fourteen**, and the row read that capped list on the night each
+house died. Counted by identity the same frame reads **387 men marked, 377 of them (97.4%) lapsed
+unanswered, 0 answered, 0 honoured** — and `probes/grave.mjs` reads 288 marked and 96% lapsed over
+3,235 weeks from a second instrument. The dead pile up twice as fast as the row said.
 
-*Verify first.* Whether this is the rope or the game, which #260's lever settles first: `honoured` is
-written by two call sites, and if neither is reachable by any policy the reference player can run,
-the zero is the instrument's. If a policy CAN reach it, measure what taking it is worth against the
-175 it would answer.
+**And the zero is the instrument's.** `d.honoured` has two writers — `stageMunus` on a funeral
+occasion and `holdMunera` with `games` — and both are reachable: 245-273 and 165-247 held over five
+seed sets at 16 x 420. The rope had a lever for the first and none for the second until v3.251.0.
+What the zero was hiding is a **feat and a lesson**: `munera` wants three held games for 45 fame and
+the `order` perk, and the villa lesson is `done` at one.
+
+*So what is left is the design half*, which the answered verify-first sharpens rather than closes:
+**#224's gap is still there.** At the regard floor, silence ties the pit on regard and costs no
+unrest, so lapsing dominates the one free door the interface offers (`none`: unrest +4, regard -6).
+The `bury` lever deliberately does not offer `none` for exactly that reason. Measure what a rite is
+worth against the 377 it would answer, and price the free door so that saying nothing is not the
+best answer available.
 
 **Risk.** #224 is closed. This re-opens a gap it recorded rather than the item.
 
