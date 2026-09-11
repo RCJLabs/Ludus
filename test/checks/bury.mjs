@@ -48,9 +48,19 @@
    silence, which is #224's gap stated as an experiment rather than an argument, and it is why the
    `bury` lever declines to offer `none` at all.
 
+   ---- AND THE GAME'S OWN FREE DOOR BUYS NOTHING, WHICH IS #261'S BUILD HALF REFUSED ----
+   `none` — "Nothing", cost 0, the cheapest answer the panel offers — is a fifth arm here because
+   #261 asked whether it should be repriced and the answer measured out as no. Its brake factor is
+   **0.88-1.43 against the rite's 4.9-7.9** at this frame: a house that takes it every time is no
+   better off than one that forgets its dead entirely, and across eight seed sets on a separate
+   frame it was 1.9 points WORSE. The two fields where the pit is priced above silence (unrest +4,
+   yard morale -3) were corrected and measured, and the paired gap moved from +1.91 points to
+   **+1.89** — so the price is not what is wrong with it. See the note over `RITES.none` in `src`.
+   The brake is the rite's unrest CREDIT, -7 and -19, and this door has none to give.
+
    THE BARS ARE DIRECTION AND MAGNITUDE, NOT THE NUMBER. The rebellion share is 8-12% under the
    reference and 0.6-1.3% under `bury` — an order of magnitude, measured twice — so the bar is set
-   at a factor of two and the figures are reported beside it. FOUR ARMS. */
+   at a factor of two and the figures are reported beside it. */
 import { installRope } from "../harness.mjs";
 
 export const name = "bury";
@@ -81,6 +91,10 @@ const BRAKE       = 2.0;   /* ref's rebellion share over bury's; measured 4.9x-7
    spread than anything else in this file. 0.70 keeps the claim (the deep end is answered) without
    resting it on one house's luck. */
 const STAGE3_CUT  = 0.70;
+/* the rite's brake factor over the free door's — the claim is that one of them is a brake and the
+   other is not, and this states it as the gap rather than as two bars that could both slip through
+   the same window. Measured 3.4, 7.8, 8.5, 6.1, 5.0 over the five sets. */
+const BRAKE_GAP   = 2.0;
 
 export async function run({ p }){
   const lines = [], bad = [];
@@ -123,11 +137,11 @@ export async function run({ p }){
       return { weeks, risings, rebWeeks, stage3, marked, lapsed, answered, ends,
         share: weeks ? rebWeeks / weeks : 0 };
     };
-    return { ref:arm({}), bury:arm({ bury:true }) };
+    return { ref:arm({}), bury:arm({ bury:true }), none:arm({ bury:"none" }) };
   }, [HOUSES, WEEKS]);
 
   if(r.why) return { pass:false, why:r.why, lines };
-  const { ref, bury } = r;
+  const { ref, bury, none } = r;
   const pct = x => (100*x).toFixed(1);
   const endStr = e => Object.entries(e).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}`).join(", ");
 
@@ -149,6 +163,15 @@ export async function run({ p }){
   if(!(bury.stage3 <= ref.stage3 * STAGE3_CUT))
     bad.push(`${bury.stage3} of ${HOUSES} houses reached rebellion stage 3 while burying their dead, against ${ref.stage3} that did not `
       + `[measured 1-3 against 6-9 houses over five seed sets] — the deep end of the arc is no longer answered by the rite`);
+  /* 3 — and the game's own free door is not one */
+  const noneFactor = none.share > 0 ? ref.share / none.share : Infinity;
+  const gap = noneFactor > 0 ? factor / noneFactor : Infinity;
+  lines.push(`   the free door ("Nothing", cost 0): ${none.rebWeeks} of ${none.weeks} (${pct(none.share)}%), ${none.risings} risings, answering ${none.answered} men — a factor of ${noneFactor === Infinity ? "∞" : noneFactor.toFixed(2)} against the rite's ${factor === Infinity ? "∞" : factor.toFixed(1)} [measured 0.88-1.43 against 4.9-7.9]`);
+  if(!(gap >= BRAKE_GAP))
+    bad.push(`the rite braked only ${gap === Infinity ? "∞" : gap.toFixed(1)}x as hard as the free door against a bar of ${BRAKE_GAP} `
+      + `[measured 3.4x-8.5x] — #261's build half was REFUSED on exactly this gap, on the reading that `+"`none`"+` has no unrest credit to give and `
+      + `is not mispriced but empty. If the two doors have converged, that refusal is worth re-reading`);
+
   if(bury.risings > ref.risings)
     bad.push(`a house that buries its dead rose MORE often (${bury.risings}) than one that does not (${ref.risings}) — the direction of the whole finding has reversed`);
 

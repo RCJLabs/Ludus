@@ -4389,6 +4389,64 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.253.0 — #261: the free door was built, measured, and put back
+
+#261's build half asked for one thing: *"price the free door so that saying nothing is not the best
+answer available."* The door is `RITES.none` — "Nothing", cost 0, *"he goes into the ground and the
+week goes on"* — and v3.168.0 had already written down the invariant it was meant to satisfy:
+**"Silence is never cheaper than the pit for any man, by construction rather than by tuning."**
+
+That invariant holds on regard and is backwards on the other two fields the row prices. A lapse
+takes 6.9 regard against the pit's 6.0 above the floor and ties at it; but the pit charges **unrest
++4** where silence charges nothing, and **morale -3** on a yard man where silence takes 1. So the
+price was the obvious thing to fix, and it was fixed.
+
+**IT CHANGED NOTHING.** Built (unrest 4 → 0, yard morale -3 → -1), rebuilt, and measured against the
+shipped build on the **same eight seed sets**, 16 houses x 420 weeks each:
+
+| | mean rebellion share, `none` arm | paired gap against the reference | sets where `none` is worse |
+|---|---|---|---|
+| shipped | 9.4% | **+1.91 points** | 7 of 8 |
+| with both fields corrected | 9.4% | **+1.89 points** | 6 of 8 |
+
+The reference and `rite` arms came back **byte-identical across both builds**, which is the control
+that says the change really was in the build: nothing but an explicit `holdMunera(d, gid, "none")`
+reads those fields, and nothing in the suite makes that call. **The change is reverted and the
+refusal is recorded beside the code refused.**
+
+**What the measurement does support is the door's shape, not its cost.** Across those eight sets the
+cheap RITE takes the rebellion share from **7.5% to 2.6%** and the free door takes it to **9.4%** —
+level with forgetting, or a little worse. The brake v3.252.0 found is the rite's unrest CREDIT (-7,
+and -19 for games) and this door has none to give. A door whose price is zero and whose effect is
+zero is not mispriced; it is the absence of an answer wearing the costume of one, which is what its
+own text says it is. Giving the pit something to spend is a design decision about whether silence
+should be answerable at all — not the tuning pass the item asked for — and is left open with these
+numbers attached.
+
+**And burying is not a free win either**, which was the mirror question worth asking after v3.252.0
+showed the `bury` arm living longer and ending better. It costs: gold p50 goes 1,033/3,952 under the
+reference to 61/-316 under the cheap rite, and `ruin` endings rise with it. It is a trade.
+
+**TWO MEASUREMENT FAULTS OF MY OWN, and the second nearly shipped a change on a finding that was
+2.5x too big.**
+
+- **A median described a skewed distribution and I read it as the whole story.** #224's recorded
+  mechanism is that at the regard floor silence ties the pit, so the floor is where the door is
+  dominated. The first cut reported the roster's share at or under 22 regard as **p50 0%** on every
+  arm — "the floor never binds" — and adding the mean and the max to the same sample gave **mean
+  16-21% and worst-week 100%.** The floor binds about one lapse in five. The p50 was true and the
+  sentence it supported was false.
+- **The fix was evaluated on two seed sets** — immediately after the eight-set run that showed two
+  sets cannot resolve an effect this size. Two sets had put the `none` arm at 11.8%/9.2% against a
+  reference of 7.1%/4.6%, which reads as a doubling; eight paired sets put the real gap at **+1.9
+  points on a 7.5% base**. The game code was already changed when that came out.
+
+**Shipped:** `test/probes/pyre.mjs` (five arms — never bury, the free door, the cheap rite, full
+games, and the dearest affordable — pricing the two doors apart), a fifth arm in `checks/bury.mjs`
+holding the gap between them (the rite brakes 3.4x-8.5x as hard as the free door), the `bury` lever
+extended to take a named rite, and the refusal written into `src` beside `RITES.none`. **The game's
+behaviour is unchanged.**
+
 ### v3.252.0 — #260 phase 2: whose weeks these are, and the door that was also the brake
 
 Phase 1 mapped the nineteen doors the reference rope leaves shut. Phase 2 was written down as a
@@ -10680,14 +10738,24 @@ seed sets at 16 x 420. The rope had a lever for the first and none for the secon
 What the zero was hiding is a **feat and a lesson**: `munera` wants three held games for 45 fame and
 the `order` perk, and the villa lesson is `done` at one.
 
-*So what is left is the design half*, which the answered verify-first sharpens rather than closes:
-**#224's gap is still there.** At the regard floor, silence ties the pit on regard and costs no
-unrest, so lapsing dominates the one free door the interface offers (`none`: unrest +4, regard -6).
-The `bury` lever deliberately does not offer `none` for exactly that reason. Measure what a rite is
-worth against the 377 it would answer, and price the free door so that saying nothing is not the
-best answer available.
+**THE BUILD HALF WAS BUILT AND REFUSED, v3.253.0.** Both halves of the design question are answered.
+*What a rite is worth against the 377 it would answer* is the rebellion arc — v3.252.0, and
+`checks/bury.mjs`. *Pricing the free door* was built (`RITES.none` unrest 4 → 0, yard morale -3 →
+-1, the two fields where the pit is charged above silence against v3.168.0's stated invariant) and
+measured on eight paired seed sets before and after: the `none` arm's mean rebellion share reads
+**9.4% either way**, and its paired gap against the reference goes from +1.91 points to **+1.89**.
+The reference and `rite` arms were byte-identical across both builds. **The price is not what is
+wrong with the door**; the brake is the rite's unrest credit (-7, -19) and `none` has none to give.
+Reverted, with the refusal recorded beside `RITES.none` in `src`.
 
-**Risk.** #224 is closed. This re-opens a gap it recorded rather than the item.
+*What is left is a design decision rather than a tuning pass*: whether silence should be answerable
+at all — i.e. whether the pit should be given something to SPEND rather than something to cost. That
+is a new mechanic on a door that currently has no effect, and it would re-phase every seeded fixture
+in the suite, so it belongs to a deliberately-taken item and not to this one.
+
+**Risk.** #224 is closed. This re-opened a gap it recorded — and found its recorded MECHANISM wrong
+too: the regard floor binds about one lapse in five, not never and not always, and it is not what
+makes the door worthless.
 
 ---
 

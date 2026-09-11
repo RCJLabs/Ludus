@@ -696,11 +696,16 @@ export async function installRope(p){
          supposed to improve on. A lever that took it would measure that gap and not this door.
          OPT-IN on `rites`'s precedent: honouring the dead moves regard, morale, unrest, fame and
          the mercy line at once, which is every quantity the reachability checks lean on. */
-      if(o.bury === true && typeof A.holdMunera === "function" && typeof A.unhonoured === "function"){
-        for(const m of (fin(A.unhonoured,[d]) || [])){
+      /* AND IT TAKES A NAMED RITE IF IT IS ASKED FOR — #261. `bury:true` is unchanged: the dearest
+         of `games`/`rite` that spare() covers. `bury:"none"` is the arm that PRICES the free door,
+         which is the one thing `bury:true` cannot measure by construction, and `bury:"rite"` the
+         cheap door on its own. The order is `PICK[key]`, so `bury:true` still walks games-first. */
+      if(o.bury && typeof A.holdMunera === "function" && typeof A.unhonoured === "function"){
+        const PICK = { true:["games","rite"], none:["none"], rite:["rite"], games:["games"] };
+        const want = PICK[o.bury === true ? "true" : o.bury];
+        for(const m of (want ? (fin(A.unhonoured,[d]) || []) : [])){
           if(!m || m.done) continue;
-          const pick = ["games","rite"]
-            .filter(k=>(A.RITES||{})[k] && A.RITES[k].cost(m) <= spare())[0];
+          const pick = want.filter(k=>(A.RITES||{})[k] && A.RITES[k].cost(m) <= spare())[0];
           if(pick && fin(A.holdMunera,[d, m.gid, pick])) bump("buried:" + pick);
         }
       }
