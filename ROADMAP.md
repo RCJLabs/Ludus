@@ -4389,6 +4389,64 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.261.0 — #265: the gatekeeper can be asked again, and both of the item's numbers were wrong
+
+**THE ITEM WAS WRITTEN ON TWO FIGURES AND NEITHER SURVIVED.** There are **35 lessons, not 53** — the
+figure came from `grep -c '^  { id:"'`, which counts every two-space table in `src` and not
+`LESSONS`. And the item says the settings toggle *"replays every one of the fifty-three from the
+beginning"*. It cannot, and why it cannot is the finding:
+
+```js
+const lessonFor = (d, tab) => LESSONS.find(l => {
+  if(l.tab!==tab || (d.flags.learned||{})[l.id]) return false;
+  try { if(l.done && l.done(d)) return false; } catch(e){}     // <-- a WINDOW, not a reading
+```
+
+**`done` is not a completion marker, it is a window-closer** — it shuts on the state of the house
+whether or not anybody read anything, and **33 of the 35 carry one.** So a lesson is not "shown
+once"; it is shown if you happen to be standing on the right tab inside its window. "Ask the
+gatekeeper again" clears `flags.learned`, which cannot reopen a window that has closed. Measured
+(`probes/keeper.mjs`, 32 houses, 6,669 house-weeks, every tab walked every week — the generous case,
+since a real player is on one tab a week and not five): clearing it at **week 40 brings back a median
+of 11 of 35, at week 120 seven, at week 300 seven.**
+
+**AND TWO OF THE THREE "DEAD" LESSONS WERE THE ROPE'S OWN HABIT.** Three were never offered in any of
+32 houses — `armory`, `heir`, `watch` — and publishing that as dead content is the mistake #260 spent
+nine releases teaching, so a second arm was run: `heir:false, gear:false, bout:false`, a poor player
+and a legal one.
+
+| lesson | reference | novice | |
+|---|---|---|---|
+| `armory` | 16 eligible weeks | **144** | the rope buys gear in week one and `done:…gearCond` shuts it. One week wide because of us. |
+| `watch` | **0** | **35** | wants under four bouts in the book AND a live offer; the rope fights every week it can |
+| `heir` | 0 | 0 | **the gate itself** — wants a lanista at 48 or under 55 health with no heir named, and no house in either arm was ever in that state inside 420 weeks |
+| `venue` | 3 | 0 | open only BECAUSE the reference fights |
+
+**Shipped is the recall the item actually asked for**, and nothing more: `lessonsTold` returns what
+the gatekeeper has said in table order, and the Guidance group prints it re-openable, each title
+with its tab. It adds no content and reaches nothing he never got to.
+
+**AND AN ARM OF THE CHECK COULD NOT FIRE, which the sabotage caught and reading would not have.**
+Arm 3 first put a bar on how many lessons come back when `flags.learned` is cleared. Disabling the
+`done` test in `lessonFor` **left the check green** — `when` still gates most of the corpus, so the
+count stayed under the bar. A bar on a number a broken mechanism does not move is not a check. It
+asserts the mechanism now — with nothing read, everything still reachable must have an OPEN window —
+and the same sabotage turns it red, naming twenty-three lessons it should not have offered.
+
+**What is NOT done, and is #275:** the glossary half. The game runs on `regard`, `defiance`,
+`standing`, `favour`, `acclaim`, `known`, `welcome`, `unrest`, `morale`, `fatigue` and `bearing`;
+**four have a lesson of their own** (`regard`, `acclaim`, `unrest`, and `form` for condition) and
+`welcome` is not named in any lesson text at all. A one-line definition where the number is printed
+is a second surface and a second release.
+
+**One check went red and it was the expected one:** `bulk`'s App cap, 5786 → 5810, for the
+twenty-four lines of list and empty state. It lands in App rather than SECT because the settings
+modal is not one of the thirty-two panels. 191 of 192 on the first run.
+
+**Shipped:** `lessonsTold` and the Guidance recall list in `src`, `test/probes/keeper.mjs`,
+`test/checks/keeper.mjs`, and `bulk`'s App allowance raised with its why. **No mechanic changed** —
+the recall list is render-only over `flags.learned`.
+
 ### v3.260.0 — #264: the rite panel prints its terms, and the field was not the number
 
 The panel that offers the three answers to a dead man rendered `name`, `desc` and `cost` and not one
@@ -11065,7 +11123,14 @@ panel's idiom, and leave fame and mercy to the description.
 
 ---
 
-**#265 — Fifty-Three Lessons, Read Once, And No Way Back** *(usability · small–medium)*
+**#265 — ~~Fifty-Three~~ THIRTY-FIVE Lessons, Read Once, And No Way Back** *(usability · small–medium)*
+— **SHIPPED, v3.261.0, AND BOTH OF THIS ITEM'S NUMBERS WERE WRONG.** There are **35**, not 53 (the
+figure counted every two-space table in `src`), and the toggle does not replay them: `done` is a
+WINDOW that closes on the house's state, 33 of 35 carry one, and clearing `flags.learned` brings back
+a median of **11 at week 40, 7 at 120, 7 at 300**. Recall shipped as `lessonsTold` + the Guidance
+list. Two of three never-offered lessons turned out to be the ROPE's habit rather than dead content
+(`armory` 16 eligible weeks against a novice's 144; `watch` 0 against 35); only `heir` is the gate
+itself. The glossary half is **#275**. Original text follows.
 
 `LESSONS` holds **53** entries. Each is shown once by the gatekeeper when its gate first opens, sets
 `flags.learned[id]`, and is never offered again. The only path back is the settings toggle at
@@ -11086,6 +11151,29 @@ Then count the derived quantities the sheets print without defining.
 **Risk.** An index becomes a manual nobody reads. The ask is recall of a thing already shown, not a
 reference work: a lesson re-openable from where its subject is printed, and a one-line definition
 where the number is.
+
+---
+
+**#275 — A One-Line Definition Where The Number Is** *(usability · medium)* — opened by #265.
+
+The game runs on eleven derived quantities — `regard`, `defiance`, `standing`, `favour`, `acclaim`,
+`known`, `welcome`, `unrest`, `morale`, `fatigue`, `bearing` — each with its own decay, its own
+readers and its own scale. **Four have a lesson of their own** (`regard`, `acclaim`, `unrest`, and
+`form` for condition). `welcome` is not named in any of the 35 lesson texts at all, and it is the
+constant #263 spent a release on. The sheets print all eleven as bare numbers.
+
+#265 shipped RECALL — the gatekeeper can be asked again about anything he has already said. This is
+the other half the item named and did not build: *"a one-line definition where the number is"*.
+
+*Verify first.* For each of the eleven, where is it PRINTED (the panels that render it) against where
+it is DEFINED (a lesson, a tooltip, a blurb). The gap is the item. And count how many of the eleven a
+reference player ever sees a number for — a quantity printed on a panel nobody opens is a different
+problem from one printed everywhere and explained nowhere.
+
+**Risk.** This is the #101 wallpaper fault waiting to happen: eleven definitions on every sheet is
+furniture, and furniture is what the agenda audit spent a release removing. The ask is one line where
+the number is, once, not a legend on every panel — and `RITE_TERM` (#264) is the precedent for
+putting the words in the domain code so the panel only prints them.
 
 ---
 
