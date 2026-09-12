@@ -4389,6 +4389,80 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.263.0 — #267: both of the item's premises fail, and the word on the bar was on a different ladder from the number behind it
+
+**THE REBELLION BRAKE IS REFUTED.** v3.252.0's attribution run put `rites` alone at 6.4% rebellion-weeks
+against a reference 12.0% on ONE seed set, and #267 was built on it. Run the way `bury` was —
+`probes/piety.mjs`, 16 houses x 420 weeks on the eight paired `PYRE` sets:
+
+| | ref | rites | paired deltas |
+|---|---|---|---|
+| rebellion-weeks | 8.1% (5.5–10.9) | **8.4%** (6.5–9.8) | −0.5 +1.1 −0.3 +1.2 +3.0 +4.4 −4.5 −1.7 |
+
+Four of eight LOWER, mean **+0.35 the wrong way**, and the spread swamps it. The single-set read was a
+fluke of exactly the shape `court` had before its second set. **The temple is not a brake on the rising.**
+
+**AND "THERE IS NO THIRD STATE" IS ALSO WRONG.** The third state is the common one:
+
+| | ref | rites | |
+|---|---|---|---|
+| blessed weeks | 0.8–2.1% (mean 1.1) | **36.3–43.0%** (mean 40.8) | 8/8 |
+| hurt man-weeks | 1.8% | 1.0% | 6/8 lower, mean −0.77 |
+| died per 100 | 76.7 | 75.0 | 6/8 lower, mean −1.69, spread +6.9 to −8.3 |
+| gold p50 | 1058 | 617 | |
+| fame p50 | 3158 | 2336 | |
+
+A house praying as hard as it can afford reaches **two weeks in five**, not two in three; the item's
+62–68% came from a longer-lived thrift arm, i.e. a richer house. **Uptake is priced, and the price is
+what sets it.** What the coin buys is a real, modest brake on the WOUND ledger and a net drain on purse
+and standing — which is a legible trade, and not furniture. The wound and death effects are directional
+and are REPORTED in `checks/piety.mjs`, not barred, on `young`'s precedent.
+
+**So no balance change shipped.** Neither fork of the item survives its own verify-first, and a jealous
+god or a diminishing blessing would re-phase every seeded fixture in the suite to fix a problem the
+measurement says is not there.
+
+---
+
+**WHAT THE MEASUREMENT WALKED INTO INSTEAD — and this is the release.** Opening the temple panel first
+(the warning written into this audit pass after #266) turned up a fault nothing in the suite could see:
+
+**The word on the bar and the effect behind it were two different ladders.** `pietyRank` changed the
+word at **18 / 38 / 60 / 80**. The two things piety actually does fired at **65** (a quarter point of
+every patron's warmth, weekly) and **20** (half a point of unrest in the cells, weekly). So:
+
+- a house at **62** read *"pious"*, went gold-hi on the bar, and bought **nothing**;
+- a house at **19** read *"lax"*, came off the red, and was **still bleeding unrest every week**.
+
+And twenty was a bare literal in **six** places — `templeWeek`, `agendaGods`, `SECT_MARK`, `SECT_LIVE`,
+the section's `open` prop, and the bar's own fill, which used `< 20` rather than `<= 20` and so went
+gold on the one point that is still godless. Six copies of one threshold, five of them disagreeing, and
+the one a player can actually see was the odd man out.
+
+**One ladder now.** `PIETY_TIERS` carries the word, the hue AND what the tier is worth; `pietyRank` is
+the index into it; every consumer reads the floor off the same table. **The engine is unchanged to the
+point** — `godless` is `<= 20` and `devout` is `>= 65`, exactly where the two effects always fired, so
+nothing re-phases. What moved is the three middle words, which are worth nothing.
+
+**And the panel says what the band is worth**, in `riteSays`'s idiom from #264 one release earlier:
+
+> *godless* — `+0.5 unrest in the cells, every week · the haruspex reads ill about 51 weeks in 100`
+> *observant* — `Nothing bought, nothing spent — 20 more to devout, and +0.25 with every patron, every week · the haruspex reads ill about 33 weeks in 100`
+
+The omen figure is #150's rule applied to the sharpest thing piety does: the haruspex's odds were an
+inline expression inside one event's `gen`, where nothing could print them. They are `omenIll(d)` now,
+and the panel and the roll are the same call — measured, not read off the source: **printed 50% / rolled
+50.9%; printed 33% / rolled 33.5%; printed 20% / rolled 19.9%**, over 7,000 draws an arm.
+
+**Shipped:** `PIETY_TIERS`, `pietyRank`, `pietyTier`, `PIETY_TERM`, `pietySays`, `omenIll`; six bare
+thresholds deleted; the terms line under the piety bar. `checks/piety.mjs` (five arms) and
+`probes/piety.mjs`. `SECT` 1492 → 1494.
+
+**And a second door nothing had ever checked.** A blessing has two ways in and only one of them is the
+altar: the *Fair Reading* omen's "Seal it with an offering" grants a three-week blessing at 60% of the
+god's price — and it does it **while the altar is mid-rest**, when `makeOffering` refuses outright. That
+is the reference player's 0.8–2.1%, and it is arm 4.
+
 ### v3.262.0 — #266 is withdrawn: the house opens, and the item was written from greps
 
 **#266 IS VOID.** It said a rival house *"is four fields wide and cannot be opened"*, that
@@ -4579,8 +4653,11 @@ per-lesson recall, no glossary**, and a settings toggle that replays all 53 as t
 **a rival house is four fields wide and cannot be opened** — `makeRivalFighter` conjures its men per
 bout (#266).
 
-**What the sweep left standing:** the temple is a switch — 0.8% of weeks blessed against 62-68%, and
-one unconfirmed single-set read that it halves the rising (#267); the road is cards and nothing else
+**What the sweep left standing:** ~~the temple is a switch — 0.8% of weeks blessed against 62-68%, and
+one unconfirmed single-set read that it halves the rising (#267)~~ — **BOTH REFUTED v3.263.0**: on the
+eight paired `PYRE` sets the rising went 8.1% → 8.4%, four of eight LOWER, and the 62-68% was a richer
+arm; the real figure for a house praying as hard as it can afford is 40.8%, which is the third state
+the item said did not exist; the road is cards and nothing else
 — `ludusNight` 179 → 11, feuds 1,120 → 348, and no parties since v3.257.0 (#268); four of twelve
 endings are never reached by the reference and never named to anyone in advance, and `closed` is the
 only one that is an achievement (#269).
@@ -11274,7 +11351,7 @@ existing record supports, and let the verify-first say whether that is enough to
 
 ---
 
-**#267 — The Temple Is A Switch** *(enhancement · medium)*
+**#267 — The Temple Is A Switch** *(enhancement · medium)* — **CLOSED v3.263.0. BOTH PREMISES REFUTED; THE RELEASE IS THE FAULT THE MEASUREMENT WALKED INTO.** The rising: 8.1% -> 8.4%, four of eight LOWER over the eight paired `PYRE` sets — v3.252.0's single-set 6.4%-vs-12.0% was a fluke. "No third state": 40.8% IS the third state, and the item's 62-68% was a richer arm. No balance change shipped — a jealous god would re-phase every seeded fixture to fix a problem that is not there. What shipped instead: the word on the piety bar changed at 18/38/60/80 while the two effects fired at 65 and 20, with twenty a bare literal in SIX places, so a house at 62 read "pious" and bought nothing and a house at 19 read "lax" and still bled unrest. One `PIETY_TIERS` ladder, the panel names the band's terms in #264's idiom, and `omenIll` makes the haruspex's odds printable — printed 50/33/20% against rolled 50.9/33.5/19.9%. `checks/piety.mjs`, `probes/piety.mjs`.
 
 Under the reference player **0.8%** of weeks carry a blessing. Under a house that prays (`rites:true`)
 it is **62-68%** — two seed sets, 3,283 and 3,777 of ~5,400 weeks. There is no third state: the

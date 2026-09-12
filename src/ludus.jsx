@@ -3241,7 +3241,7 @@ function agendaFolk(d, add){
 function agendaGods(d, add){
   if(d.city || d.travel || d.rome) return;
   const pi = pietyOf(d);
-  if(pi <= 20){
+  if(pietyRank(pi) === 0){
     add(2, "villa:standing:temple", "This house is keeping no rites at all",
       illLuck(d) ? "godless, and under an ill turn for it"
         : `${pietyWord(pi)} — the streets feel it, and the omens run against you`);
@@ -3428,7 +3428,7 @@ const SECT_MARK = {
     : d.unrest >= 50 ? { urg:1, n:1 } : null,
   feast:    d => (d.unrest >= 55 && d.gold >= feastCost(d)) ? { urg:2, n:1 }
     : (d.unrest >= 35 && d.gold >= feastCost(d)) ? { urg:1, n:1 } : null,
-  temple:   d => pietyOf(d) <= 20 ? { urg:2, n:1 }
+  temple:   d => pietyRank(pietyOf(d)) === 0 ? { urg:2, n:1 }
     : (offeringReady(d) && !blessOf(d) && d.gold >= Math.min(...GOD_KEYS.map(k=>GODS[k].cost(d)))) ? true : null,
   standing: d => canClaimRise(d) ? { urg:2, n:1 } : null,
   rome:     d => d.romeOffer ? { urg:3, n:1 } : romeReady(d) ? { urg:2, n:1 } : null,
@@ -12861,9 +12861,63 @@ const pietyOf   = d => clamp(d.piety==null ? 30 : d.piety, 0, 100);
 /* the shrine SAYS one of five things and DREW one of two — a lit altar or an unlit one. It carries
    the band in its shapes now (votives on the step, one per band), and #150's rule says the picture
    and the word have to be the same function, so both are this one. */
-const PIETY_WORDS = ["godless","lax","observant","pious","devout"];
-const pietyRank = p => p>=80 ? 4 : p>=60 ? 3 : p>=38 ? 2 : p>=18 ? 1 : 0;
-const pietyWord = p => PIETY_WORDS[pietyRank(p)];
+/* ---- AND THE WORD AND THE EFFECT WERE STILL TWO LADDERS — audit item #267 ----
+   The picture and the word were made one call and the EFFECT was left where it was. The words
+   changed at 18 / 38 / 60 / 80; the two things piety actually does fired at 65 (a quarter point of
+   a patron's warmth, every week) and at 20 (half a point of unrest into the cells). So a house at
+   62 read "pious", went gold-hi on the bar, and bought nothing — and a house at 19 read "lax",
+   came off the red, and was still bleeding unrest every week. Twenty appeared as a bare literal in
+   FOUR places — `templeWeek`, the agenda, the section mark and `SECT_LIVE` — the bar's own fill
+   used `< 20` rather than `<= 20` so it went gold on the one point that is still godless, and the
+   word's boundary was eighteen. Six copies of one threshold, five of them disagreeing, and the one
+   the player could actually see was the odd one out.
+
+   ONE LADDER. The tiers carry the word, the hue AND what the tier is worth; `pietyRank` is the
+   index into it; `templeWeek`, `agendaGods`, `SECT_MARK` and `SECT_LIVE` all read the floor off
+   the same table. The two real boundaries land on the two real numbers, so nothing in the engine
+   moves by a point — `godless` is `<= 20` and `devout` is `>= 65`, exactly as the effects always
+   fired. What moves is the three middle words, which are worth nothing and now say so out loud
+   instead of colouring themselves gold and letting a player infer otherwise. */
+const PIETY_TIERS = [
+  { at:  0, word:"godless",   hue:"var(--blood)",   warmth:0,    unrest:0.5 },
+  { at: 21, word:"lax",       hue:"var(--gold)",    warmth:0,    unrest:0   },
+  { at: 38, word:"observant", hue:"var(--ink-2)",   warmth:0,    unrest:0   },
+  { at: 52, word:"pious",     hue:"var(--gold)",    warmth:0,    unrest:0   },
+  { at: 65, word:"devout",    hue:"var(--gold-hi)", warmth:0.25, unrest:0   },
+];
+const PIETY_WORDS = PIETY_TIERS.map(t=>t.word);
+const pietyRank = p => { let i = 0;
+  while(i + 1 < PIETY_TIERS.length && p >= PIETY_TIERS[i+1].at) i++; return i; };
+const pietyWord = p => PIETY_TIERS[pietyRank(p)].word;
+const pietyTier = d => PIETY_TIERS[pietyRank(pietyOf(d))];
+/* ---- AND THE ONE TERM THAT MOVES WITH EVERY POINT ----
+   The haruspex reads ill on `0.55 - piety/200`, floored at a fifth and capped at just under three
+   quarters. It is the sharpest thing piety does — forty-five weeks in a hundred at the godless
+   line against twenty-two at the devout one — and it lived as an inline expression inside one
+   event's `gen`, where nothing could print it. #150's rule: the number the panel shows and the
+   roll the week makes are the same call, and this is it. */
+const omenIll = d => clamp(0.55 - pietyOf(d)/200, 0.2, 0.72);
+/* ---- WHAT THE BAND IS WORTH, AT THE BAR — #264's shape, one panel over ----
+   The bar carried a word, a colour, and a line of prose saying a pious house "keeps the patrons
+   and the crowd warm" and a godless one has "the streets restless — and the omens turn against
+   it". All three of those are true and not one of them is a number. */
+const PIETY_TERM = {
+  warmth: v => `+${v} with every patron, every week`,
+  unrest: v => `+${v} unrest in the cells, every week`,
+};
+const PIETY_TERM_KEYS = ["warmth","unrest"];
+const pietyTermsOf = T => PIETY_TERM_KEYS.filter(k=>T[k]).map(k=>PIETY_TERM[k](T[k]));
+function pietySays(d){
+  const r = pietyRank(pietyOf(d)), said = pietyTermsOf(PIETY_TIERS[r]);
+  if(!said.length){
+    const up = PIETY_TIERS.slice(r + 1).find(t=>pietyTermsOf(t).length);
+    said.push("Nothing bought, nothing spent"
+      + (up ? ` — ${Math.ceil(up.at - pietyOf(d))} more to ${up.word}, and ${pietyTermsOf(up).join(" · ")}`
+            : ""));
+  }
+  said.push(`the haruspex reads ill about ${Math.round(omenIll(d)*100)} weeks in 100`);
+  return said.join(" · ");
+}
 const OFFERING_COOL = 3;
 const offeringReady = d => (d.week - (d.lastOffering==null ? -9 : d.lastOffering)) >= OFFERING_COOL;
 function makeOffering(d, god){
@@ -12948,9 +13002,11 @@ function templeWeek(d){
     blessAdd(d, "mars", g.morale - was); } });     /* what he actually put in, not what he offered */
   if(bg==="jupiter"){ patronsOf(d).forEach(p=>{ const was = p.favor;
     p.favor=clamp(p.favor+0.5,0,100); blessAdd(d, "jupiter", p.favor - was); }); recomputeFavor(d); }
-  const pi = pietyOf(d);
-  if(pi>=65){ patronsOf(d).forEach(p=>{ p.favor=clamp(p.favor+0.25,0,100); }); recomputeFavor(d); }
-  else if(pi<=20){ d.unrest = clamp(d.unrest+0.5,0,100); }
+  /* #267 — the same table the bar's word comes off. `godless` is `<= 20` and `devout` is
+     `>= 65`, which is exactly where these two fired as bare literals, so the week is unchanged. */
+  const T = pietyTier(d);
+  if(T.warmth){ patronsOf(d).forEach(p=>{ p.favor=clamp(p.favor+T.warmth,0,100); }); recomputeFavor(d); }
+  if(T.unrest){ d.unrest = clamp(d.unrest+T.unrest,0,100); }
   if(illLuck(d) && R()<0.35){ d.unrest = clamp(d.unrest+1,0,100); }
 }
 /* the rates each one moves */
@@ -22004,7 +22060,7 @@ const EVENTS = {
       const soon = nextFestivals(d, 1)[0];
       const near = soon && weeksUntil(d, soon) <= 1;
       if(!near && R() > 0.14) return null;                   // omens cluster around the great games
-      const ill = R() < clamp(0.55 - pietyOf(d)/200, 0.2, 0.72);
+      const ill = R() < omenIll(d);                          /* the figure the temple prints, #267 */
       const where = near ? `${soon.name} are almost upon Capua, and` : "This week";
       return { id:"omen", title: ill ? "An Ill Reading" : "A Fair Reading",
         text: ill
@@ -23155,7 +23211,7 @@ const SECT_LIVE = {
   cells:     d => d.unrest >= 30 || tourneyReady(d) || walkReady(d),
   square:    d => !d.doctore && (d.doctoreMarket||[]).length > 0,
   household: d => HH_KEYS.some(k=>!hasFolk(d,k) && (k===HH_FREE || d.gold >= rnd(hhWage(d,k)*16))),
-  temple:    d => pietyOf(d) <= 20 || (offeringReady(d) && !blessOf(d) && d.gold >= 200),
+  temple:    d => pietyRank(pietyOf(d)) === 0 || (offeringReady(d) && !blessOf(d) && d.gold >= 200),
   school:    d => !d.doctrine && d.gold >= Math.min(...DOC_KEYS.map(k=>DOCTRINES[k].cost)),
   collegium: d => !collOn(d) && d.gold >= COLL_FEE,
   blood:     d => marryReady(d) || livingKids(d).length > 0,
@@ -26251,14 +26307,16 @@ const SECT = {
                return (
                <Sect live={sectFresh(S,"temple")} sid="temple" title="The Temple" note={bg ? `blessed · ${GODS[bg].name}` : pietyWord(pi)}
                  mark={sectMark(S,"temple")}
-                 open={!!S.vow || !!bg || pi<=20 || illLuck(S) || canAct}>
+                 open={!!S.vow || !!bg || pietyRank(pi)===0 || illLuck(S) || canAct}>
                  <div className="flex items-center justify-between" style={{marginBottom:3,fontSize:"var(--fs-md)"}}>
                    <span>Piety of the house</span>
-                   <span style={{color: pi>=60?"var(--gold-hi)":pi>=38?"var(--ink-2)":pi>=18?"var(--gold)":"var(--blood)"}}>{pietyWord(pi)}</span>
+                   <span style={{color: PIETY_TIERS[pietyRank(pi)].hue}}>{pietyWord(pi)}</span>
                  </div>
                  <div className="track" style={{height:6}}>
-                   <div className="fill" style={{width:`${pi}%`, background: pi<20? "linear-gradient(90deg,var(--blood-edge),var(--blood-str))" : "linear-gradient(90deg,var(--line-4),var(--gold-hi))"}}/>
+                   <div className="fill" style={{width:`${pi}%`, background: pietyRank(pi)===0 ? "linear-gradient(90deg,var(--blood-edge),var(--blood-str))" : "linear-gradient(90deg,var(--line-4),var(--gold-hi))"}}/>
                  </div>
+                 {/* and what this band is worth, in the terms the week actually pays — #267 */}
+                 <div style={{fontSize:"var(--fs-sm)",color:"var(--gold-line)",marginTop:5}}>{pietySays(S)}</div>
                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"5px 0 9px"}}>
                    Rome did nothing without the gods. A pious house keeps the patrons and the crowd warm; a godless one, the streets restless — and the omens turn against it.
                  </div>
@@ -35158,6 +35216,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* the gods: five of them, four real boons, and nothing had ever called either action */
     GODS, GOD_KEYS, makeOffering, swearVow, resolveVow, templeWeek,
     pietyOf, pietyWord, blessOf, blessLeft, offeringReady, OFFERING_COOL, illLuck,
+    /* #267 — one ladder: the word, the hue, the two weekly terms and the omen's own odds */
+    PIETY_TIERS, PIETY_WORDS, pietyRank, pietyTier, pietySays, omenIll,
     PIETY_TOP, pietyFame, vowStake, healSpeed, vowReturn, vowRisked, buried20,
     VOW_BOUTS_FULL, VOW_EARNT_AT,
     blessMercy, blessHeal, blessPurse, blessFame,
