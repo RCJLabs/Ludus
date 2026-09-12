@@ -22727,7 +22727,24 @@ function roadSays(){
      That is a better answer than one long line in one place, and the budget is what found it. */
   return `Away from Capua, ${EV_HOME.length} of the week's ${EV_DRAWN.length} questions never come up.`;
 }
-/* and the other half, where the walk is */
+/* ---- AND WHAT THE ARENA FACE GAVE UP TO CARRY IT, WHICH IS THE BETTER HALF OF THIS ----
+   `scroll` holds the arena to 3.2 screens and the face was already 67px over its baseline BEFORE
+   this release, with about 16px of headroom. Three things fell out of that budget, and all three
+   are improvements rather than concessions:
+
+   1 · The count went INTO the circuit panel's own sentence rather than into a block beneath it. The
+       sentence read "Nothing you have built in Capua travels" — which is `roadSays()` with the
+       number taken out — so the count REPLACES that clause instead of being added under it.
+   2 · The night deck moved to the cells section, beside the walk that is its only door, which is
+       where a player meets it anyway. Two facts, two places, each where it is met.
+   3 · `c.blurb` came out of the town blocks. Each town printed TWO flavour sentences one above the
+       other, `c.blurb` and the custom's `say`, both of them "what this crowd is like", and only the
+       second names a mechanic ("a card without mercy fills the tiers"). The blurb is also the
+       chronicle line `setOut` writes the week you go — so it was not lost, it was said twice.
+
+   The arena finished at 2,574px against a 2,618 baseline: 44px SMALLER than this release found it,
+   and no ceiling raised. A face budget that forces a better arrangement is doing its job. */
+/* the other half, where the walk is */
 function cellsAwaySays(){
   return `The tables travel with the familia. The cells do not — and the walk down to them is the `
     + `only door to ${NIGHT_KEYS.length} more things a night can turn up.`;
@@ -31662,10 +31679,7 @@ export default function App(){
             return (
               <div className="panel" style={{padding:13}}>
                 <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,marginBottom:3}}>THE CIRCUIT</div>
-                {/* IN THE SENTENCE, NOT UNDER IT — #268. This read "Nothing you have built in Capua
-                    travels", which is `roadSays()` with the number taken out, so the count replaces
-                    the clause rather than being added beneath it. `scroll` is what forced the
-                    composition: a second block cost 26px of a face with 16px of headroom. */}
+                {/* in the sentence, not under it — see over `roadSays`. #268 */}
                 <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
                   Three towns down the bay who have never heard of you. {roadSays()} Your grudges do not travel either.
                 </div>
@@ -31685,14 +31699,7 @@ export default function App(){
                   return (
                     <div key={k} style={{borderTop:"1px dotted var(--line)",paddingTop:9,marginTop:9}}>
                       <div className="disp" style={{fontSize:"var(--fs-base)",color:knownIn(S,k)?"var(--ink-hi)":"var(--ink-dim)"}}>{c.name}</div>
-                      {/* ---- AND `c.blurb` CAME OUT — #268 ----
-                          Each town carried TWO flavour sentences one above the other: `c.blurb` and
-                          the custom's `say`, both of them "what this crowd is like", and only the
-                          second names a mechanic ("a card without mercy fills the tiers"). The blurb
-                          is also the chronicle line `setOut` writes the week you go — so it was not
-                          lost here, it was said twice. Cutting it took the arena from 88px over its
-                          scroll baseline to under it, which is why this release could add the count
-                          without raising a ceiling that has already been raised once. */}
+                      {/* `c.blurb` came out here — see over `roadSays`. #268 */}
                       {/* the town's own politics: who runs its games, what it wants, whose sand it is */}
                       {(()=>{ const P = (S.bayPol||{})[k], CU = CITY_CUSTOM[k]; if(!CU) return null;
                         return (
