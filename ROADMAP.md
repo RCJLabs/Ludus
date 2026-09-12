@@ -4389,6 +4389,65 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.269.0 — #273: the yard buys men, not a facility — and a full house pays thousands for nobody
+
+**#273 said the verify-first *is* the whole item until answered, and its Risk note said not to open
+the build without it.** Answered, and the build is not opened.
+
+## What `yard` buys
+
+`EVENTS.yard.run` delegates to `buyYard`, which buys a dead rival's **lineage** and pushes his men
+into the cells you already have — capped by `rosterFull`, with whoever does not fit sold on at the
+gate for half `gladValue`. There is no facility, no second cells, no second roster. `offerYard`'s
+own comment says it outright: **"Phase 3 would be the second yard that holds them; without it they
+are sold on at the gate."**
+
+**Every reader of what it sets**, which is what the item asked for:
+
+| field | |
+|---|---|
+| `d.flags.yardsTaken` | **live** — a new rival arrives warier (`grudge + ri(8,18)`, `watchful`) and two chronicle lines name how many gates on the street are yours |
+| `h.lineage.sold` | **live** — the offer gate, `lastDark`, the newcomer's inheritance |
+| `g.fromYard` | **written once, read nowhere** — one hit in the whole file |
+| `h.lineage.soldAt` | **written once, read nowhere** — one hit in the whole file |
+
+## And measuring it found something worse than the missing facility
+
+`probes/walls.mjs`, 24 houses × 520 weeks. Three policies, each failing to reach the purchase for
+its own reason — which is why a single arm would have said "it never happens" and stopped:
+
+| | |
+|---|---|
+| reference | 5 offer-weeks, **0 taken** — a poor house cannot raise the price |
+| complete + tour | 49 dark weeks, **0 offered** — `offerYard` refuses away, and `lineage.asked` is set on the first ask and then refuses for ever, so the one window falls while he is away |
+| complete at home | 16 offer-weeks, **2 taken** |
+
+And of those two purchases: **both at cap 4 against a roster of 4, and ZERO men arrived.** Every man
+of both houses went straight back out at the gate. The letter named `y.men` of his men and `y.worth`
+denarii of fighting men, quoted **2,803**, and said nothing about the only number that decided what
+the buyer got. He paid twice and bought a counter.
+
+## What shipped
+
+`yardRoom` and `yardSays` — the letter now carries the number in its `note`, which is where
+`booking` and `challenge` already put a read:
+
+> *There is room for all 6 of them in your cells, which hold 8.*
+> *Your cells hold 8 and 2 of his 6 would fit. The other 4 go on at the gate for half what they are worth.*
+> *Your cells are full at 8. Not one of his 6 would come up the hill — every man of them goes on at the gate for half what he is worth, and what you are buying is the walls and the name.*
+
+**Nothing about the purchase changes.** `rosterFull` is still checked per man inside `buyYard`'s
+loop, which is right — the coin comes back for whoever will not fit. What was missing is that the
+loop's answer was knowable before the question was asked. The check's load-bearing arm drives both
+and requires them to agree: **promised 3 → arrived 3, promised 0 → arrived 0, promised 1 → arrived 1.**
+
+**The facility is not built.** The item calls it "the largest state change since the domus", its own
+Risk note says not to open the build without the verify-first, and the measurement then sized the
+hole at **3 men across 24 houses in 520 weeks**.
+
+**Shipped:** `yardRoom`, `yardSays`, the letter's note. `checks/walls.mjs` (four arms) and
+`probes/walls.mjs`.
+
 ### v3.268.0 — #272: handing over by choice was built, and it is the only door anybody uses — but the house talks about the man as if he were dead
 
 **#272's premise is the #118-era state, and it was fixed.** *"The dynasty is playable only through
@@ -11876,7 +11935,7 @@ endings table, the annals and the forebears record all have to agree about which
 
 ---
 
-**#273 — The Second Yard** *(new system · large)*
+**#273 — The Second Yard** *(new system · large)* — **CLOSED v3.269.0. THE VERIFY-FIRST IS ANSWERED AND THE FACILITY IS NOT BUILT.** `yard` buys a dead rival's LINEAGE and his men into the cells you already have — no facility; `offerYard`'s own comment says "Phase 3 would be the second yard that holds them". Of what it sets, `yardsTaken` and `lineage.sold` are live; **`g.fromYard` and `h.lineage.soldAt` are written once and read nowhere**. And measuring it found worse: the only player who ever gets to answer (rich, not touring) took 2 yards and **ZERO men arrived** both times — cap 4 against a roster of 4, every man sold at the gate, ~2,803d paid for a counter. Shipped the number, not the facility: `yardSays` puts what will fit in the letter's note, and the check requires it to equal what `buyYard`'s loop actually delivers. The hole a second yard would fill measured **3 men across 24 houses in 520 weeks**. `checks/walls.mjs`, `probes/walls.mjs`.
 
 #263 found a town week worth 3.6x a Capua week, and declined to brake it because the source calls
 the tour untouched on purpose. The road's other half is that it is somewhere you visit: `setOut`,

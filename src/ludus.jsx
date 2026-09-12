@@ -15324,6 +15324,42 @@ const cellsCap = d => {
    it had nowhere to put. */
 const rosterCount = d => d.gladiators.filter(g=>!isGone(g)).length;
 const rosterFull = d => rosterCount(d) >= cellsCap(d);
+/* ---- AND WHAT WOULD ACTUALLY FIT, SAID BEFORE THE COIN CHANGES HANDS — audit item #273 ----
+   #273 asked what the `yard` card buys. It buys a dead rival's LINEAGE and his men, pushed into the
+   cells you already have — there is no facility, and `offerYard`'s own comment says so: "Phase 3
+   would be the second yard that holds them; without it they are sold on at the gate."
+
+   MEASURED (`probes/walls.mjs`, 24 houses x 520 weeks, a rich house that stays home — the only kind
+   that ever gets to answer): **2 purchases, both at cap 4 against a roster of 4, and ZERO men
+   arrived.** Every man of both houses went straight back out at the gate for half `gladValue`. The
+   letter had named `y.men` of his men and `y.worth` denarii of fighting men, quoted a price of
+   2,803, and said nothing at all about the only number that decided what the buyer got. He paid
+   twice and bought a counter.
+
+   `rosterFull` is checked PER MAN inside `buyYard`'s loop, which is right — the coin comes back for
+   whoever will not fit. What was missing is that the loop's answer was knowable before the question
+   was asked. Nothing here changes what the purchase does; it says what it will do. */
+const yardRoom = (d, y) => {
+  const men = (y && y.men) || 0, cap = cellsCap(d);
+  const room = Math.max(0, cap - rosterCount(d));
+  return { cap, room, men, fit:Math.min(room, men), spill:Math.max(0, men - room) };
+};
+function yardSays(d, y){
+  const r = yardRoom(d, y);
+  if(!r.men) return `There is nobody left in those cells to come up the hill. You would be buying the walls.`;
+  if(r.fit === 0)
+    return r.men === 1
+      ? `Your cells are full at ${r.cap}. His one man would not come up the hill at all — he goes on at the gate `
+        + `for half what he is worth, and what you are buying is the walls and the name.`
+      : `Your cells are full at ${r.cap}. Not one of his ${r.men} would come up the hill — every man of them `
+        + `goes on at the gate for half what he is worth, and what you are buying is the walls and the name.`;
+  if(!r.spill)
+    return r.men === 1
+      ? `There is room for him in your cells, which hold ${r.cap}.`
+      : `There is room for all ${r.men} of them in your cells, which hold ${r.cap}.`;
+  return `Your cells hold ${r.cap} and ${r.fit} of his ${r.men} would fit. The other ${r.spill} `
+    + `${r.spill === 1 ? "goes" : "go"} on at the gate for half what ${r.spill === 1 ? "he is" : "they are"} worth.`;
+}
 /* what they will let a man go for — a house that hates you charges for the privilege */
 function houseAsk(d, h, f){
   if(!h || !f) return 0;
@@ -23314,6 +23350,9 @@ function heldQuestions(d){
         + `The bay wants it off its hands and will take ${y.price} for the whole of it. `
         + `${y.price} denarii and ${y.favour} of your standing with the magistrate, and the gate has your colours on it. `
         + `${y.endedAs === "broken" ? "They watched you finish that house. They will not come up the hill glad." : "He asked that they go somewhere they would be fed."}`,
+      /* the one number that decides what the coin buys — #273. `note` is where `booking` and
+         `challenge` already put a read, so it is where this goes. */
+      note: yardSays(d, y),
       choices:[`Take the yard — ${y.price}d`, "Let the bay have it"], data:{ y } }; }
   if(!d.pendingEvent && d.askBooking){ const o = d.askBooking;
     d.pendingEvent = { id:"booking",
@@ -35570,6 +35609,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* #271 — what the other houses' men did, which two thirds of the time nobody could see */
     RIVAL_FORM, noteRivalBout, rivalForm, rivalFormWord, rivalWeekly,
     hostParty, throwFeast, walkTheCells, holdTourney, stageMunus,
+    /* #273 — what would actually fit, said before the coin changes hands */
+    yardRoom, yardSays, offerYard, buyYard, rosterCount, rosterFull, cellsCap, yardPrice,
     /* the gods: five of them, four real boons, and nothing had ever called either action */
     GODS, GOD_KEYS, makeOffering, swearVow, resolveVow, templeWeek,
     /* #269 — the nine ways a house is taken, and the notice three of them give */
