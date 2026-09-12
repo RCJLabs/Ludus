@@ -16955,16 +16955,46 @@ function runOverture(d, k, houseName){
    into a list. He is a person with a trade and nowhere else to use it, and Capua is
    not a large town. He comes back. */
 const FREEDMEN = {
+  /* ---- THE BENCH WAS BUILT AND THE DOOR WAS NAILED SHUT BY ONE TERM — audit item #270 ----
+     #270 proposed keeping a freed champion on as the house's own man. This is that, and it shipped
+     long ago: skill off HIS OWN record, no fee, `fromHouse`, his years, a past line naming his wins
+     under your colours, and nine points of morale and seven of regard to every man standing.
+
+     It had never once happened. `probes/bench.mjs`, 16 houses x 1,893 weeks under a complete
+     player: a freed or retired man was waiting in **68.4% of weeks**, and this outcome fired
+     **0 times** — 0 of the 25 freedman outcomes that did fire, and **0 of 16 houses** ever had
+     their own man in the chair.
+
+     A CONJUNCTION MUST BE SPLIT BY TERM BEFORE ANYTHING CAN BE FIXED — `nemesis` established that
+     here and the RUINS table cites it. `need` was `!d.doctore && f.wins >= 8`, and of the weeks a
+     man was waiting:
+
+         a waiting man had 8+ wins    986 of 1,294  (76.2%)
+         the chair was EMPTY           53 of 1,294  ( 4.1%)
+         both at once                   7 of 1,893 weeks (0.4%)
+
+     The wins term was never the problem. A house that can afford a doctore has one, so the door
+     asked for a coincidence. It is a CHOICE now, which is what #270 actually wanted: he comes to
+     the gate whether or not the chair is filled, and a house with a hired man in it decides which
+     of the two it would rather have. The moment is offered once either way — a man turned away at
+     the gate does not come back to ask again. */
   doctore: { w:10, name:"He comes back to teach",
-    need:(d,f)=>!d.doctore && f.wins >= 8,
-    say:(d,f)=>`${f.name} is at the gate with nothing to say for himself except that he has been three months at a trade he is not good at, and he knows this yard.`,
-    run:(d,f)=>{ const doc = makeDoctore(d, clamp(40 + f.wins*2.2, 40, 82));
+    need:(d,f)=>f.wins >= 8,
+    say:(d,f)=>`${f.name} is at the gate with nothing to say for himself except that he has been three months at a trade he is not good at, and he knows this yard.`
+      + (d.doctore ? ` ${d.doctore.name} has the post, and is standing close enough to hear this.` : ``),
+    ask:(d,f)=>d.doctore ? [`Give him the post`, `Keep ${d.doctore.name}`] : ["Go on"],
+    run:(d,f)=>{ const had = d.doctore ? d.doctore.name : null;
+      const doc = makeDoctore(d, clamp(40 + f.wins*2.2, 40, 82));
       doc.name = f.name.split(",")[0]; doc.fromHouse = true; doc.fee = 0;
       if(f.age) doc.age = f.age;                          /* #251 — his years are his own, not the market's */
       doc.tag = "who was freed here"; doc.pastLine = `Fought ${f.wins} times under your colours and was given the wooden sword for it. He does not need telling how any of this works.`;
       d.doctore = doc;
       activeG(d).forEach(g=>{ g.morale = clamp(g.morale+9,0,100); g.regard = clamp(regardOf(g)+7,0,100); });
-      return `He takes the doctore's place for nothing but keep. Every man in that block just watched what the wooden sword is actually worth.`; } },
+      return had
+        ? `${had} is paid to the end of the week and is gone by the middle of it. ${doc.name} takes the post for nothing but keep, and every man in that block just watched what the wooden sword is actually worth.`
+        : `He takes the doctore's place for nothing but keep. Every man in that block just watched what the wooden sword is actually worth.`; },
+    no:(d,f)=>{ activeG(d).forEach(g=>{ g.regard = clamp(regardOf(g)-4,0,100); });
+      return `You keep the man you are paying. ${f.name} says that is fair, which it is, and goes back down the road — and the block, which had already worked out what was being offered, watches him go.`; } },
   lanista: { w:8, name:"He sets up on his own",
     need:(d,f)=>f.wins >= 10 && liveRivals(d).length < 5,
     say:(d,f)=>`${f.name} has bought two men and a yard on the Neapolis road. He learned the trade somewhere and everybody knows where.`,
@@ -17047,8 +17077,20 @@ function freedWeek(d){
   for(const c of fit){ x -= FREEDMEN[c].w; if(x<=0){ k=c; break; } }
   f.became = k;
   const F = FREEDMEN[k];
+  /* ---- AND THE STUB DROPPED THE TWO FIELDS THE OUTCOMES ACTUALLY READ — #270 ----
+     `data.man` carried `{ name, wins, cls }` and the run bodies read `f.age` and `f.regardAt`.
+     Both were structurally undefined by the time they were asked for, so:
+       · `doctore` — "#251: his years are his own, not the market's" could never fire, and the
+         freed champion always took the market's age instead of his own;
+       · `lanista` — `const bitter = f.regardAt != null && f.regardAt < 45` was ALWAYS false, so
+         a man freed grudgingly always set up his yard without a grudge. `ri(28,42)` and the whole
+         bitter paragraph under it were unreachable, in an outcome that DOES fire.
+     The fields are named rather than passing `f` whole: `f` carries `became`, which the event does
+     not need, and a widened stub is auditable where an aliased object is not. */
   d.pendingEvent = { id:"freedman", title:F.name, text:F.say(d, f),
-    choices:["Go on"], data:{ k, man:{ name:f.name, wins:f.wins||0, cls:f.cls } } };
+    choices: F.ask ? F.ask(d, f) : ["Go on"],
+    data:{ k, man:{ name:f.name, wins:f.wins||0, cls:f.cls,
+      age:f.age, regardAt:f.regardAt, scars:f.scars } } };
 }
 
 /* ---- THE FALLEN ----
@@ -22095,8 +22137,11 @@ const EVENTS = {
       catch(e){ return `Whatever was said, it is said.`; } } },
   freedman: {
     make(){ return null; },
-    run(d,ev){ const F = FREEDMEN[ev.data.k];
-      try { return F.run(d, ev.data.man || { name:"He", wins:0 }); } catch(e){ return `He is seen about the town.`; } } },
+    /* the answer was thrown away: `run(d,ev)` took no `i`, so an outcome could not offer a choice
+       even if it wanted to. #270's bench is the first that does. */
+    run(d,ev,i){ const F = FREEDMEN[ev.data.k], man = ev.data.man || { name:"He", wins:0 };
+      try { return (i === 1 && F.no) ? F.no(d, man) : F.run(d, man); }
+      catch(e){ return `He is seen about the town.`; } } },
   omen: {
     make(d){
       if(awayFromCapua(d) || d.week < 8) return null;
@@ -35398,7 +35443,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     EDITOR_KEYS, editorOf, editorFor, editorKeyOf, editorRec, editorMark, editorKept,   /* #254 phase 1 */
     editorTrust, cardEditor, EDITOR_PATIENCE,   /* #254 phase 2 — the record read */
     editorWord, EDITOR_PULL, appetiteOf, APPETITES, APP_KEYS,   /* #254 phase 3 — his voice, and his taste on his own card */
-    buildUp, setCrestTo, setCareOf, editorBought, EDITORS, PETITIONS, PET_KEYS, runPetition, petitionOdds, petitionWhy, petitionReady, PETITION_COOL, pickAnyOpp, CARE, CARE_KEYS, careWhy, surgeonOK, surgeonFee, retireEligible, FM_KEYS, freedWeek,
+    buildUp, setCrestTo, setCareOf, editorBought, EDITORS, PETITIONS, PET_KEYS, runPetition, petitionOdds, petitionWhy, petitionReady, PETITION_COOL, pickAnyOpp, CARE, CARE_KEYS, careWhy, surgeonOK, surgeonFee, retireEligible, scarBurden, FM_KEYS, freedWeek,
     teachSigTo, makeMasterOf, startSecond, switchStyle, techsFor, sigFee, sigOf, TECHNIQUES,
     canMaster, makeMaster, MASTERY_GATE, MASTERY, masterOf, masterNeed,   /* #232 phase 5 — masterOpen/MASTER_ACCLAIM are already on the handle */
     challengeSquare, squareReady, squareWhy, provedIt, proveInSquare,   /* #232 phase 5 — the square as a door */
