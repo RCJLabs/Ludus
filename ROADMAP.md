@@ -4389,6 +4389,59 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.262.0 — #266 is withdrawn: the house opens, and the item was written from greps
+
+**#266 IS VOID.** It said a rival house *"is four fields wide and cannot be opened"*, that
+`openRival` does not exist, that *"no rival roster is rendered anywhere in the UI"*, and that
+`makeRivalFighter` *"conjures a rival's man on demand"*. Every one of those is wrong, and the
+evidence was in this repository before the item was written.
+
+**The roster is persistent state.** `makeRivals` gives every house a `fighters` array of four at
+founding; `RIVAL_MOVES` buys, sells and retrains them week by week; `closeHouse` writes the survivors
+into `lineage.roster` when a yard goes dark. Each man carries full stats, class, origin, age, kit,
+traits, `pfame`, wins, losses, kills — and **`beatYou` and `lostToYou`**, his record against you.
+
+**And the sheet exists.** The Houses record's **Treat** button opens a modal carrying the lanista's
+face, his name and trait, `grudgeWord`, the feud state, `HouseLedger` (*"what has passed between the
+two of you"*, #249 phase 3), the record book's card count and win-loss, the named beats, a peace
+price — and **"His men"**, the whole roster, tappable through to a per-man card, each row reading
+class, record, age and how much of him you have had watched. Measured on the live screen: **5 of 5
+men named.** The live panel beside it already shows the lanista's name and trait, the house's form,
+its star with his age, warmth or grudge, its weekly move, and the head-to-head book.
+
+**`checks/treat.mjs` has existed since #249 and its own header says so in its second paragraph** —
+*"the Treat sheet, which is the one screen that is ABOUT a single house, showed his men, his grudge
+word and a price"*. The item contradicted a sentence sitting in this repo's own test suite.
+
+**HOW IT WENT WRONG, because that is the part worth keeping.** The audit pass that produced #266 was
+written from `grep` over the render region for `r.name`, `r.wins`, `r.men`, `h.grudge` — and concluded
+those four were all a rival had. The sheet uses `h` and `riv` and `dealH`, and the modal is six
+thousand lines from the panel that opens it. **A grep on variable names is not a reading of a
+screen.** This is the third premise failure in an eleven-item pass: #264's risk note had to be
+widened, #265's two headline figures were both wrong, and #266 is void entirely. The pass was
+written without opening the game.
+
+**WHAT SURVIVES IS ONE REAL GAP, and it is now closed.** `treat.mjs` asserted the ledger, the record
+and the beats — and **nothing held that the roster renders at all.** The men could have gone quiet
+and every check would have stayed green. A fifth arm holds it now, sabotage-verified: showing only
+two of the five goes red naming the three missing.
+
+**AND THE ARM'S FIRST CUT WAS MY OWN BUG, caught by dumping rather than assuming.** It tested
+`/His men/` and went red on a live build. The label is a `.tag`, `.tag` uppercases in CSS, and
+`innerText` returns the RENDERED text — so the sheet reads "HIS MEN" and the regex missed a roster
+that was on the screen all along, with the names three lines further down. Printing the captured text
+found it in one run; another round of reasoning about `scoutLive` would not have. The arm matches
+case-insensitively now and decides on the men's NAMES rather than the label.
+
+**The two folded-in claims are withdrawn too, unverified rather than disproved.** The familia is
+drawn as a SCENE — men positioned in a yard, tapped to open — not a list, so "the roster has no sort"
+is true of a surface that does not sort by nature, and I did not establish that a list view exists to
+sort. The block side-by-side was never checked at all. Neither should be re-opened without someone
+opening the screen first.
+
+**Shipped:** a fifth arm in `test/checks/treat.mjs`. **No game code touched.** #266 is closed as
+withdrawn.
+
 ### v3.261.0 — #265: the gatekeeper can be asked again, and both of the item's numbers were wrong
 
 **THE ITEM WAS WRITTEN ON TWO FIGURES AND NEITHER SURVIVED.** There are **35 lessons, not 53** — the
@@ -11091,6 +11144,16 @@ it is a door.
 The five new features are each grounded in a number from the same run rather than in a wish, and
 each says which number.
 
+**AND A WARNING ON THIS PASS, WRITTEN INTO IT AFTER THE FACT (v3.262.0).** Three of the eleven items
+had premises that did not survive contact with the code. #264's risk note had to be widened; **#265's
+two headline figures were both wrong** (35 lessons, not 53; and the toggle cannot replay what it
+shut); and **#266 was void entirely** — the rival sheet it asks for has existed since #249 and
+`checks/treat.mjs` says so in its own header. The cause is the same in all three: **this pass was
+written from `grep` over the render region rather than from opening the game.** Variable names hide
+surfaces — the rival sheet is `dealH`, six thousand lines from the panel whose button opens it — and
+a grep for `r.name` will never find it. Every remaining item's *Verify first* should be read as
+beginning with "open the screen", whatever else it says.
+
 ---
 
 **#264 — The Rite Panel Hides The Only Number That Matters** *(usability · small)* — **SHIPPED,
@@ -11177,7 +11240,15 @@ putting the words in the domain code so the panel only prints them.
 
 ---
 
-**#266 — A House You Cannot Open** *(interactivity · medium)*
+**#266 — A House You Cannot Open** *(interactivity · medium)* — **WITHDRAWN v3.262.0. THE HOUSE
+OPENS.** The Treat button on the Houses record opens a full sheet: the lanista's face, name and
+trait, the grudge word, `HouseLedger`, the record book's cards and win-loss, the named beats, a peace
+price, and **"His men"** — the whole persistent `fighters` roster, tappable to a per-man card (5 of 5
+named, measured on the live screen). `makeRivals` creates that roster at founding and `RIVAL_MOVES`
+maintains it weekly; each man carries `beatYou` and `lostToYou`. `checks/treat.mjs` has said so in its
+header since #249. The item was written from greps on `r.name`/`r.wins` and never opened the game.
+What survived: nothing HELD that the roster renders, and a fifth arm now does. Original text
+follows — **read it as a worked example of a premise that does not survive opening the screen.**
 
 The rivals panel (*"The other houses"*) reads `r.name`, `r.wins`, `r.men` and `h.grudge` and nothing
 else. There is no rival sheet — `openRival` does not exist, no rival roster is rendered anywhere in
