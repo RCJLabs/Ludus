@@ -20411,12 +20411,28 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
   });
   d.gladiators.forEach(o=>{ if(o.status==="active" && !ids.includes(o.id)) o.morale = clamp(o.morale+(res.win?2:-2),0,100); });
   gs.forEach(x=>{ if(x.ambition && x.ambition.kind==="beside" && tie && tie.kind==="brother") ambitionMet(d, x); });
-  /* #276 — and the word you gave about THESE two, if it was about these two */
+  /* ---- #276 — AND THE WORD YOU GAVE ABOUT THESE TWO, IF IT WAS ABOUT THESE TWO ----
+     This sits AFTER the dead-and-wounded block above on purpose, and `pairKept` does not ask
+     whether either man is still standing: going out together is the whole of what was promised,
+     and a man who dies doing it kept it. What that costs is the LINE — "neither of them mentions
+     it" is a sentence about two men walking off the sand, and the first cut of this would have
+     printed it over a corpse. Measured over 160 kept promises at tier 2: **both live on 115, one
+     falls on 33, both fall on 12** — so better than a QUARTER of the times this fires, somebody on
+     it is dead. Only the living are paid; all three endings are written. */
   if(pairKept(d, gs)){
     d.flags.pairWord = null;
-    gs.forEach(x=>remember(d, x, "kept"));
-    chron(d, `${gs[0].name} and ${gs[1].name} went out together, which is what you said would happen. `
-      + `Neither of them mentions it and both of them have counted the weeks since you said it.`, "good");
+    const fell = gs.filter(x=>x.status === "dead");
+    gs.forEach(x=>{ if(x.status !== "dead") remember(d, x, "kept"); });
+    chron(d, fell.length === 2
+      ? `${gs[0].name} and ${gs[1].name} went out together, which is what you said would happen, `
+        + `and the pair of them are still out there.`
+      : fell.length === 1
+      ? `${gs[0].name} and ${gs[1].name} went out together, which is what you said would happen. `
+        + `${fell[0].name} did not come back off it, and the other one was beside him for it, which `
+        + `is exactly what you promised and is not what either of you had in mind.`
+      : `${gs[0].name} and ${gs[1].name} went out together, which is what you said would happen. `
+        + `Neither of them mentions it and both of them have counted the weeks since you said it.`,
+      fell.length ? "bad" : "good");
   }
   if(tie){ tie.strength = clamp(tie.strength + (res.win?9:5), 1, 100);
     if(tie.kind==="rival" && res.win && R()<0.35){ tie.kind = "brother";

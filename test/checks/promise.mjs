@@ -4,15 +4,18 @@
 
    ---- THE SWEEP THIS CAME OUT OF ----
    A census of `src/ludus.jsx` — every field assigned on an object, against every read of it
-   anywhere, with comments, string bodies and template prose stripped so writing could not count as
-   reading — returned **518 distinct assigned fields, 30 written once and read nowhere**. `#273`
-   had found two of them by hand (`g.fromYard`, `h.lineage.soldAt`), which is the calibration.
+   anywhere, with COMMENTS stripped and nothing else (the note over `noComments` says why that is
+   the right line to draw, and it cost eight false positives to find) — returned **538 distinct
+   assigned fields, 30 written once and read nowhere**. `#273` had found two of them by hand
+   (`g.fromYard`, `h.lineage.soldAt`), which is the calibration: the census finds what a careful
+   reading finds, and finds twenty-eight more.
 
-   Arm 1 below RE-RUNS THAT CENSUS as a gate. The thirty are named in `KNOWN` and the check fails
-   on a THIRTY-FIRST — the `romeFall` pin of #269 scaled to a class. It does not require the list
-   to shrink: several are deliberate (`el.dataset.fold` is read by the stylesheet, `d.law.women`
-   and `d.law.damnati` are duplicate bookkeeping beside a live edict, six more are stamped for the
-   gate to read). What it forbids is a NEW one arriving unremarked.
+   Arm 1 below RE-RUNS THAT CENSUS as a gate. Twenty-nine are named in `KNOWN` — `pairWord` was
+   the thirtieth and this release is why it is not — and the check fails on a THIRTY-FIRST, which
+   is the `romeFall` pin of #269 scaled to a class. It does not require the list to shrink: several
+   are deliberate (`el.dataset.fold` is read by the stylesheet, `d.law.women` and `d.law.damnati`
+   are duplicate bookkeeping beside a live edict, six more are stamped for the gate to read). What
+   it forbids is a NEW one arriving unremarked.
 
    ---- AND WHAT THE THIRTY CLUSTERED INTO ----
    `ASKS` is the five things a man will come and ask you for. Two leave something the game reads
@@ -41,8 +44,8 @@ export const describe = "a word given to one of your own reaches his record, and
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
-/* the thirty, as the census returned them at v3.272.0. Six are deliberate and six more are read
-   by the gate; the list is a CEILING on the class, not a to-do list. */
+/* the twenty-nine still standing at v3.272.0. Six are deliberate and six more are read by the
+   gate; the list is a CEILING on the class, not a to-do list. */
 const KNOWN = new Set(["avenging","cartel","damnati","demo","eased","everBorrowed","fold","fromYard",
   "inside","kinBroken","lastCheck","lookedAway","mentorLost","oneMoreYear","paragonBought",
   "raised","romeBid","scenario","softened","soldAt","stood","tookHouse","turnedHimIn","wantMatch",

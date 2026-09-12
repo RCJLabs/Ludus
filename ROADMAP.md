@@ -4479,6 +4479,15 @@ which is what three of the five asks extract. Every hand-applied number was pres
 through `remember`'s multiplier (`refused` at 9/13 is -9; `collegium` at 8/9 is +8), so the record
 arrives without a silent re-balance.
 
+## And the line had to be written three times
+
+`pairKept` does not ask whether either man is still standing — going out together is the whole of
+what was promised, and a man who dies doing it kept it. What that costs is the prose. *"Neither of
+them mentions it"* is a sentence about two men walking off the sand, and the first cut of this
+would have printed it over a corpse. Measured over 160 kept promises at tier 2: **both live on 115,
+one falls on 33, both fall on 12** — so on better than a quarter of the afternoons this fires,
+somebody on it is dead. Only the living are paid, and all three endings are written.
+
 ## What this release refuses, and the numbers are why
 
 **`d.flags.oneMoreYear` stays one hit, because its ask never fires.** `ASK_DIE` gives `year` the
