@@ -4389,6 +4389,80 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.265.0 — #269: three of the four "never occurs" do occur, and the endings were written for a player who had already lost
+
+**`OVER_TEXT` is referenced in exactly ONE place in the file: the end screen.** Every word the game
+had written about how a house ends was read by a player who had already lost. That much of #269 is
+exactly right.
+
+**Three of its numbers are not.**
+
+**35 lessons, not 53** — the same stale figure #265 corrected in the item that cited it, carried
+straight into this one.
+
+**And three of the four endings the item says never occur, occur.** Two seed sets, 16 houses × 420
+weeks an arm, every house run to its end:
+
+| | |
+|---|---|
+| ref/A | ruin 7 · debt 7 · rebellion 1 · banned 1 |
+| ref/B | debt 9 · rebellion 3 · ruin 3 · emptied 1 |
+| most/A | debt 6 · ruin 5 · closed 3 · emptied 2 |
+| most/B | ruin 9 · closed 3 · emptied 3 · debt 1 |
+
+`ruin` is the **second commonest reference ending** (10 of 32). `emptied` and `banned` both occur.
+Only `closed` is genuinely 0/32 for the reference — and under a complete player it is **6 of 32**,
+real but a long way under the item's cited "9 and 11 of 16", which this release withdraws.
+
+**That also corrects `ends.mjs`,** which has recorded `closed` as NOT REACHABLE since v2.91.0 on the
+grounds that "13 of 23 men standing in six real yards could be let go by none of them". The gate did
+not change; the rope did. The `free` lever did not exist when that note was written, so it was
+measuring a policy that never freed anybody.
+
+**And `OVER_TEXT` has thirteen entries where twelve are settable.** `romeFall` is written by nothing
+— every `d.over = {` site was enumerated, there is no `over.kind =` anywhere, and the one
+parameterised site takes `RUIN_KEYS`. `romeWeek` carries the reason in its own comment: *"the house
+comes home — Rome is a milestone, not the grave."* The ending was retired and its paragraph left
+behind. **It is kept and pinned rather than cut** — the text is good and the door could be reopened —
+and `checks/epitaph.mjs` fixes the set difference at exactly that one key, so a *second* orphan fails.
+
+---
+
+**A GREP IS THE WRONG INSTRUMENT AND THE ITEM ASKS FOR ONE.** A lesson saying *"free five men and
+there is nobody left"* foreshadows `closed` without the string; *"the house is closed to him"* carries
+the string and foreshadows nothing. So `probes/epitaph.mjs` collects the corpora a player actually
+reads — 35 lessons, 19 feats, and **1,898 distinct agenda lines emitted over played weeks** rather
+than read off a table — and scores them under a deliberately **loose** term filter.
+
+That looseness is the point: **a loose filter over-reports, so a zero under one is a real zero.**
+`foreclosed` and `disgrace` score zero across all three corpora. `triumph` is the well-signposted one
+— a feat, plus an agenda line counting the fame still short of what Rome asks.
+
+## What shipped
+
+**HOW A HOUSE IS LOST**, in the settings Guidance group beside #265's gatekeeper recall — the **nine
+ways a house is taken**, each with the engine's own figure for where this house stands against it:
+
+> **THE CREDITORS COME** — The box falls past the credit line. *the line is −250d and there is 4000d in the box*
+> **THE CELLS STAY EMPTY** — 14 weeks with nobody fit to send and nobody bought. *0 such weeks behind you*
+> **STRUCK FROM THE ROLL** · *you are warned first* — The aedile strikes the house from the roll. *heat 0 of 90 · 0 of 2 edicts · 0 of 2 in breach*
+
+Every figure is the engine's own call — `creditLine`, `EMPTY_LIMIT`, `RUIN_NOTICE`, the lender's
+multiple — so a moved dial moves the list with it, and the titles are read from `OVER_TEXT` itself
+rather than retyped, so the name a player reads here is the name he will read at the end. The
+six-week notice the RUINS three give was the bare literal `6` in `ruinWeek`; it is `RUIN_NOTICE` now,
+and the panel prints that.
+
+**WHAT IS DELIBERATELY OFF THE LIST**, by explicit decision: `closed` and `triumph` are the two
+endings a player plays *toward*, and the item's own risk note is that naming `closed` turns it into a
+goal — a house run at it is the empty-yard house of v3.251.0, roster median nought. `oldAge` is off
+because it is not reachable at all: `ends` measured `age >= 62` and `health >= 45` never co-occurring
+in 3,070 lanista-weeks. The argument sits over `END_DOORS`, beside the table.
+
+**Shipped:** `END_DOORS`, `houseEnds`, `RUIN_NOTICE`; the Guidance list; the `romeFall` note.
+`checks/epitaph.mjs` (five arms) and `probes/epitaph.mjs`. `ends.mjs`'s `closed` note corrected.
+`App` 5814 → 5837.
+
 ### v3.264.0 — #268: the road is two thirds of the die, and "not in Capua" was written forty-three times
 
 **THE ITEM'S COUNT, COUNTED.** #268: *"of the 36 drawn events, how many `make()` gates return null on
@@ -4785,8 +4859,9 @@ the item said did not exist; the road is cards and nothing else
 — ~~`ludusNight` 179 → 11, feuds 1,120 → 348, and no parties since v3.257.0~~ (#268) — **CORRECTED
 v3.264.0: 25 of the 36 drawn events fire away at identical rates; two of the four numbers cited are
 rope counters for actions that are not gated at all**; four of twelve
-endings are never reached by the reference and never named to anyone in advance, and `closed` is the
-only one that is an achievement (#269).
+endings are never reached by the reference ~~and never named to anyone in advance~~ (#269) —
+**CORRECTED v3.265.0: three of the four DO occur under the reference, `ruin` commonest among them;
+only `closed` is genuinely 0/32**, and `closed` is indeed the only one that is an achievement.
 
 **Five new systems, each grounded in a number from the run:** the veteran's bench (#270 — the complete
 player retires 214 men and frees 115 and keeps none); wagers on other men's blood (#271 — `bet` is
@@ -11527,7 +11602,7 @@ anyone decides whether the road needs a ceiling, it has decided.
 
 ---
 
-**#269 — Four Endings The Player Is Never Told Are Doors** *(enhancement · small–medium)*
+**#269 — Four Endings The Player Is Never Told Are Doors** *(enhancement · small–medium)* — **CLOSED v3.265.0. THE PREMISE HOLDS; THREE OF THE NUMBERS DO NOT.** `OVER_TEXT` really is referenced in exactly one place — the end screen — so every word about how a house ends was read by a player who had already lost. But there are **35 lessons, not 53**, and **three of the four "never occurs" occur**: over two seed sets `ruin` is the second commonest reference ending (10 of 32), `emptied` and `banned` both fire, and only `closed` is 0/32 (6 of 32 under a complete player, not the cited 9-and-11-of-16). That also corrects `ends.mjs`'s "closed NOT REACHABLE", which predates the `free` lever. `OVER_TEXT` carries a **thirteenth entry nothing can set** (`romeFall`, retired when Rome became "a milestone, not the grave") — kept and pinned so a second orphan fails. Shipped HOW A HOUSE IS LOST in settings: the nine ways a house is TAKEN, each with the engine's own figure. `closed` and `triumph` are deliberately off it — they are played toward, and naming `closed` makes the empty-yard house a goal. `checks/epitaph.mjs`, `probes/epitaph.mjs`.
 
 The source can set twelve `d.over.kind` values. Under the reference player, over 3,538 weeks, four
 never occur: `closed`, `emptied`, `banned`, `ruin`. Under a complete player `closed` is **9 and 11 of
