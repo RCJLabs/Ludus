@@ -97,7 +97,9 @@ export async function run({ p, errors }){
     const b = JSON.stringify(d); for(const k of keys) localStorage.setItem(k, b);
     const st = window.storage; if(st && !st.__treatShut){ const real = st.set.bind(st);
       st.set = (k,v)=>/ludus-slot-\d/.test(k)?Promise.resolve({key:k,value:v}):real(k,v); st.__treatShut = true; }
-    return { name:live.name, died };
+    /* #266's arm needs the names the sheet should be showing, read off the same persistent
+       `fighters` array `RIVAL_MOVES` maintains — not a list built for the check */
+    return { name:live.name, died, roster:(live.fighters||[]).map(f=>f.name) };
   });
   if(!res0) return { pass:false, why:"the played house has no live rival to treat with", lines };
   const want = res0.name;
@@ -142,6 +144,31 @@ export async function run({ p, errors }){
     for(const k of ["drink","respect","warning","old"])
       if(t.words[k] && !sheet.includes(t.words[k]))
         bad.push(`the beat \`${k}\` was planted on this rivalry and its name ("${t.words[k]}") is not on the sheet`);
+    /* ---- 5 · AND HIS MEN ARE ON IT — #266, which was written claiming they were not ----
+       #266 said a rival house "is four fields wide and cannot be opened", that `openRival` does not
+       exist and that no rival roster is rendered anywhere. All of that is wrong: `makeRivals` gives
+       every house a persistent `fighters` array of four, `RIVAL_MOVES` buys, sells and retrains
+       them week by week, and THIS sheet has rendered them under "His men" since #249 — the header
+       of this very file says so in its second paragraph. The item was written from greps on `r.name`
+       and `r.wins` and never opened the screen.
+       What was true is that nothing HELD it. The arms above assert the ledger, the record and the
+       beats; the roster they sit above was unguarded, so it could have gone quiet without a check
+       noticing. That is the whole of what #266 leaves behind. */
+    /* CASE-INSENSITIVE, and the first cut of this line was not. `.tag` uppercases in CSS and
+       `innerText` returns the RENDERED text, so the label reads "HIS MEN" and `/His men/` missed a
+       roster that was on the screen all along — the names were three lines further down. The men
+       are the substance and the label decoration, so the names are what decide below. */
+    if(!/his men/i.test(sheet))
+      bad.push(`the Treat sheet does not carry a "his men" heading — the roster is the reason this screen exists `
+        + `and \`h.fighters\` is persistent state that \`RIVAL_MOVES\` maintains every week, not a list conjured for a bout`);
+    else {
+      const shown = res0.roster.filter(n=>sheet.includes(n));
+      lines.push(`  and his men: ${shown.length}/${res0.roster.length} named on the sheet — ${shown.join(", ")}`);
+      if(shown.length < res0.roster.length)
+        bad.push(`House ${want} holds ${res0.roster.length} men and the sheet names ${shown.length} of them `
+          + `(missing ${res0.roster.filter(n=>!shown.includes(n)).join(", ")}) — the roster is rendered from \`h.fighters\`, `
+          + `so a man in the yard and off the sheet means the panel is filtering something it should not`);
+    }
     /* 4 · the freshness line, planted three weeks back with a grudge of 55 */
     const fresh = await p.evaluate(()=>{ const el = document.querySelector("[data-fresh]");
       return el ? { house:el.getAttribute("data-fresh"), text:(el.textContent||"").replace(/\s+/g," ").trim() } : null; });
