@@ -11785,8 +11785,14 @@ const MISSIO_MAN = ACCLAIM_MISSIO;   /* his own name, outside the box's cap and 
    death against 19.31% for one that presses nothing. */
 const ENT_MISSIO = ACCLAIM_MISSIO;   /* what the afternoon itself can be worth, outside the cap */
 function missioScore(A, ctx, crowd, account, endured, own){
+  /* `ctx.hisTown` is the man's own name in the town this bout is in — #274, and the ONE thing that
+     release wires it to. It sits inside the editor's box beside `ctx.favor`, which is already the
+     HOUSE's local standing away, because the item's whole sentence is that the missio away "reads
+     the man's local name as well as the house's". It is inside `MISSIO_CAP` with everything else,
+     so it cannot run away with the roll, and it is 0 at Capua, where a man's name IS his pfame. */
   const box = Math.min(MISSIO_CAP,
-    (A.pfame||0)*0.20 + (ctx.favor||0)*0.22 + (ctx.fav||0) + (ctx.patron ? ctx.patron.favor*0.10 : 0));
+    (A.pfame||0)*0.20 + (ctx.favor||0)*0.22 + (ctx.fav||0) + (ctx.patron ? ctx.patron.favor*0.10 : 0)
+    + (own === false ? 0 : (ctx.hisTown||0)*0.22));
   const man = own === false ? 0 : clamp(ctx.man||0, 0, MISSIO_MAN);
   /* what he did before the horn, which is his own doing and not his master's */
   const day = own === false ? 0 : clamp(ctx.day||0, 0, ENT_MISSIO);
@@ -14169,6 +14175,13 @@ function bayWeek(d){
     if(d.city === k) continue;
     const v = d.known[k] || 0;
     if(v > 0) d.known[k] = Math.max(0, v - BAY_DECAY);
+    /* and every man's own name with it — #274. Same clock, same rate: a crowd forgets a fighter
+       at least as fast as it forgets his school. */
+    for(const g of activeG(d)){
+      if(!g.known) continue;
+      const m = g.known[k] || 0;
+      if(m > 0) g.known[k] = Math.max(0, m - BAY_DECAY);
+    }
   }
   if(bayWide(d) && !d.flags.bayWide){ d.flags.bayWide = d.week;
     chron(d, `Word has gone round the whole bay now — Pompeii, Neapolis and Puteoli all know the house by name. A reputation that wide does not stay in Campania; it is already being spoken of in rooms in Rome, and the road there is shorter for it.`, "good"); }
@@ -14348,13 +14361,23 @@ function cityServed(d, key, offer, v){
    inline in doFight, which meant a melee or a hunt fought at Pompeii earned the
    house nothing at all in Pompeii — the whole point of having gone. One function,
    four callers. */
-function cityAfter(d, offer, v, sum){
+/* `who` is the man or men whose own name the bout built — #274. Only the SINGLES caller passes it,
+   and deliberately: the one consumer wired this release is the gladiator missio, which is a singles
+   roll. A melee or a hunt still builds the HOUSE's standing exactly as before and builds nobody's
+   name, which is a gap named here rather than half-filled. */
+function cityAfter(d, offer, v, sum, who){
   const key = offer && offer.city; if(!key) return;
   const away = CITIES[key]; if(!away) return;
   d.known = d.known || {};
   const fit = repStyle(d)===away.taste;
   const gained = rnd((7 + v.crowd/16 + (fit?5:0)) * docKnown(d));
   d.known[key] = clamp(knownIn(d,key) + gained, 0, 100);
+  /* his own name, at the house's rate into a lower ceiling — #274 */
+  for(const g of (who || [])){
+    if(!g) continue;
+    g.known = g.known || {};
+    g.known[key] = clamp(manFollow(g,key) + gained, 0, MAN_FOLLOW_CAP);
+  }
   sum.push(`${away.name} is beginning to know the name — local standing ${Math.round(knownIn(d,key))}.${fit? " They like the kind of house you are." : ""}`);
   /* the town's own man, and the town's own house, both took a view of that */
   const P = bayPol(d, key), C = cityCustom(key);
@@ -14383,6 +14406,33 @@ const STAY_FRESH = 6;      // weeks in one town before the welcome starts to wea
 const stayWeeks = d => (d.city && d.flags && d.flags.cityArrived!=null) ? Math.max(0, d.week - d.flags.cityArrived) : 0;
 const welcomeOf = d => clamp(1 - Math.max(0, stayWeeks(d) - STAY_FRESH) * 0.045, 0.6, 1);
 const knownIn = (d,k) => (d.known && d.known[k]) || 0;
+/* ---- AND A MAN'S OWN NAME IN A TOWN — audit item #274 ----
+   `known` is per HOUSE per town and bleeds `BAY_DECAY` a week wherever you are not standing. A man
+   had `pfame`, one number, everywhere: the crowd at Pompeii that watched him take a head and the
+   crowd at Neapolis that never saw him were the same crowd to the game.
+
+   #274 SET ITS OWN FALSIFICATION CLAUSE AND IT RESOLVED THE OTHER WAY. "If a tourer fights evenly
+   across the three towns, a per-town following is three numbers that move together and buys nothing
+   over `pfame`." Measured (`probes/following.mjs`, 16 houses x 420 weeks an arm) the touring
+   HOUSE does fight evenly — capua 24% · pompeii 26% · neapolis 27% · puteoli 23% — and its MEN do
+   not. Each man's town mix sits a median **0.47** in total variation from his own house's, against
+   **0.14** for the same men re-drawn from that house's mix: **+0.33 over the sampling**. There is
+   one roster and it travels whole, so a man cannot go anywhere by himself — but which weeks he
+   fought decides which towns ever saw him, and that is not the house's answer.
+
+   (Two things the item cited are wrong: `probes/capua.mjs` splits home against away and never by
+   WHICH town, so the figure the clause turns on had never been measured; and the `tour` lever goes
+   "to whichever town knows the house least", which equalises by construction — reading an even
+   split out of it would be reading the policy back out of itself.)
+
+   THE SAME SHAPE AS THE HOUSE'S, at a lower ceiling: a man's name does not carry as far as a
+   school's. It is gained where he fights and bled where he does not, by `bayWeek`, on the house's
+   own clock. */
+const MAN_FOLLOW_CAP = 40;
+const manFollow = (g,k) => (g && g.known && g.known[k]) || 0;
+const manBestTown = g => { let best = null, v = 0;
+  for(const k of Object.keys(CITIES)){ const n = manFollow(g,k); if(n > v){ v = n; best = k; } }
+  return best ? { town:best, n:v } : null; };
 const cityTier = (d,k) => knownIn(d,k) >= 60 ? 3 : knownIn(d,k) >= 30 ? 2 : 1;
 /* a house known the length of the bay carries further than Campania — word of it
    reaches Rome, and shortens the road there. capped at 60 known per town. */
@@ -21368,7 +21418,9 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
       favor: imperial ? Math.min(d.favor, 20) : PLACE.favor, tier: Math.min(offer.tier,3),
       hostile:!!bribeHouse, patron: imperial ? null : (patron ? {name:patron.name, favor:patron.favor} : null),
       repShow: workPerk(d,"crowd") + femCrowd(g) + favCrowd(g) + W.crowd + provCrowd(g) + ((g.mastery && g.mastery.cls===g.cls) ? masteryCrowd(g) : 0) + signatureCrowd(g) + (repStyle(d)==="show" ? 8 : 0) + (nem ? 10 : 0) + (offer.rematch ? 8 : 0) + (away ? cityCrowd(d, offer.city) : facCrowd(d, g.cls)) + seasonCrowd(d) + V.crowd + (away ? 0 : acclaimCrowd(d)) + (g.graffiti ? 3 : 0),
-      guarded: choice==="cover" };
+      guarded: choice==="cover",
+      /* #274 — what this town knows of THIS man, 0 at home */
+      hisTown: offer.city ? manFollow(g, offer.city) : 0 };
   /* the entrance — a bout-start effect only, never re-applied on a coached resume */
   const ENT = ENTRANCES[offer.entrance||"none"] || ENTRANCES.none;
   if(!pending){
@@ -21510,7 +21562,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
      Turning up at all is still worth the +4; what you did when you got there is
      the ±5 on top. */
   if(away) cityAfter(d, offer, { won:win, theirDead:!!res.bDies, spared:!!res.spared,
-    vigour:res.vA, crowd:res.crowd }, sum);
+    vigour:res.vA, crowd:res.crowd }, sum, [g]);
 
   boutAftermath(d, g, gid, offer, res, win, F, sum);
   if(offer.stakes==="sine") d.gladiators.forEach(o=>{ if(o.status==="active") o.defiance=clamp(o.defiance+1,0,100); });
@@ -32577,6 +32629,18 @@ export default function App(){
               <span>Renown <b>{rnd(selG.pfame)}</b></span>
               <span>Age <b>{selG.age}</b></span>
             </div>
+            {/* #274 — his own name down the bay, and ONLY where it is not simply his renown. The
+                item's own note says show the one that differs, not the table of three. */}
+            {(()=>{ const b = manBestTown(selG); if(!b || b.n < 6) return null;
+              const here = S.city ? manFollow(selG, S.city) : null;
+              return (
+                <div style={{fontSize:"var(--fs-sm)",color:"var(--gold-line)",marginBottom:8}}>
+                  {CITIES[b.town].name} knows him on his own account — {Math.round(b.n)} of {MAN_FOLLOW_CAP}
+                  {S.city && S.city !== b.town
+                    ? `, and ${CITIES[S.city].name}, where you are standing, ${here >= 6 ? `${Math.round(here)}` : "barely at all"}.`
+                    : `. It bleeds ${BAY_DECAY.toFixed(2)} a week wherever he is not fighting.`}
+                </div>
+              ); })()}
             <div style={{fontSize:"var(--fs-lg)",fontStyle:"italic",marginBottom:8,color:selG.legend?"var(--gold-hi)":"var(--ink-2)"}}>
               The doctore's eye: {selG.read ? `potential ${rnd(selG.potential)}, heart ${rnd(selG.heart)}` : potentialWord(selG.potential, selG)}. Bearing: {demeanor(selG.defiance).toLowerCase()}{selG.read? ` (${rnd(selG.defiance)})`:""}. At {selG.age} {PR(selG).he} is {ageWord(selG.age, selG)}.{yearBurden(selG) > 0 && (()=>{ const y = selG.yearCap || {};
                 const worst = Object.entries(y).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${(STAT_NAMES[k]||k).toLowerCase()} ${v}`).join(", ");
@@ -35751,6 +35815,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        ever toured. Two scales live here: `bayPol[key].favor`, which only a bout in that town moves,
        and `knownIn`, which bleeds BAY_DECAY every week you are somewhere else. See `bay`. */
     CITY_KEYS, BAY_DECAY, bayKnownTotal, bayWide, bayHolder, bayWorth, baySince,
+    /* #274 — a man's own name in a town, and the one roll that reads it */
+    MAN_FOLLOW_CAP, manFollow, manBestTown, cityAfter, bayWeek, missioScore, knownIn,
     /* ---- AND THE FOUR ENDINGS NOTHING HAS EVER REACHED ----
        200 played houses produced seven of the twelve endings the source can set. `oldAge` needs an
        HEIR, `foreclosed` a LOAN grown to four times its principal, `closed` five men FREED, and
