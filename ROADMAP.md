@@ -4389,6 +4389,129 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.272.0 — #276: the dead-flag sweep, and the promise the house makes in a quarter of its conversations
+
+**The audit queue is closed, so this release opened a class instead of an item.** A census of
+`src/ludus.jsx` — every field assigned on an object, against every read of it anywhere — returned
+**538 distinct assigned fields and 30 written once and read nowhere**. #273 had found two of them
+by hand (`g.fromYard`, `h.lineage.soldAt`), which is the calibration: the census finds what a
+careful reading finds, and finds twenty-eight more.
+
+## The instrument had to be fixed before any of it could be read
+
+The first census stripped comments **and string and template state**, so prose could not count as a
+read. It returned eight extra dead fields — `avenged`, `ended`, `headline`, `imported`,
+`lastScheme`, `snap`, `stone`, `watchedTac` — and every one of them is read inside JSX, in
+`{o.headline && …}` and its kind.
+
+**The cause is an apostrophe.** Thirty-six thousand lines of English prose sit inside JSX, "he
+doesn't" opens a string state that runs to the next apostrophe, and whole regions of the render
+were being blanked before any read in them was counted. A read is `.field` **with a leading dot**,
+and English does not write a leading dot, so string bodies were never the hazard. Comments are —
+this file's notes name dead fields on purpose, #273's two among them. Stripping comments and
+nothing else returns the thirty exactly, with no eighth.
+
+## Six of the thirty are false positives and are named so the list is not re-walked
+
+`el.dataset.fold` is read by the stylesheet (`.plate[data-fold="1"]`); `d.law.women` and
+`d.law.damnati` are duplicate bookkeeping beside a live edict, where `L.edicts` plus
+`EDICTS[k].check` carry the whole consequence. Six more are read by the gate and by nothing in the
+game — `o.inside`, `c.tookHouse`, `h.watchful`, `d.flags.kinBroken`, `d.flags.everBorrowed`,
+`x.writtenOff` — a check asserts each is stamped, so they are evidence, not mechanism.
+
+## What is left clusters, and the cluster is one table
+
+`ASKS` is the five things a man will come and ask you for. Two leave something the game reads
+(`noSell` → `herSpareMan` will not let the wife pick a man you promised not to sell; `g.family` →
+the death letter, where somebody has to go into town and tell her). **Three left nothing at all**,
+and the file had already diagnosed the fault: #239's note over `REGARD.leave` reads *"`woman` was
+the only one of the five ASKS whose branches never called `remember`."*
+
+**It was one of four.** `match`, `year` and `burial` call it on neither branch. `REGARD.collegium`
+was written for `burial` — *"You put the house into a burial society, so there would be a stone"* —
+and the ask applies its regard by hand and never touches it, because it builds the society inline
+instead of going through `foundCollegium`, which calls `rememberAll`.
+
+## And the one with two names in it
+
+`WORDS.beside` — *"Put them out together when you can"* — is the **third most common thing a man
+says to you**. Driving the conversation every week it was allowed, over 40 houses x 420 weeks:
+
+| word | fired | share |
+|---|---|---|
+| `wants` | 381 | 34.5% |
+| `grudge` | 283 | 25.6% |
+| **`beside`** | **260** | **23.6%** |
+| `spine` | 56 | 5.1% |
+
+What it wrote was `d.flags.pairWord = d.week` — **a house-wide number, with no room in it for the
+two men it was given about**, and one hit in the whole file at its own assignment.
+
+**Every other piece was already there.** `offer.pair` is on the card on 13.5% of weeks; the
+reference player took **330 pair bouts in 3,491 weeks**; and `doPairFight`'s aftermath already asks
+whether the two who went out are brothers, because that is where `AMBITIONS.beside` is met. What
+nothing did was point one at the other: **of 260 promises given about a named pair, 22 saw those
+two men go out in the same week — 8.5%, which is the coincidence rate.**
+
+## What shipped — the word carries its names, wired to one site
+
+`d.flags.pairWord` is `{ a, b, at }` now. It is read by `pairSworn` / `pairStands` / `pairMen` /
+`pairKept`, which tolerate the bare week an older save carries, and it is wired to **one** place:
+the pair-bout aftermath, where `remember(d, x, "kept")` pays it at +20 a man and the chronicle says
+so. It is **not** paid on the day it is given — `REGARD.kept` is *"you gave him your word and then
+you kept it"*, a sentence about the afternoon and not about the conversation.
+
+`PAIR_WORD` is **14** weeks: `match`'s own window for the other promise a man extracts, the
+measured number (the median wait among the 22 coincidental keeps was **9 weeks**), and it has to
+sit inside `YEAR_WEEKS`, which is 18 — `calendarRows` spans a year and drops anything past it, and
+a deadline nothing can show is the fault this item exists to fix.
+
+**Two surfaces, doing two different jobs.** The date goes in the calendar block already headed
+*"what you have promised, or been told"*, beside the bookings, the levies and the pact — it was the
+only dated promise in the game that had never been on a dated surface. The moment goes in the
+agenda, and `agendaPair` speaks **only** on the 13.5% of weeks a pair bout is actually on the card
+and both men can stand, because a row that lit on all of them would be #101's wallpaper fault
+applied to a promise.
+
+**And one new memory kind.** `REGARD` held both ends of a promise — `kept` +20 and `broke` -24 —
+and nothing for the middle. `word` (+11) is the word given on a thing that has not happened yet,
+which is what three of the five asks extract. Every hand-applied number was preserved exactly
+through `remember`'s multiplier (`refused` at 9/13 is -9; `collegium` at 8/9 is +8), so the record
+arrives without a silent re-balance.
+
+## What this release refuses, and the numbers are why
+
+**`d.flags.oneMoreYear` stays one hit, because its ask never fires.** `ASK_DIE` gives `year` the
+highest weight of the five (w:4 against brother 1, match 1, burial 2, woman 3) and `ASK_FRESH`
+triples a key that has never fired, so on the table it is the likeliest thing a man will say. It is
+the only one that never says it: **0 asks in 2,402 played weeks.** Walking every eligible man every
+week rather than waiting on the 6% roll, `year`'s own gate is in the pool on **17 of 1,411 weeks
+(1.2%)** and is reached in **5 of 40 houses at all** — against 55%, 45%, 28% and 22% for the other
+four. The median house lives 43 weeks and the wooden sword wants ten wins and 180 renown. This is
+the `woman` refusal of #239 a second time and for the same reason.
+
+**And `d.flags.wantMatch` stays one hit, which is a closer call.** The machinery to honour it
+exists — `PETITIONS.soften` already swaps an offer's opponent — so it is a wire, not a system. But
+the ask fires **7 times in 2,402 played weeks**, all 7 promises outlived their own date, none was
+ever cleared, and the median one sat there **58 weeks** after falling due. An opponent-injection
+path into the bill for 0.3% of weeks buys a rarer thing than the pair word it would sit beside at
+23.6%. What it gains instead is the record. Both are pinned orphans with the numbers written beside
+the code refused.
+
+## And a fourth gap the check found, recorded rather than fixed
+
+Arm 2 requires every branch of every ask to reach the man's record **or take him off the roster**.
+`year.no` is "Free him now" and passes on the branch that frees him — but when the house cannot
+pay, `grantRudis` keeps the man and chronicles *"He stays, which he will understand and not
+forgive."* **Nothing is behind the not forgiving.** It is not the ask's fault and it is not
+repaired here: `grantRudis` has two callers, so the record belongs at that line for both, and what
+a man makes of a house that meant well and was broke is a different question from the one #276
+asked. The check reports it; `src` carries the note.
+
+**Shipped:** `REGARD.word`; `PAIR_WORD`, `pairSworn`, `pairStands`, `pairMen`, `pairKept`,
+`pairWordSays`, `agendaPair`; the pair-bout wire; the calendar row; five ask branches on the
+record; `checks/promise.mjs` (six arms, the census among them), `probes/promise.mjs`.
+
 ### v3.271.0 — #275: the item said eleven and named the wrong four, and the gloss belongs in the label
 
 **"Bearing" is not a quantity.** The man's sheet prints `demeanor(g.defiance)` under that label, so
