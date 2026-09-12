@@ -4389,6 +4389,64 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.268.0 — #272: handing over by choice was built, and it is the only door anybody uses — but the house talks about the man as if he were dead
+
+**#272's premise is the #118-era state, and it was fixed.** *"The dynasty is playable only through
+death."* `lanistaWeek` carries a retirement branch — `L.age >= 62 && L.health >= 45 && d.heir &&
+heirOfAge(d) && yearOf(d) >= 6 && R() < 0.06` — raising `d.succession` with `retire:true`, and
+`succeed` reads it: *"a handover from a living man is not a handover from a dead one, and the two
+say different things."*
+
+**It is not merely reachable. It is the only door anybody uses.** `probes/steward.mjs`, two
+policies, 24 houses × 520 weeks each:
+
+| | |
+|---|---|
+| reference | 3 handovers — **3 retired, 0 died** |
+| complete player | 7 handovers — **7 retired, 0 died** |
+
+matching `probes/widow.mjs`'s fifteen of fifteen. And the state the door needs is common, not rare:
+a lanista past `LAN_AGE_FROM` and a named heir of age stand together in **10.4%** of reference weeks
+and **23.5%** under a complete player. The item's fear — *"if that state is rare, the door opens on
+nobody"* — is answered: it opens on everybody who gets that far.
+
+## The fault is what the house says afterwards
+
+`succeed` promises the retired man *"keeps his rooms and the ledger, and comes down to the square
+when the mood takes him."* #248 phase 2 then gives the house **six recurring lines about its old
+master** on a fourteen-week cadence — and every one of the six was written for a **dead** man:
+
+> *A trader asks after him by name, having been away some years, and **takes the news** standing in the doorway.*
+> *He was bought by him and **has now served two masters** in this house.*
+
+Measured: **10 of 10 and 42 of 42 of those lines landed on a man still in the building.** `f.retired`
+was written on the forebear record, read by exactly one UI row (*"stepped back at"* against *"died
+at"*), and read by nothing else.
+
+## What shipped
+
+`FORE_LINES_BACK` — the same six shapes in the register of a master who is upstairs:
+
+> *Zenon still calls the place Marcus Tullius's yard, **in front of him**, and neither of them has ever mentioned it.*
+> *An argument in the cells about how he would have handled the week. **Somebody points out that he is upstairs and could simply be asked.** Nobody goes.*
+> *A trader asks after him by name and **is sent up to the rooms**. They are a long time about it, and the trader comes down having forgotten what he called for.*
+
+**A second set, not a conditional clause.** `foreWeek` indexes the pool by `since / FORE_EVERY`, so
+the two arrays must line up one for one, and the `fn.length < 3` rule that spares the lines needing
+a named man has to hold in both — arities `[3,3,2,3,2,3]` in each. **No `R()` draw is added**: the
+cadence is still the calendar, so nothing re-phases.
+
+**Two instrument faults corrected on the way.** The check first read `d.chronicle`, which does not
+exist — `chron` unshifts onto `d.log` — and duly reported all twelve lines silent, which was the
+instrument saying nothing rather than the game. And its last arm played a bare `endWeek` loop and
+read *"138 weeks past LAN_AGE_FROM, 0 with an heir of age"*: **naming an heir is a player action**,
+so a house left alone can never reach the state whatever the game does. The share in play is the
+probe's job; the check holds the gate's five terms instead, each asserted separately so a moved term
+says which.
+
+**Shipped:** `FORE_LINES_BACK` and the register switch in `foreWeek`. `checks/steward.mjs` (four
+arms) and `probes/steward.mjs`.
+
 ### v3.267.0 — #271: the card was already there and nine tenths of it was silent, and the wager the item wanted is a certain loss
 
 **Two of #271's three citations are wrong.** `checks/odds.mjs` does not hold the book — it holds
@@ -11796,7 +11854,7 @@ stranger-versus-stranger card may have nothing to stand on until #266's roster e
 
 ---
 
-**#272 — Handing Over By Choice** *(new system · medium)*
+**#272 — Handing Over By Choice** *(new system · medium)* — **CLOSED v3.268.0. ALREADY BUILT, AND IT IS THE ONLY DOOR ANYBODY USES.** The premise is the #118-era state: `lanistaWeek`'s retirement branch raises `d.succession` with `retire:true` and `succeed` reads it. Measured, **3 of 3 and 7 of 7 handovers were retirements and no lanista died**, and the state the door needs stands in **10.4%** of reference weeks (23.5% complete) — it opens on everybody who gets that far. The real fault: `succeed` promises the retired man "keeps his rooms", and then all six of #248's recurring lines about the old master are written for a DEAD one — **10 of 10 and 42 of 42 landed on a man still in the building**. Shipped `FORE_LINES_BACK`, the same six shapes in the register of a man who is upstairs. `checks/steward.mjs`, `probes/steward.mjs`.
 
 The dynasty is playable only through death. `succeed` fires when the lanista dies or breaks; `oldAge`
 wants `age>=62 && health>=45 && d.heir` and #118 measured it **unreachable** — over 3,070

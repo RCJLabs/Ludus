@@ -17685,6 +17685,37 @@ const FORE_LINES = [
   (d,f)=>`A trader asks after ${f.name} by name, having been away some years, and takes the news standing in the doorway with his list still in his hand.`,
   (d,f,who)=>`${who[0]} was bought by ${f.name} and has now served two masters in this house, which he mentions about once a season and did again today.`,
 ];
+/* ---- AND HALF OF THOSE SIX ARE ABOUT A MAN WHO IS UPSTAIRS — audit item #272 ----
+   #272 proposed handing the house over on purpose. That was built: `lanistaWeek` carries a
+   retirement branch, `succeed` reads `d.succession.retire`, and its own note says "a handover from
+   a living man is not a handover from a dead one, and the two say different things".
+
+   IT IS NOT JUST REACHABLE, IT IS THE ONLY DOOR ANYBODY USES. `probes/steward.mjs`, two policies:
+   **3 handovers of 3 and 7 of 7 were RETIREMENTS, and not one lanista died** — matching
+   `probes/widow.mjs`'s fifteen of fifteen. The state the door needs is not rare either: a lanista
+   past `LAN_AGE_FROM` and a named heir of age stand together in **10.4% of reference weeks and
+   23.5% under a complete player**.
+
+   SO THE FAULT IS WHAT THE HOUSE SAYS AFTERWARDS. `succeed` promises the retired man "keeps his
+   rooms and the ledger, and comes down to the square when the mood takes him" — and then the six
+   recurring lines #248 phase 2 gives the house are every one of them written for a dead master.
+   "A trader asks after him by name and takes the news standing in the doorway." "He has now served
+   two masters." Measured: **10 of 10 and 42 of 42 of those lines landed on a man still in the
+   building**, because `f.retired` is written on the forebear record, read by exactly one UI row
+   ("stepped back at" against "died at"), and read by nothing else.
+
+   A SECOND SET, NOT A CONDITIONAL CLAUSE. The six shapes are kept one for one — the index into the
+   pool is `since / FORE_EVERY`, so the two arrays have to line up, and the `fn.length < 3` rule
+   that spares the lines needing a named man has to hold in both. No `R()` draw is added: the
+   cadence is still the calendar, so nothing re-phases. */
+const FORE_LINES_BACK = [
+  (d,f,who)=>`${who[0]} still calls the place ${f.name}'s yard, in front of him, and neither of them has ever mentioned it.`,
+  (d,f,who)=>`The old master's corner of the colonnade is swept every morning. ${who.length>1?`${who[0]} and ${who[1]} both deny doing it`:`${who[0]} denies doing it`}, and ${f.name} has never once said thank you for it.`,
+  (d,f)=>`${f.name} held this house for ${Math.max(1, Math.round((f.to-f.from)/WEEKS_PER_YEAR))} years and the doctore still runs the morning the way he liked it. He comes down to watch about one week in four, says nothing, and goes back up.`,
+  (d,f,who)=>`An argument in the cells about how ${f.name} would have handled the week. Somebody points out that he is upstairs and could simply be asked. Nobody goes, and ${who[0]} settles it instead.`,
+  (d,f)=>`A trader asks after ${f.name} by name, having been away some years, and is sent up to the rooms. They are a long time about it, and the trader comes down having forgotten what he called for.`,
+  (d,f,who)=>`${who[0]} was bought by ${f.name} and now serves the second master of this house while the first watches from the colonnade. He mentions it about once a season and did again today.`,
+];
 /* ---- THE HOUSE'S OWN BOOK — #248 phase 3 ----
    The item asks for "the annals turned into prose by the chronicle's own shapes", as a SHEET. A
    sheet is a place to read and adds nothing to a week, and phases 1 and 2 both failed this item's
@@ -17748,7 +17779,9 @@ function foreWeek(d){
   const i = Math.floor(since / FORE_EVERY) - 1;
   /* the lines that name a man need one; when the last of them has gone the house says the other
      kind, which is the point — the men who knew him run out before the memory does */
-  const pool = who.length ? FORE_LINES : FORE_LINES.filter(fn => fn.length < 3);
+  /* #272 — the man who stepped back is not the man who was carried out */
+  const set = f.retired ? FORE_LINES_BACK : FORE_LINES;
+  const pool = who.length ? set : set.filter(fn => fn.length < 3);
   if(!pool.length || i >= pool.length) return;
   chron(d, pool[i](d, f, who), "info");
 }
@@ -35692,6 +35725,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     loanWeek,   /* #235 — the escalation ladder is read off its own source by checks/debt.mjs */
     RUINS, RUIN_KEYS, facOf, lawOf, inBreach,
     COUNSEL, WHISPERS, YARD, LATE, LATE_KEYS, lateWeek, foreWeek, FORE_LINES, FORE_EVERY, servedUnder,
+    FORE_LINES_BACK,   /* #272 — the same six shapes for a master who is upstairs */
     bookWeek, BOOK_LINES, BOOK_EVERY, BOOK_MIN, bookDead, NIGHT, ASKS, REFUSE_REASONS, RIVAL_MOVES, FREEDMEN, AFTERS, FEUD_CAUSES, griefStricken, isAuctor, refuseCandidate, refuseWeek, endRefusal, refusing, canFight, refuseOdds, refuseRisk, REF_KEYS,   /* #201 — everything the refusal gate reads */   /* #186 — eleven registers no probe could reach; the account is in checks/voice.mjs */
     /* #196 — the conversation the player starts. WORDS is a register like the eleven above, so
        `voice` requires it here, and it is free to sit on its own line now that `bulk` ends App at
