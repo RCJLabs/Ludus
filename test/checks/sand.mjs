@@ -81,7 +81,37 @@ const overlay = (p, where) => p.evaluate(([where, FT, FP, FC])=>{
     if(/hidden|clip/.test(cs.overflowX) || cs.textOverflow === "ellipsis"){
       if(cs.overflowX !== "auto" && cs.overflowX !== "scroll"){
         const over = e.scrollWidth - e.clientWidth;
-        if(over > 1) bad.push(`"${txt.slice(0,28)}" is cut off, ${over}px hidden`);
+        if(over > 1){
+          /* ---- AND WHAT IS ACTUALLY STICKING OUT, WHICH THIS DID NOT USED TO SAY ----
+             The message named the element's OWN text. On a leaf that is the whole story; on a
+             scene container it is a lie of attribution. `.arena` carries `overflow:hidden` and its
+             only text is the momentum row — `position:absolute; left:8; right:8`, so its width is
+             DERIVED from the arena and it cannot overflow it — and a real failure therefore read
+             `"MOMENTUM CROWD 100" is cut off, 15px hidden`, pointing at the one thing in the box
+             that was provably not the cause. Five hypotheses died on that before the attribution
+             was added: the momentum text, the beast figure's fixed stance, a narrowed frame, the
+             dead beast's 14-degree rotation, and the `driven` pose's -30px under `scaleX(-1)`.
+             Enumerating all eight beast poses in the live frame returned over=0 for every one, so
+             `scrollWidth` here is not seeing descendant SVG transforms either.
+             The threshold is unchanged. Only the message is, and it now names the culprit. */
+          const pr = e.getBoundingClientRect();
+          let worst = null;
+          for(const c of e.querySelectorAll("*")){
+            const r = c.getBoundingClientRect(); if(!r.width) continue;
+            const oh = r.right - pr.right;
+            if(oh > 0.5 && (!worst || oh > worst.oh)) worst = { oh:Math.round(oh),
+              tag:c.tagName.toLowerCase(),
+              cls:String((c.className && c.className.baseVal != null) ? c.className.baseVal
+                    : (c.className || "")).trim().slice(0, 20),
+              txt:(c.innerText || "").trim().slice(0, 18) };
+          }
+          bad.push(`"${txt.slice(0,28)}" is cut off, ${over}px hidden — `
+            + (worst
+              ? `widest overhang ${worst.oh}px by <${worst.tag}`
+                + `${worst.cls ? ` class="${worst.cls}"` : ""}${worst.txt ? ` text="${worst.txt}"` : ""}>`
+              : `nothing inside it overhangs the RIGHT edge, so the overflow is on the left or is `
+                + `this element's own inline content`));
+        }
       }
     }
     if(!e.children.length){

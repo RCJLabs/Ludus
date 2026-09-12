@@ -4389,6 +4389,63 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.274.0 — #278: the overflow check named the one thing in the box that could not be the cause
+
+**A real failure, five wrong hypotheses, and no repair — because the check's message pointed at the
+wrong element and I followed it for an hour.** The v3.273.0 gate went 201/202 on `sand`:
+
+    the verdict, a hunt: "MOMENTUM CROWD 100" is cut off, 15px hidden
+
+`overlay()` flags any element with `overflow-x:hidden` whose `scrollWidth` exceeds its
+`clientWidth`, and names **the element's own text**. On a leaf that is the whole story. On a scene
+container it is a lie of attribution.
+
+The element is `.arena` — `position:relative; overflow:hidden; height:232px` — and on a HUNT
+verdict its only text is the momentum row, which is why that row's words ended up in the message.
+**That row is `position:absolute; left:8; right:8`, so its width is derived from the arena and it
+cannot overflow it.** The message named the one thing in the box that was provably not the cause.
+
+## What died on the way, in order
+
+1. **The momentum text itself.** `MOMENTUM` + a `flex:1` track + a `nowrap` `CROWD 100`, inside
+   336px. Measured at 9..345 of a 352px frame on every draw.
+2. **The beast's stance.** `stance()` returns a fixed `160` for a beast, so its figure sits at
+   `ol186 ow150` — right edge 336, a constant 16px inside the frame. It cannot drift.
+3. **A narrowed frame.** Overflow would need an inner width under 320; the arena measured 352 on
+   every run, from `.modal` at 390 minus 36 of padding.
+4. **The dead beast's rotation.** `translate(6px,26px) rotate(14deg)` really does widen the
+   figure's box — measured 150 -> **181px**, and the fallen man 118 -> **170px**, with right edges
+   landing at 332 and 343 against a 352 boundary. Thin margins, and still not it.
+5. **The `driven` pose.** `{x:-30}` — *"it has had enough of him and wants the gate"* — under the
+   B-side figure's `scaleX(-1)`, which turns a local -30px into **+30px rightward on screen**:
+   336 + 30 = 366 against 352, an overhang of 14px against an observed 15. The arithmetic was
+   exact and the hypothesis was still wrong.
+
+**Enumerating all eight beast poses in the live frame returned `over=0` for every one**, the dead
+rotation included — so `scrollWidth` is not seeing descendant SVG transforms here, and the whole
+figure line of reasoning was dead from the start. Eleven runs and the pose sweep never reproduced
+it; the widest overhang seen anywhere was **2px**, by an empty `.chead`.
+
+## What shipped, and what did not
+
+**The fault is real, rare (3 reds in 289 recorded runs) and still unidentified.** Nothing about the
+layout is changed, because five hypotheses were eliminated and none of them was the answer, and
+changing geometry on a guess is how a check gets quietly defeated instead of satisfied.
+
+What is changed is the message. **The threshold is untouched** — the same elements fail at the same
+`over > 1` — and it now names the widest descendant that actually overhangs the right edge:
+
+    "MOMENTUM CROWD 100" is cut off, 15px hidden — widest overhang 15px by <div class="...">
+
+and, when nothing overhangs the right, says so, which narrows it to the left edge or the element's
+own inline content. Verified by injecting a known 400px child: *"48px hidden — widest overhang 47px
+by `<div class="probe-overhang" text="X">`"*.
+
+The next occurrence diagnoses itself. That is the whole release.
+
+**Shipped:** `checks/sand.mjs` — descendant attribution on the overflow message, threshold
+unchanged. No game code.
+
 ### v3.273.0 — #277: the sweep closed, and the answer to the other fifteen is no
 
 **This release changes no game code, and that is the result rather than the omission.** #276 left
