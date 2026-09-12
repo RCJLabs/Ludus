@@ -4389,6 +4389,85 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.264.0 — #268: the road is two thirds of the die, and "not in Capua" was written forty-three times
+
+**THE ITEM'S COUNT, COUNTED.** #268: *"of the 36 drawn events, how many `make()` gates return null on
+`d.city` — the number of cards that simply cannot fire away."* `probes/camp.mjs` asks each key four
+times off **one saved stream position** — at home, in a town, on the road between towns, and at Rome
+— so the only thing that differs is where the house is standing. (Unpaired, `make`'s own `R()` draws
+report a gate like `R() > 0.14` as a road gate.)
+
+| | |
+|---|---|
+| refuse away | **11** of 36 |
+| fire away at rates identical to the decimal | **25** of 36 |
+
+**The die is two thirds intact on the road, not empty** — so *"the road has cards and nothing else"*
+is wrong, and wrong in the direction that matters, because it was the premise for adding content.
+
+**And nothing in the die tells a town from the road from Rome.** Town, road and Rome are the same
+column in every row. All eleven carry the same guard in the same place — the first line of `make`.
+
+**TWO OF THE ITEM'S FOUR HEADLINE NUMBERS ARE ROPE COUNTERS, NOT GATES.** `did.feast` 284 → 12 is an
+action with **no city gate anywhere** — not in `throwFeast`, not on its button. It works on the road
+and always did. `did.walk` 364 → 8 *is* a real gate, and it is the bigger one the item did not name:
+`walkTheCells` is the **only caller of `pickNight`**, so its gate is the whole of the road's access
+to the five-card night deck.
+
+**Sampling could not close it, and that is the second arm.** Thirteen of the thirty-six were never
+eligible at home in any sampled state, so no paired test can classify them — and "8 of 23" with a
+denominator of 36 is the fault this audit keeps catching. So the question is asked of the code too:
+`make` is handed a **Proxy** recording every top-level key it reads, and a body that never reads
+`city`, `travel` or `rome` in any sampled state cannot be home-only whatever its eligibility. The
+union over all samples gives all 36, and it names the same eleven.
+
+---
+
+**WHAT SHIPPED — legibility only, by explicit decision.** The item's own Risk note says content on the
+road decides the ceiling question before anyone has decided it. **No number moves in this release.**
+
+**"Not in Capua" was spelled out inline forty-three times**, in seven orderings of the same three
+fields. `awayFromCapua(d)` now says it once. It is a **function declaration, not a `const`**: the
+call sites start at line 1,322 and it sits at fourteen thousand, and hoisting is a better bargain
+than proving no call site runs during module evaluation. Deliberately **not** folded in: the
+Rome-excluding form at four sites — Capua's patrons credit what they *saw*, and a house at Rome is a
+house they read about. Folding those in would be a behaviour change wearing a refactor's clothes.
+
+**`EV_HOME` declares the eleven**, and it is a **list rather than a read of `String(make)`** the way
+`EV_DRAWN` finds the stubs two declarations down. The shipping build minifies (`minify: !TEST`), so
+a regex on the identifier `awayFromCapua` would match eleven times in the test bundle and **zero
+times in the game a player downloads** — a number wrong only for players, which no check running
+against the test build could ever see. `checks/camp.mjs` binds the list to the behaviour instead.
+
+**And the road says what it costs, where the road is chosen.** The circuit panel offered a purse
+multiplier, a crowd temperament, a road length and a standing bar — the whole of the road's side of
+the trade and nothing at all of the other side. It said *"Nothing you have built in Capua travels"*,
+which is true, carries no number, and is not even the part that costs most. Now, counted off the
+tables rather than written down:
+
+> `11 of the 36 things a week can put in front of you do not happen away from Capua · and no going down to the cells after dark, which is the only door to the 5 things a night down there turns up`
+
+**And the one asymmetry a player actually meets.** The cells section offers a feast and a walk, one
+above the other, both an evening spent on the familia — and they answer the road differently. Both
+are correct (the men eat wherever they are; there are no cells to walk in a camp) and the section
+said nothing about it. **Neither gate moves;** the difference is named, in one line, where it is met:
+*"The tables travel with the familia. The cells do not."*
+
+**A recursion, recorded.** The 43-site substitution ran in the same pass that inserted the
+declaration, so it rewrote the declaration's own body into `return !!(awayFromCapua(d))`. Every call
+overflowed the stack, `make()` threw, callers caught it as null — and `pace` reported *"reach fell to
+zero on 19 events … eligible on the last recorded run and never in 880 + 880 weeks now: a gate
+somebody shut."* A check whose failure text names what changed since the last run is what turned a
+stack overflow into a one-line fix.
+
+**Shipped:** `awayFromCapua` (43 sites), `EV_HOME`, `roadSays`; the cost line in both road panels and
+the asymmetry line in the cells section. `checks/camp.mjs` (five arms) and `probes/camp.mjs`.
+`App` 5810 → 5814, `SECT` 1494 → 1497.
+
+**Still open, and deliberately:** whether the road gets a ceiling. Eleven gates and the night deck are
+sitting there; opening any of them makes the road better on top of 3.6x, and that is the decision the
+Risk note asked nobody to take by accident.
+
 ### v3.263.0 — #267: both of the item's premises fail, and the word on the bar was on a different ladder from the number behind it
 
 **THE REBELLION BRAKE IS REFUTED.** v3.252.0's attribution run put `rites` alone at 6.4% rebellion-weeks
@@ -4678,7 +4757,9 @@ one unconfirmed single-set read that it halves the rising (#267)~~ — **BOTH RE
 eight paired `PYRE` sets the rising went 8.1% → 8.4%, four of eight LOWER, and the 62-68% was a richer
 arm; the real figure for a house praying as hard as it can afford is 40.8%, which is the third state
 the item said did not exist; the road is cards and nothing else
-— `ludusNight` 179 → 11, feuds 1,120 → 348, and no parties since v3.257.0 (#268); four of twelve
+— ~~`ludusNight` 179 → 11, feuds 1,120 → 348, and no parties since v3.257.0~~ (#268) — **CORRECTED
+v3.264.0: 25 of the 36 drawn events fire away at identical rates; two of the four numbers cited are
+rope counters for actions that are not gated at all**; four of twelve
 endings are never reached by the reference and never named to anyone in advance, and `closed` is the
 only one that is an achievement (#269).
 
@@ -11397,7 +11478,7 @@ temple made visible turns 0.8% into whatever the reference player does once it c
 
 ---
 
-**#268 — The Road Has Cards And Nothing Else** *(enhancement · medium–large)*
+**#268 — The Road Has Cards And Nothing Else** *(enhancement · medium–large)* — **CLOSED v3.264.0. THE PREMISE IS WRONG BY A THIRD.** Counted paired off one stream position: **11** of the 36 drawn events refuse away, **25** fire at identical rates — the die is two thirds intact on the road. Nothing in it tells a town from the road from Rome. Two of the item's four headline numbers are rope counters, not gates: `throwFeast` has NO city gate anywhere and works on the road; `did.walk` is real and is the bigger hole the item missed, since `walkTheCells` is the only caller of `pickNight`. Shipped legibility only, by explicit decision — no number moves: `awayFromCapua` replaces 43 inline copies in 7 orderings, `EV_HOME` declares the eleven (a list, not a `String(make)` read, because the shipping build minifies and that would read 0 for players), and both road panels now print what the road costs. `checks/camp.mjs`, `probes/camp.mjs`. **The ceiling question is left open on purpose.**
 
 v3.256.0 priced the road: a town week pays 3.6x a Capua week at the same bout rate. v3.252.0 priced
 what it costs, and the price is the game. A touring house meets `ludusNight` **179 → 11**,

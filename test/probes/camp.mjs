@@ -62,6 +62,19 @@ const out = await p.evaluate(([H, W, STRIDE, DRIVE])=>{
   const row = {}; for(const k of KEYS){ row[k] = {}; for(const q of PLACES) row[k][q] = 0; }
   let samples = 0;
 
+  /* ---- 0. WHICH MAKES EVEN ASK WHERE THE HOUSE IS ----
+     Sampling cannot classify a card whose gate never opens in the sample: thirteen of the
+     thirty-six were never eligible at home under either policy, and "8 of 23" with a denominator
+     of 36 is the shape of fault this audit keeps catching. So the question is asked of the code
+     instead of the outcome. `make` is handed a Proxy over the state that records every top-level
+     key it reads; a body that never reads `city`, `travel` or `rome` in ANY sampled state cannot
+     be home-only, whatever its eligibility. An early `return null` can hide a later read, so the
+     answer is the UNION over every sample rather than one call — a read at the top of the body is
+     far easier to reach than a non-null return.
+     `ownKeys` is trapped too: a body that enumerates the whole state (a clone, a stringify) would
+     touch `city` without gating on it, and that has to be visible rather than counted. */
+  const consult = {}; for(const k of KEYS) consult[k] = { city:false, travel:false, rome:false, enumerated:false, calls:0 };
+
   /* ---- 1. the gate on the flag, everything else held ---- */
   for(let i=0;i<H;i++){
     const d = A.newGameState("Cm","clean",`CAMP-${i}`);
@@ -70,6 +83,20 @@ const out = await p.evaluate(([H, W, STRIDE, DRIVE])=>{
       if(w % STRIDE === 0 && w >= STRIDE){
         const st0 = A.rngGet();
         samples++;
+        for(const k of KEYS){
+          const at0 = A.rngGet(), seen = new Set(); let enumerated = false;
+          const base = cp(d); base.city = null; base.travel = null; base.rome = null;
+          const px = new Proxy(base, {
+            get(t, key){ if(typeof key === "string") seen.add(key); return t[key]; },
+            ownKeys(t){ enumerated = true; return Reflect.ownKeys(t); } });
+          try { A.EVENTS[k].make(px); } catch(err){}
+          A.rngSet(at0);
+          const c = consult[k]; c.calls++;
+          if(seen.has("city")) c.city = true;
+          if(seen.has("travel")) c.travel = true;
+          if(seen.has("rome")) c.rome = true;
+          if(enumerated) c.enumerated = true;
+        }
         for(const k of KEYS){
           const at = A.rngGet();
           for(const q of PLACES){
@@ -113,7 +140,7 @@ const out = await p.evaluate(([H, W, STRIDE, DRIVE])=>{
   const ref  = realised(DRIVE, "ref");
   const tour = realised(Object.assign({ tour:true }, DRIVE), "tour");
 
-  return { KEYS, row, samples, places:PLACES, town:A.CITIES[TOWN].name, ref, tour };
+  return { KEYS, row, samples, places:PLACES, town:A.CITIES[TOWN].name, ref, tour, consult };
 }, [H, W, STRIDE, DRIVE]);
 
 await browser.close(); server.close();
@@ -122,6 +149,17 @@ if(out.why){ console.log(out.why); process.exit(1); }
 const pct = (n, of) => of ? (100*n/of).toFixed(1) : "0.0";
 console.log(`\n#268 — THE DIE ON THE ROAD · ${H} houses x ${W} weeks, sampled every ${STRIDE}`);
 console.log(`${out.samples} paired asks per key, off one stream position each · the town is ${out.town}\n`);
+
+/* ---- 0. printed first, because it is the one that covers all 36 ---- */
+const asks = out.KEYS.filter(k=>{ const c = out.consult[k]; return c.city || c.travel || c.rome; });
+const blind = out.KEYS.filter(k=>!asks.includes(k));
+const enumd = out.KEYS.filter(k=>out.consult[k].enumerated);
+console.log(`WHICH MAKES ASK WHERE THE HOUSE IS (${out.samples} states each, union over all):`);
+console.log(`  asks:  ${asks.length} of ${out.KEYS.length} — ${asks.join(", ")}`);
+console.log(`  blind: ${blind.length} of ${out.KEYS.length} — open on the road by construction`);
+console.log(`         ${blind.join(", ")}`);
+if(enumd.length) console.log(`  NOTE: ${enumd.join(", ")} enumerated the whole state — the read may not be a gate`);
+console.log("");
 
 const shut = { town:[], road:[], rome:[] }, open_ = [];
 console.log(`${"event".padEnd(16)} ${"HOME".padStart(7)} ${"TOWN".padStart(7)} ${"ROAD".padStart(7)} ${"ROME".padStart(7)}   verdict`);
