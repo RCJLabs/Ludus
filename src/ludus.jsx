@@ -14344,7 +14344,16 @@ const bayWide  = d => bayKnownTotal(d) >= 150;
 const bayRomeCut = d => Math.round(bayKnownTotal(d)/180 * 150);                       // up to 150 fame off the Rome bar
 
 function setOut(d, key){
-  const C = CITIES[key]; if(!C || awayFromCapua(d)===key) return false;
+  /* ---- NOT `awayFromCapua` — audit item #268, and the refactor made this mistake ITSELF ----
+     This guard reads "at Rome, or already travelling, or already standing in the town you are
+     asking for", and that last term is an EQUALITY, not a truthiness test: `setOut` deliberately
+     carries a house from one town straight to another, so being in a town is no bar unless it is
+     THIS town. The 43-site substitution matched the `d.rome || d.travel || d.city` prefix and left
+     `awayFromCapua(d)===key` — a boolean compared to a string, always false — so the whole guard
+     collapsed to `if(!C)` and a house already on the road could set out again.
+     `checks/roads.mjs` caught it in one line. The comment over `awayFromCapua` warns against
+     exactly this, a hundred and twenty lines above where it happened. */
+  const C = CITIES[key]; if(!C || d.rome || d.travel || d.city===key) return false;
   d.travel = { to:key, weeks:C.travel, home:false };
   d.flags.lastTravelled = d.week;
   d.games = null;
@@ -22710,9 +22719,18 @@ const EV_HOME = ["ludusNight","mentor","foundling","owedLife","crowdCalls","sacr
    number falls on its own, add a night card and the second rises. #150's rule is that the shown
    number and the thing behind it are the same call, and these are. */
 function roadSays(){
-  return `${EV_HOME.length} of the ${EV_DRAWN.length} things a week can put in front of you do not happen `
-    + `away from Capua · and no going down to the cells after dark, which is the only door to the `
-    + `${NIGHT_KEYS.length} things a night down there turns up`;
+  /* ONE CLAUSE, NOT TWO, AND `scroll` IS WHY. Both facts on the circuit panel cost 45px of a face
+     already 67px over its baseline, and the arena's ceiling is the one this check says has crept
+     2.8 -> 3.1 -> 3.2 across three releases. A line that pushes a face past its scroll budget is
+     not legibility. So the two facts went to the two places they are actually met: the die's count
+     here, where a tour is chosen, and the night deck below, beside the walk that is its only door.
+     That is a better answer than one long line in one place, and the budget is what found it. */
+  return `Away from Capua, ${EV_HOME.length} of the week's ${EV_DRAWN.length} questions never come up.`;
+}
+/* and the other half, where the walk is */
+function cellsAwaySays(){
+  return `The tables travel with the familia. The cells do not — and the walk down to them is the `
+    + `only door to ${NIGHT_KEYS.length} more things a night can turn up.`;
 }
 /* ---- AND THE TWO ACTIONS THAT ANSWER THE ROAD DIFFERENTLY, ONE ABOVE THE OTHER ----
    The cells section offers a feast and a walk, both of them an evening spent on the familia. The
@@ -26819,7 +26837,7 @@ const SECT = {
           </div>
           <div className="dim" style={{fontSize:"var(--fs-md)",margin:"3px 0 7px"}}>Meat, honeyed wine, and a night without the whip. Loyalty is cheaper than rebellion.</div>
           {awayFromCapua(S) && <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",margin:"0 0 7px",color:"var(--gold-line)"}}>
-            The tables travel with the familia. The cells do not.
+            {cellsAwaySays()}
           </div>}
           {reach < 0.95 && (
             <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",margin:"0 0 7px"}}>
@@ -31644,11 +31662,13 @@ export default function App(){
             return (
               <div className="panel" style={{padding:13}}>
                 <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,marginBottom:3}}>THE CIRCUIT</div>
+                {/* IN THE SENTENCE, NOT UNDER IT — #268. This read "Nothing you have built in Capua
+                    travels", which is `roadSays()` with the number taken out, so the count replaces
+                    the clause rather than being added beneath it. `scroll` is what forced the
+                    composition: a second block cost 26px of a face with 16px of headroom. */}
                 <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
-                  Three towns down the bay who have never heard of you. Nothing you have built in Capua travels — but neither do your grudges.
+                  Three towns down the bay who have never heard of you. {roadSays()} Your grudges do not travel either.
                 </div>
-                {/* "nothing you have built travels" with the number in it — #268 */}
-                <div style={{fontSize:"var(--fs-sm)",color:"var(--gold-line)",marginBottom:8}}>{roadSays()}</div>
                 <CampaniaMap S={S}/>{/* #250 — the bay, drawn. It REPLACES `CircuitLedger`: see its head */}
                 {bayHolder(S) && (
                   <div className="panel" style={{padding:10,marginBottom:8,background:"var(--blood-edge)",borderColor:"var(--blood-edge)"}}>
@@ -31665,7 +31685,14 @@ export default function App(){
                   return (
                     <div key={k} style={{borderTop:"1px dotted var(--line)",paddingTop:9,marginTop:9}}>
                       <div className="disp" style={{fontSize:"var(--fs-base)",color:knownIn(S,k)?"var(--ink-hi)":"var(--ink-dim)"}}>{c.name}</div>
-                      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{c.blurb}</div>
+                      {/* ---- AND `c.blurb` CAME OUT — #268 ----
+                          Each town carried TWO flavour sentences one above the other: `c.blurb` and
+                          the custom's `say`, both of them "what this crowd is like", and only the
+                          second names a mechanic ("a card without mercy fills the tiers"). The blurb
+                          is also the chronicle line `setOut` writes the week you go — so it was not
+                          lost here, it was said twice. Cutting it took the arena from 88px over its
+                          scroll baseline to under it, which is why this release could add the count
+                          without raising a ceiling that has already been raised once. */}
                       {/* the town's own politics: who runs its games, what it wants, whose sand it is */}
                       {(()=>{ const P = (S.bayPol||{})[k], CU = CITY_CUSTOM[k]; if(!CU) return null;
                         return (
@@ -35190,7 +35217,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     heirOfAge, HEIR_AGE, yearsAtHead,   /* #253 — a boy's age is his own */
     EV_DIE, EV_DRAWN, evTune, evPool, evPick, EV_FRESH, evWeight,   /* #245 phases 2-3 — the weighted, cooled, fresh die */
     /* #268 — where the house is standing, once; which cards need Capua; and what the road costs */
-    awayFromCapua, EV_HOME, roadSays, NIGHT, NIGHT_KEYS, pickNight,
+    awayFromCapua, EV_HOME, roadSays, cellsAwaySays, NIGHT, NIGHT_KEYS, pickNight,
     ASK_DIE, ASK_FRESH, askPool, askWeight, askPick,   /* #245 phase 4 — the asks through the same door */
     togaEvent,   /* #237 phase 4/5 — so a check can drive the toga trigger against an already-named son */
     /* the summit: the gate, the letter, the bar, and the trip's own clock */

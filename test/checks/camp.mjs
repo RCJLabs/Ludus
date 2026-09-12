@@ -52,7 +52,7 @@ export async function run({ p, errors }){
   const out = await p.evaluate(([H, W, STRIDE])=>{
     const A = window.__LVDVS, R = window.__ROPE;
     const miss = ["EVENTS","EV_DRAWN","EV_HOME","awayFromCapua","roadSays","NIGHT_KEYS","pickNight",
-      "walkReady","throwFeast","rngGet","rngSet","newGameState","CITY_KEYS"].filter(k=>A[k]==null);
+      "walkReady","throwFeast","rngGet","rngSet","newGameState","CITY_KEYS","cellsAwaySays"].filter(k=>A[k]==null);
     if(miss.length) return { why:`the handle is missing ${miss.join(", ")}` };
     const cp = x => JSON.parse(JSON.stringify(x));
     const KEYS = A.EV_DRAWN.slice(), TOWN = A.CITY_KEYS[0];
@@ -116,7 +116,7 @@ export async function run({ p, errors }){
 
     return { KEYS, row, consult, samples, places:PLACES,
       declared:A.EV_HOME.slice(), drawn:A.EV_DRAWN.length, nights:A.NIGHT_KEYS.length,
-      says:A.roadSays(), doors };
+      says:A.roadSays(), cellsSays:A.cellsAwaySays(), doors };
   }, [HOUSES, WEEKS, STRIDE]);
 
   if(out.why) return { pass:false, why:out.why, lines:[] };
@@ -124,14 +124,17 @@ export async function run({ p, errors }){
   /* ---- 5. and it reaches the screen ---- */
   await found(p);
   await clearAll(p, 10);
+  /* TWO FACES, BECAUSE THE TWO FACTS WENT TO THE TWO PLACES THEY ARE MET. The die's count is on the
+     circuit panel, where a tour is chosen; the night deck is in the cells section, beside the walk
+     that is its only door. `scroll` forced that split — both on the arena cost 26px of a face with
+     16px of headroom — and it is the better arrangement, so the check reads both. */
   await tab(p, "arena"); await p.waitForTimeout(400); await clearAll(p, 8); await settle(p);
   await p.evaluate(()=>{ for(const d of document.querySelectorAll("details")) d.open = true; });
   await p.waitForTimeout(300);
   const screen = await p.evaluate(()=>{
     const body = (document.body.innerText||"").replace(/\s+/g," ");
-    const m = /(\d+) of the (\d+) things a week can put in front of you/i.exec(body);
-    const n = /the (\d+) things a night down there turns up/i.exec(body);
-    return { hit:!!m, shut:m?+m[1]:null, drawn:m?+m[2]:null, nights:n?+n[1]:null,
+    const m = /(\d+) of the week's (\d+) questions never come up/i.exec(body);
+    return { hit:!!m, shut:m?+m[1]:null, drawn:m?+m[2]:null,
       tabs:[...document.querySelectorAll("button[role=tab]")].map(b=>b.getAttribute("aria-label")),
       sample: body.slice(0, 160) };
   });
@@ -148,9 +151,10 @@ export async function run({ p, errors }){
     `on the road ${shutIn("road").length}, at Rome ${shutIn("rome").length}`);
   lines.push(`the night deck's door: at home walk ${out.doors.atHome.walk}, a night to turn up ${out.doors.atHome.night}, feast ${out.doors.atHome.feast}`);
   lines.push(`   in a town: walk ${out.doors.away.walk}, a night to turn up ${out.doors.away.night}, feast ${out.doors.away.feast}`);
-  lines.push(`the panel says: ${out.says}`);
+  lines.push(`the circuit panel says: ${out.says}`);
+  lines.push(`the cells section says, away: ${out.cellsSays}`);
   lines.push(screen.hit
-    ? `on the screen: ${screen.shut} of ${screen.drawn} cards, ${screen.nights} nights`
+    ? `on the screen (arena): ${screen.shut} of ${screen.drawn} questions`
     : `on the screen: NOT FOUND · tabs=${JSON.stringify(screen.tabs)} · "${screen.sample}"`);
 
   /* ---- 1. the list is the behaviour ---- */
@@ -188,11 +192,13 @@ export async function run({ p, errors }){
     if(t !== m) fails.push(`the die tells a town from Rome: shut in town [${t}] against [${m}] at Rome`); }
 
   /* ---- 4. the panel prints the tables' own numbers ---- */
-  { const want = [out.declared.length, out.drawn, out.nights];
-    for(const n of want)
+  { for(const n of [out.declared.length, out.drawn])
       if(!new RegExp(`\\b${n}\\b`).test(out.says))
         fails.push(`\`roadSays\` does not carry ${n} — "${out.says}"`);
-    if(/\b0\b/.test(out.says)) fails.push(`\`roadSays\` printed a zero: "${out.says}"`); }
+    if(!new RegExp(`\\b${out.nights}\\b`).test(out.cellsSays))
+      fails.push(`\`cellsAwaySays\` does not carry the ${out.nights} in NIGHT_KEYS — "${out.cellsSays}"`);
+    for(const [what, str] of [["roadSays", out.says], ["cellsAwaySays", out.cellsSays]])
+      if(/\b0\b/.test(str)) fails.push(`\`${what}\` printed a zero: "${str}"`); }
 
   /* ---- the night deck has one door, and the feast is not it ---- */
   { const D = out.doors;
@@ -214,8 +220,6 @@ export async function run({ p, errors }){
       fails.push(`the screen says ${screen.shut} cards shut against the ${out.declared.length} in EV_HOME`);
     if(screen.drawn !== out.drawn)
       fails.push(`the screen says ${screen.drawn} drawn events against the ${out.drawn} in EV_DRAWN`);
-    if(screen.nights !== out.nights)
-      fails.push(`the screen says ${screen.nights} nights against the ${out.nights} in NIGHT_KEYS`);
   }
 
   if(errors.length) fails.push(`${errors.length} page errors`);

@@ -4442,27 +4442,52 @@ against the test build could ever see. `checks/camp.mjs` binds the list to the b
 **And the road says what it costs, where the road is chosen.** The circuit panel offered a purse
 multiplier, a crowd temperament, a road length and a standing bar — the whole of the road's side of
 the trade and nothing at all of the other side. It said *"Nothing you have built in Capua travels"*,
-which is true, carries no number, and is not even the part that costs most. Now, counted off the
-tables rather than written down:
+which is true, carries no number, and is not even the part that costs most. That clause is now the
+count, in the same sentence rather than under it:
 
-> `11 of the 36 things a week can put in front of you do not happen away from Capua · and no going down to the cells after dark, which is the only door to the 5 things a night down there turns up`
+> *Three towns down the bay who have never heard of you.* `Away from Capua, 11 of the week's 36 questions never come up.` *Your grudges do not travel either.*
 
 **And the one asymmetry a player actually meets.** The cells section offers a feast and a walk, one
 above the other, both an evening spent on the familia — and they answer the road differently. Both
 are correct (the men eat wherever they are; there are no cells to walk in a camp) and the section
-said nothing about it. **Neither gate moves;** the difference is named, in one line, where it is met:
-*"The tables travel with the familia. The cells do not."*
+said nothing about it. **Neither gate moves;** the difference is named where it is met — and that is
+also where the night deck belongs, beside the walk that is its only door:
 
-**A recursion, recorded.** The 43-site substitution ran in the same pass that inserted the
+> `The tables travel with the familia. The cells do not — and the walk down to them is the only door to 5 more things a night can turn up.`
+
+**`scroll` IS WHAT ARRANGED THAT, AND IT IS THE BETTER ARRANGEMENT.** Both facts on the circuit panel
+cost 45px of a face already **67px over its baseline before this release touched it**, with about
+16px of headroom. Rather than raise a ceiling already raised once (2.8 → 3.1 → 3.2 screens), the two
+facts went to the two places they are met — and the room came from a real duplication: **each town
+printed two flavour sentences**, `c.blurb` and the custom's `say`, both "what this crowd is like",
+and only the second names a mechanic. `c.blurb` is also the chronicle line `setOut` writes the week
+you go, so it was not lost — it was said twice. The arena is now **2,574px, 44px BELOW its recorded
+baseline** and 467 words against a 590 ceiling: this release adds a counted line and leaves the face
+smaller than it found it.
+
+**TWO FAULTS THE SUBSTITUTION MADE, BOTH CAUGHT, BOTH WORTH RECORDING.**
+
+*The recursion.* The 43-site substitution ran in the same pass that inserted the
 declaration, so it rewrote the declaration's own body into `return !!(awayFromCapua(d))`. Every call
 overflowed the stack, `make()` threw, callers caught it as null — and `pace` reported *"reach fell to
 zero on 19 events … eligible on the last recorded run and never in 880 + 880 weeks now: a gate
 somebody shut."* A check whose failure text names what changed since the last run is what turned a
 stack overflow into a one-line fix.
 
-**Shipped:** `awayFromCapua` (43 sites), `EV_HOME`, `roadSays`; the cost line in both road panels and
-the asymmetry line in the cells section. `checks/camp.mjs` (five arms) and `probes/camp.mjs`.
-`App` 5810 → 5814, `SECT` 1494 → 1497.
+*And the eaten equality — the exact fault the `awayFromCapua` comment warns against, committed one
+hundred and twenty lines below that comment.* `setOut`'s guard read
+`if(!C || d.rome || d.travel || d.city===key)`: at Rome, or already travelling, or **already standing
+in the town you are asking for** — and that last term is an EQUALITY, because `setOut` deliberately
+carries a house from one town straight to another. The substitution matched the
+`d.rome || d.travel || d.city` prefix and left `awayFromCapua(d)===key`, a boolean compared to a
+string, always false. The whole guard collapsed to `if(!C)` and a house already on the road could set
+out again. `checks/roads.mjs` said so in one line. All 43 sites were then re-audited by their
+trailing character; that was the only one.
+
+**Shipped:** `awayFromCapua` (43 sites), `EV_HOME`, `roadSays`, `cellsAwaySays`; the count in the
+circuit and in-town panels, the night deck beside the walk, and `c.blurb` out of the circuit panel.
+`checks/camp.mjs` (five arms) and `probes/camp.mjs`. `App` 5810 → 5814, `SECT` 1494 → 1497; arena
+scroll 2,618 → **2,574**.
 
 **Still open, and deliberately:** whether the road gets a ceiling. Eleven gates and the night deck are
 sitting there; opening any of them makes the road better on top of 3.6x, and that is the decision the
