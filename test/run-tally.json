@@ -283,4 +283,6 @@
 {"v":"3.268.0","checks":198,"failed":[]},
 {"v":"3.269.0","checks":199,"failed":[]},
 {"v":"3.270.0","checks":200,"failed":[]},
-{"v":"3.271.0","checks":201,"failed":[]}]
+{"v":"3.271.0","checks":201,"failed":[]},
+{"v":"3.272.0","checks":202,"failed":["sale"]},
+{"v":"3.272.0","checks":202,"failed":[]}]

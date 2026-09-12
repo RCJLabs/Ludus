@@ -3201,6 +3201,20 @@ function agendaSquare(d, add){
    It is raised once the house is past its first scramble and can pay for one: a doctrine costs 300 to
    500 denarii, and asking a house that cannot feed itself to pick a philosophy is the `agendaCan`
    fault this project has already priced once, where advice goes quiet exactly when it is needed. */
+/* #276 — and the moment, as against the date. `agendaCan` speaks every week; this speaks on the
+   13.5% of weeks a pair bout is actually on the card, which is the only week the word can be kept.
+   A row that lit on all of them would be #101's wallpaper fault on a promise. */
+function agendaPair(d, add){
+  const m = pairMen(d);
+  if(!m || awayFromCapua(d)) return;
+  if(!(d.games && d.games.offers && d.games.offers.some(o=>o.pair))) return;
+  /* `canFight` is the game's own gate on whether a man will stand — refusal, learning, the bench.
+     The first cut of this wrote `refusing(d, g)`, and `refusing` takes ONE argument, so it read
+     `d.refusing` and was false on every man for ever. #268's eaten equality, one release later. */
+  if(!m.every(canFight)) return;
+  add(2, "arena", `You said ${m[0].name} and ${m[1].name} would go out together`,
+    "there is a pair on the card this week and both of them can stand");
+}
 function agendaSchool(d, add){
   if(d.doctrine || awayFromCapua(d)) return;
   if(d.week < 12) return;                       /* the opening has louder problems */
@@ -3852,6 +3866,7 @@ function agenda(d){
         `${men.map(f=>f.name).join(", ")} — no festival needed, and ${free.length===1?"one man is":free.length+" men are"} free`,
         "pit"); }
   agendaSquare(d, add);
+  agendaPair(d, add);
   if(d.unrest >= 70) add(2, "ludus::cells", "The cells are close to fire", unrestWord(d.unrest), null, "walkCells");
   if(d.lanista && d.lanista.health < 30 && !d.heir) add(2, "ludus", "You are failing and have named nobody", "the house dies with you");
   { const br = inBreach(d);
@@ -9031,6 +9046,11 @@ const REGARD = {
   spared:    { n:  8, say:"You let a beaten man live when the crowd wanted otherwise." },
   feast:     { n:  3, say:"You fed the familia properly, more than once." },
   broke:     { n:-24, say:"You promised him a thing and then spent it elsewhere.", bad:true },
+  /* #276 — the table held both ends of a promise and nothing for the middle: the word given on a
+     thing that has not happened yet. Three of the five ASKS give exactly that, and #239's note
+     over `leave` says `woman` was the only one of the five whose branches never called `remember`.
+     It was one of FOUR. Priced under `kept` because it costs nothing on the day it is said. */
+  word:      { n: 11, say:"You gave him your word on a thing that has not happened yet." },
   soldKin:   { n:-20, say:"You sold a man he called brother.", bad:true },
   whipped:   { n:-14, say:"You had him whipped.", bad:true },
   hurt:      { n:-16, say:"You sent him out on a wound that had not closed.", bad:true },
@@ -16068,6 +16088,12 @@ function calendarRows(d, span){
       (WANTS[p.want.kind] ? WANTS[p.want.kind].label : "something") + " — or his standing goes the other way", "villa");
   for(const m of unhonoured(d)) if(!m.done)
     put(m.week + RITE_WINDOW, "duty", `${m.name} is still not buried`, "after this nobody can put it right", "villa");
+  /* #276 — a word given about two of your own belongs in a block headed "what you have promised",
+     which is where every other promise in this game already is. It was the only one with a date on
+     it that had never been on a dated surface. */
+  { const m = pairMen(d);
+    if(m) put(pairStands(d).at + PAIR_WORD, "duty", `${m[0].name} and ${m[1].name} have not gone out together`,
+      "you said they would, and a pair bout is the only card that can", "arena"); }
   /* the town's own business */
   if(d.election && !d.election.done) put(d.election.week + 3, "town", "The aedileship is decided",
     "the aedile is the man who decides whose men are on the card", "villa");
@@ -16375,19 +16401,51 @@ const ASKS = {
     no:(d,g)=>{ g.regard = clamp(regardOf(g)-14,0,100); g.morale = clamp(g.morale-10,0,100);
       remember(d, g, "refused");
       return `You promise nothing, which is the honest answer. He says he understands, and he does, and it does not help.`; } },
+  /* ---- `d.flags.wantMatch` IS STILL WRITTEN ONCE AND READ NOWHERE, AND THAT IS THE DECISION ----
+     "You will put it in front of the editor." Nothing puts it in front of the editor. The flag
+     stores { gid, fid, until:+14 } and the machinery to honour it exists — `PETITIONS.soften`
+     already swaps an offer's opponent for a chosen one, `o.opp = pr.opp; o.oppRef = pr.ref` — so
+     this is a wire, not a system, and it was measured before it was refused:
+
+       THE ASK FIRES 7 TIMES IN 2,402 PLAYED WEEKS, one per 343, across 40 houses. All 7 promises
+       outlived their own date; none was ever cleared or read; the median one sat there 58 weeks
+       after falling due. The gate is not the problem — `match` is in the ask pool on 45% of the
+       weeks a man is eligible to speak at all — the 6% roll and one-ask-per-man-per-life are.
+
+     An opponent-injection path into the bill, for 0.3% of weeks, buys a rarer thing than the pair
+     word it would sit beside at 23.6%. What the ask gains instead is the RECORD: `remember(d, g,
+     "word")` at the same +11 it was applying by hand, so a man who was promised a matching and
+     never got one is at least carrying the promise where the game can see it. Pinned orphan. */
   match:   { w:9, need:(d,g)=>g.wins >= 4 && (d.circuit||[]).some(f=>f.beatYou>0),
     say:(d,g)=>{ const f = pick((d.circuit||[]).filter(x=>x.beatYou>0)) || {name:"the man"};
       return { text:`${fullName(g)} wants a particular man. ${f.name} put him down in front of a house that laughed, and he has been carrying it since, and he would like it seen to.`,
         choices:["Arrange it","Tell him he fights who he is given"], fid:f.id, fname:f.name }; },
     yes:(d,g,ex)=>{ d.flags.wantMatch = { gid:g.id, fid:ex.fid, until:d.week+14 };
-      g.regard = clamp(regardOf(g)+11,0,100); g.morale = clamp(g.morale+12,0,100); g.form = clamp(formOf(g)+18,-100,100);
+      remember(d, g, "word");                        /* the +11, on the record instead of by hand — #276 */
+      g.morale = clamp(g.morale+12,0,100); g.form = clamp(formOf(g)+18,-100,100);
       return `You will put it in front of the editor. He does not thank you and he trains differently from that afternoon on.`; },
-    no:(d,g)=>{ g.regard = clamp(regardOf(g)-9,0,100); g.morale = clamp(g.morale-8,0,100);
+    no:(d,g)=>{ remember(d, g, "refused", 9/13);    /* the -9, on the record instead of by hand — #276 */
+      g.morale = clamp(g.morale-8,0,100);
       return `He fights who he is given. That is the arrangement, he knows it is the arrangement, and he asked anyway.`; } },
+  /* ---- AND `d.flags.oneMoreYear` STAYS ONE HIT, BECAUSE THE ASK ITSELF NEVER FIRES ----
+     `ASK_DIE` gives `year` the HIGHEST weight of the five (w:4 against brother 1, match 1,
+     burial 2, woman 3) and `ASK_FRESH` triples a key that has never fired, so on the table it is
+     the likeliest thing a man will say. Measured, it is the only one that never says it:
+
+       0 ASKS IN 2,402 PLAYED WEEKS. Walking every eligible man every week rather than waiting on
+       the 6% roll, `year`'s own gate — `rudisEligible(g) && regardOf(g) >= 60` — is in the pool on
+       17 of 1,411 weeks (1.2%) and is reached in 5 of 40 houses at all. The others sit at 55%,
+       45%, 28% and 22%. The median house lives 43 weeks and the wooden sword wants ten wins and
+       180 renown; the die is not what is shutting this door.
+
+     So nothing is built on the flag. This is the `woman` refusal of #239 a second time and for the
+     same reason — the ask is real, the writing is good, and no player has read it. The +14 goes on
+     the record like the other four, which costs nothing and is true whenever it does fire. */
   year:    { w:8, need:(d,g)=>rudisEligible(g) && regardOf(g) >= 60,
     say:(d,g)=>({ text:`${fullName(g)} has earned the wooden sword and knows it. He is asking for one more year before you give it to him — he wants to go out at the top and he would like the house to have the season.`,
       choices:["One more year, then","Free him now"] }),
-    yes:(d,g)=>{ g.plan = null; g.regard = clamp(regardOf(g)+14,0,100);
+    yes:(d,g)=>{ g.plan = null;
+      remember(d, g, "word", 14/11);                 /* the +14, on the record instead of by hand — #276 */
       d.flags.oneMoreYear = { gid:g.id, until:d.week + YEAR_WEEKS };
       activeG(d).forEach(x=>{ x.morale = clamp(x.morale+5,0,100); });
       return `He stays. Every man in that block watched somebody choose another year of this and could not tell you why it made them feel better.`; },
@@ -16398,11 +16456,17 @@ const ASKS = {
   burial:  { w:7, need:(d,g)=>!d.collegium && (d.fallen||[]).length >= 2,
     say:(d,g)=>({ text:`${fullName(g)} asks about the burial society, on behalf of men who did not want to ask. Three denarii a week each, and a name cut in stone instead of a ditch.`,
       choices:["Start it","Not this year"] }),
-    yes:(d,g)=>{ d.collegium = { since:d.week, buried:0 };
-      activeG(d).forEach(x=>{ x.regard = clamp(regardOf(x)+8,0,100); x.morale = clamp(x.morale+8,0,100); });
+    /* it does not go through `foundCollegium` and should not — the men pay into this one
+       themselves, which is the whole of what he came to say, so there is no COLL_FEE to take. What
+       it dropped along with the fee was the RECORD: `REGARD.collegium` was written for this exact
+       act ("so there would be a stone") and the ask paid its regard by hand instead. And `lapsed`
+       was missing from the shape, which `agendaGods` and the census row both read. — #276 */
+    yes:(d,g)=>{ d.collegium = { since:d.week, buried:0, lapsed:0 };
+      rememberAll(d, "collegium", 8/9);               /* the +8, on the record instead of by hand */
+      activeG(d).forEach(x=>{ x.morale = clamp(x.morale+8,0,100); });
       d.unrest = clamp(d.unrest-8,0,100);
       return `It is started. The men pay into it themselves and it is somehow still the best thing you have done for them.`; },
-    no:(d,g)=>{ activeG(d).forEach(x=>{ x.regard = clamp(regardOf(x)-5,0,100); });
+    no:(d,g)=>{ rememberAll(d, "refused", 5/13);    /* the -5, on the record instead of by hand — #276 */
       d.unrest = clamp(d.unrest+6,0,100);
       return `Not this year. He nods, and goes back to the yard, and tells them, and you do not hear about it again in words.`; } },
   /* ---- A LIFE OUTSIDE THE WALL — phase queue #239, phases 1 and 5 only ----
@@ -16462,6 +16526,54 @@ const ASK_KEYS = Object.keys(ASKS);
    makes him voice it: you learn what he wants, and his clock starts — `voiced` and `since` are the
    two fields the despair tick reads, so knowing costs you the quiet. And a man with nothing on his
    mind says so, and the week's conversation is spent on finding that out. */
+/* ---- THE WORD YOU GAVE ABOUT TWO MEN — #276 ----
+   `beside` is the third most common thing a man says to you. Measured over 40 houses x 420 weeks
+   driving the conversation every week it was allowed: **260 of 1,104 words, 23.6%**, behind only
+   `wants` and `grudge`. Its first answer is "Put them out together when you can."
+
+   What that wrote was `d.flags.pairWord = d.week` — A HOUSE-WIDE NUMBER, with no room in it for
+   the two men it was given about, and one hit in the whole file at its own assignment.
+
+   THE GAME FIGHTS THE BOUT. `offer.pair` is on the card on 13.5% of weeks; the reference player
+   took **330 pair bouts in 3,491 weeks**; and `doPairFight`'s aftermath already asks whether the
+   two who went out are brothers, because that is where `AMBITIONS.beside` is met. Every piece was
+   there. What nothing did was point one at the other: **of 260 promises given about a NAMED pair,
+   22 saw those two men go out in the same week — 8.5%, which is the coincidence rate**, because
+   the card takes whoever is fit and sorted first and no part of it has ever read this flag.
+
+   So the word carries its two names now, and it is wired to ONE site — the pair-bout aftermath,
+   where `pairKept` reads it and `remember(d, x, "kept")` pays it at +20 a man. It is not paid on
+   the day it is given: saying it costs nothing, and `REGARD.kept` is "you gave him your word and
+   then you kept it", which is a sentence about the afternoon and not about the conversation.
+
+   THE HOUSE HOLDS ONE SUCH WORD AT A TIME. A later `beside` replaces it, which is what saying the
+   same thing to somebody else amounts to, and it lapses at PAIR_WORD without a penalty — there is
+   no tick in this game that walks a man's unkept promises, and building one is a pressure system,
+   not a repair. What it does instead is SAY SO while it stands, on the two surfaces that exist for
+   exactly this: the calendar block headed "what you have promised, or been told", and the agenda,
+   which speaks only on the weeks a pair is actually on the card. */
+/* 14 weeks, which is `match`'s own window for the other promise a man extracts from you, and it is
+   the measured number too: of the 22 promises that were kept by pure chance, THE MEDIAN WAIT WAS 9
+   WEEKS, and a pair is on the card on 13.5% of weeks, so a fortnight-and-a-season covers the
+   ordinary case without becoming a thing the house carries for ever. It also has to sit inside
+   `YEAR_WEEKS`, which is 18 — `calendarRows` spans a year and drops anything past it, and a
+   deadline nothing can show is the fault this item exists to fix. */
+const PAIR_WORD = 14;
+const pairSworn = d => { const P = d && d.flags && d.flags.pairWord;
+  /* a save written before this carried a WEEK in this field, and a number has no names in it */
+  return (P && typeof P === "object" && P.a != null && P.b != null) ? P : null; };
+const pairStands = d => { const P = pairSworn(d);
+  return (P && d.week - P.at <= PAIR_WORD) ? P : null; };
+const pairMen = d => { const P = pairStands(d); if(!P) return null;
+  const a = (d.gladiators||[]).find(x=>x.id===P.a), b = (d.gladiators||[]).find(x=>x.id===P.b);
+  return (a && b && a.status==="active" && b.status==="active") ? [a, b] : null; };
+const pairKept = (d, gs) => { const P = pairStands(d);
+  return !!(P && gs && gs.length === 2 && gs[0] && gs[1]
+    && ((gs[0].id===P.a && gs[1].id===P.b) || (gs[0].id===P.b && gs[1].id===P.a))); };
+const pairWordSays = d => { const m = pairMen(d); if(!m) return null;
+  const left = PAIR_WORD - (d.week - pairStands(d).at);
+  return `You said ${m[0].name} and ${m[1].name} would go out together, and ${left === 0 ? "this is the last week of it"
+    : `you have ${left} week${left===1?"":"s"} left to do it`}`; };
 const WORD_COOL = 12;      // weeks before the same man will sit down with you again
 const WORDS = {
   /* the one with a price on it: he tells you the thing he has not said, and starts his own clock */
@@ -16515,7 +16627,11 @@ const WORDS = {
         choices:[`Put them out together when you can`, `Tell him the card is not made that way`, "Say nothing"], oid:o.id }; },
     run:(d,g,i,ex)=>{ const o = d.gladiators.find(x=>x.id===(ex&&ex.oid));
       const nm = o ? o.name : "the other man";
-      if(i===0){ d.flags.pairWord = d.week; g.morale = clamp(g.morale+9,0,100);
+      /* #276 — the two names, not the week. `remember(d, g, "heard")` below is unchanged and is
+         the CONVERSATION's own payment, uniform across all three branches; the word itself is paid
+         on the afternoon it is kept, in `doPairFight`. */
+      if(i===0){ if(o) d.flags.pairWord = { a:g.id, b:o.id, at:d.week };
+        g.morale = clamp(g.morale+9,0,100);
         if(o) o.morale = clamp(o.morale+6,0,100);
         remember(d, g, "heard");
         return `You say you will put them out together when the card allows it. He does not thank you. He goes and tells ${nm}, which is the thanks.`; }
@@ -20295,6 +20411,29 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
   });
   d.gladiators.forEach(o=>{ if(o.status==="active" && !ids.includes(o.id)) o.morale = clamp(o.morale+(res.win?2:-2),0,100); });
   gs.forEach(x=>{ if(x.ambition && x.ambition.kind==="beside" && tie && tie.kind==="brother") ambitionMet(d, x); });
+  /* ---- #276 — AND THE WORD YOU GAVE ABOUT THESE TWO, IF IT WAS ABOUT THESE TWO ----
+     This sits AFTER the dead-and-wounded block above on purpose, and `pairKept` does not ask
+     whether either man is still standing: going out together is the whole of what was promised,
+     and a man who dies doing it kept it. What that costs is the LINE — "neither of them mentions
+     it" is a sentence about two men walking off the sand, and the first cut of this would have
+     printed it over a corpse. Measured over 160 kept promises at tier 2: **both live on 115, one
+     falls on 33, both fall on 12** — so better than a QUARTER of the times this fires, somebody on
+     it is dead. Only the living are paid; all three endings are written. */
+  if(pairKept(d, gs)){
+    d.flags.pairWord = null;
+    const fell = gs.filter(x=>x.status === "dead");
+    gs.forEach(x=>{ if(x.status !== "dead") remember(d, x, "kept"); });
+    chron(d, fell.length === 2
+      ? `${gs[0].name} and ${gs[1].name} went out together, which is what you said would happen, `
+        + `and the pair of them are still out there.`
+      : fell.length === 1
+      ? `${gs[0].name} and ${gs[1].name} went out together, which is what you said would happen. `
+        + `${fell[0].name} did not come back off it, and the other one was beside him for it, which `
+        + `is exactly what you promised and is not what either of you had in mind.`
+      : `${gs[0].name} and ${gs[1].name} went out together, which is what you said would happen. `
+        + `Neither of them mentions it and both of them have counted the weeks since you said it.`,
+      fell.length ? "bad" : "good");
+  }
   if(tie){ tie.strength = clamp(tie.strength + (res.win?9:5), 1, 100);
     if(tie.kind==="rival" && res.win && R()<0.35){ tie.kind = "brother";
       chron(d, `${gs[0].name} and ${gs[1].name} came off the sand together with their arms around each other. Whatever it was, it is over.`, "good"); } }
@@ -23851,6 +23990,16 @@ function grantRudis(d, gid, bought){
          anyway", and the man's own card. A priced action that silently does nothing while the screen
          says otherwise is the exact fault this audit has spent a dozen releases finding, and it took
          about ten minutes to introduce one. It returns false now and both callers read it. */
+      /* ---- AND "NOT FORGIVE" IS A SENTENCE WITH NOTHING BEHIND IT — a #276 finding, unfixed ----
+         `checks/promise.mjs` arm 2 requires every branch of every ASK to reach the man's own
+         record or take him off the roster. Four of the five now do. `year.no` is "Free him now",
+         and it passes on the branch that frees him — but when the house cannot pay, HE STAYS, this
+         line tells the player he will not forgive it, and no `remember` call is made, so what he
+         will not forgive is nowhere in him. The check reports the state rather than failing on it.
+         It is deliberately not repaired here: the fault is `grantRudis`'s, not the ask's, and this
+         function has two callers (the ask and the man's own card), so the record belongs at this
+         line for both — which is a decision about what a man makes of a house that meant well and
+         was broke, and that is a different question from the one #276 asked. */
       if(!canAffordRudis(d, gid)){
         chron(d, `${fullName(gc)} has earned the rudis and this house cannot pay for it — ${fee} denarii for the manumission, and the strongbox holds ${rnd(d.gold)}. He stays, which he will understand and not forgive.`, "bad");
         return false;
@@ -35881,6 +36030,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        `voice` requires it here, and it is free to sit on its own line now that `bulk` ends App at
        its own closing brace instead of at the end of the file. */
     WORDS, WORD_KEYS, WORD_COOL, wordReady, wordWhy, haveWordWith, askWeek, ASK_KEYS,
+    /* #276 — the word given about two men, which was a WEEK before this and had no names in it */
+    PAIR_WORD, pairSworn, pairStands, pairMen, pairKept, pairWordSays, agendaPair,
     /* #239 — the ask that grants a life outside the wall, the table its two answers are now on the
        record through, and the grief hook every one of the five doors a man can die through calls */
     REGARD, remember, mournKin, HH_NAMES,
