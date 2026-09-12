@@ -4440,9 +4440,19 @@ gold on the one point that is still godless. Six copies of one threshold, five o
 the one a player can actually see was the odd man out.
 
 **One ladder now.** `PIETY_TIERS` carries the word, the hue AND what the tier is worth; `pietyRank` is
-the index into it; every consumer reads the floor off the same table. **The engine is unchanged to the
-point** — `godless` is `<= 20` and `devout` is `>= 65`, exactly where the two effects always fired, so
-nothing re-phases. What moved is the three middle words, which are worth nothing.
+the index into it; every consumer reads the floor off the same table. `devout` is `>= 65` and `godless`
+is `< 21`, which is `<= 20` **at every integer piety a player will ever read**. What moved is the three
+middle words, which are worth nothing.
+
+**And the one point where that is not the same thing**, because "nothing moves" has to be exact or it is
+not a claim. Piety is fractional — the drift is `p + (30 - p) * 0.03` — so a house climbing out of the
+cellar passes through **20 < p < 21** for about three weeks, and the bare `<= 20` let it out of the
+penalty there while the bar still showed it red. It is godless for those weeks now: **the only
+behavioural difference in this release, worth about 1.5 points of unrest per crossing.** The fractional
+boundaries are pinned at 19.99 / 20 / 20.01 / 20.5 / 20.99 / 21 / 21.01 and 63.99 / 64 / 64.5 / 64.99 /
+65 / 65.01, so the next hand cannot move them without saying so. The gate ran 193 checks against it and
+the only two reds were `dense` (below) and `seller`, which is unseeded — 7 reds across 189 builds — and
+green on re-run.
 
 **And the panel says what the band is worth**, in `riteSays`'s idiom from #264 one release earlier:
 
@@ -4454,9 +4464,19 @@ inline expression inside one event's `gen`, where nothing could print them. They
 and the panel and the roll are the same call — measured, not read off the source: **printed 50% / rolled
 50.9%; printed 33% / rolled 33.5%; printed 20% / rolled 19.9%**, over 7,000 draws an arm.
 
+**AND THE PROSE WENT WHEN THE TERMS ARRIVED — `dense` is what insisted.** villa/standing came out at 412
+words against a ceiling of 400, and the line that had to go picked itself: *"A pious house keeps the
+patrons and the crowd warm; a godless one, the streets restless — and the omens turn against it"* is the
+warmth, the unrest and the haruspex's odds, the same three claims `pietySays` now makes **with the
+numbers in them**. Keeping both would be a fourth place to say one thing, which is the argument the town
+comparison made one panel over. What is left is the frame, which claims nothing: *"Rome did nothing
+without the gods."* villa/standing 412 → **389**.
+
 **Shipped:** `PIETY_TIERS`, `pietyRank`, `pietyTier`, `PIETY_TERM`, `pietySays`, `omenIll`; six bare
-thresholds deleted; the terms line under the piety bar. `checks/piety.mjs` (five arms) and
-`probes/piety.mjs`. `SECT` 1492 → 1494.
+thresholds and one paragraph of duplicated prose deleted; the terms line under the piety bar.
+`checks/piety.mjs` (six arms) and `probes/piety.mjs`. `SECT` 1492 → 1494 (the rationale for the cut
+lives beside `pietySays` in the domain code, not in the panel registry — which is the division the
+registry's own allowance is for).
 
 **And a second door nothing had ever checked.** A blessing has two ways in and only one of them is the
 altar: the *Fair Reading* omen's "Seal it with an offering" grants a three-week blessing at 60% of the

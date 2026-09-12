@@ -39,8 +39,11 @@
    odd one out. A house at 62 read "pious", went gold-hi, and bought nothing; a house at 19 read
    "lax", came off the red, and was still bleeding half a point of unrest a week.
 
-   FIVE ARMS.
+   SIX ARMS.
      1 · ONE LADDER — every edge in the effect, the nag, the mark and the hue is an edge in the word.
+     1b· AND BETWEEN THE INTEGERS — piety is fractional, so the one behavioural difference this
+         release makes (a house in 20 < p < 21 is godless now, where the bare `<= 20` let it out) is
+         pinned at thirteen points rather than left to drift back.
      2 · THE WEEK PAYS WHAT THE TIER SAYS — differenced off `templeWeek`, against the tier of the
          piety the week ENDS at, because the drift lands before the tier is read.
      3 · THE PANEL NAMES THE TERMS, AND ITS OMEN FIGURE IS THE ROLL — #150's rule, measured against
@@ -102,6 +105,17 @@ export async function run({ p, errors }){
         nag: edges("nag"), mark: edges("mark"), live: edges("live"),
         words: A.PIETY_TIERS.map(t=>t.word), floors: A.PIETY_TIERS.map(t=>t.at),
         monotone: row.every((r,i)=>i===0 || r.rank >= row[i-1].rank) }; }
+
+    /* ---- 1b. and where the boundary sits BETWEEN two integers ----
+       Piety is fractional: the drift is `p + (30 - p) * 0.03`, so a house climbing out of the
+       cellar spends about three weeks in 20 < p < 21. The bare `<= 20` this release deleted let it
+       out of the penalty there while the bar still showed it red; the ladder does not. That is the
+       ONE behavioural difference in #267, so it is pinned rather than left to drift back. */
+    R.edge = [19.99, 20, 20.01, 20.5, 20.99, 21, 21.01,
+              63.99, 64, 64.5, 64.99, 65, 65.01].map(pi=>{
+      const T = A.pietyTier({ piety:pi });
+      return { pi, word:T.word, warmth:T.warmth, unrest:T.unrest };
+    });
 
     /* ---- 2. what the week actually pays, against the tier it ends on ----
        The drift lands BEFORE the tier is read, so a house set to 65 ends the week at 63.95 and is
@@ -200,6 +214,7 @@ export async function run({ p, errors }){
   lines.push(`   edges — word ${L.word.join(",")} · hue ${L.hue.join(",") || "none"} · ` +
     `warmth ${L.warmth.join(",") || "none"} · unrest ${L.unrest.join(",") || "none"} · ` +
     `nag ${L.nag.join(",") || "none"} · mark ${L.mark.join(",") || "none"} · live ${L.live.join(",") || "none"}`);
+  lines.push(`between the integers: ${out.edge.map(e=>`${e.pi}→${e.word}`).join(" · ")}`);
   lines.push("what the week pays, against the tier it ends on:");
   for(const w of out.week)
     lines.push(`   piety ${String(w.pi).padStart(3)} → ends ${String(w.ended).padStart(6)} (${w.band.padEnd(10)}) · ` +
@@ -241,6 +256,25 @@ export async function run({ p, errors }){
       if(!(L.rows[100].warmth > 0)) fails.push("the top of the scale buys nothing");
       const mid = L.rows.filter(r=>r.pi > 0 && r.pi < 100 && r.warmth && r.unrest);
       if(mid.length) fails.push(`piety ${mid[0].pi} both costs and buys — no band may do both`);
+    } }
+
+  /* ---- 1b. the fractional boundaries, pinned ---- */
+  { const at = pi => out.edge.find(e=>e.pi===pi) || {};
+    const godless = out.ladder.words[0], devout = out.ladder.words[out.ladder.words.length-1];
+    for(const pi of [19.99, 20, 20.01, 20.5, 20.99])
+      if(at(pi).word !== godless)
+        fails.push(`piety ${pi} reads "${at(pi).word}" — everything below ${out.ladder.floors[1]} is ${godless}, `
+          + `and the bare \`<= 20\` this release deleted is what let a house out of the penalty on a fraction`);
+    for(const pi of [21, 21.01])
+      if(at(pi).word === godless) fails.push(`piety ${pi} is still ${godless} — the band ends at ${out.ladder.floors[1]}`);
+    for(const pi of [63.99, 64, 64.5, 64.99])
+      if(at(pi).word === devout) fails.push(`piety ${pi} reads "${devout}" — the warmth starts at ${out.ladder.floors[4]}, not below it`);
+    for(const pi of [65, 65.01])
+      if(at(pi).word !== devout) fails.push(`piety ${pi} does not read "${devout}" — ${out.ladder.floors[4]} is where the warmth has always started`);
+    for(const e of out.edge){
+      const owed = out.ladder.rows.find(r=>r.word === e.word) || {};
+      if(e.warmth !== owed.warmth || e.unrest !== owed.unrest)
+        fails.push(`a fractional piety ${e.pi} reads "${e.word}" and pays ${e.warmth}/${e.unrest} against the band's ${owed.warmth}/${owed.unrest}`);
     } }
 
   /* ---- 2. the week pays exactly what the tier says ---- */

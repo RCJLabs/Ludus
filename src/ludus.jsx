@@ -12874,10 +12874,16 @@ const pietyOf   = d => clamp(d.piety==null ? 30 : d.piety, 0, 100);
 
    ONE LADDER. The tiers carry the word, the hue AND what the tier is worth; `pietyRank` is the
    index into it; `templeWeek`, `agendaGods`, `SECT_MARK` and `SECT_LIVE` all read the floor off
-   the same table. The two real boundaries land on the two real numbers, so nothing in the engine
-   moves by a point — `godless` is `<= 20` and `devout` is `>= 65`, exactly as the effects always
-   fired. What moves is the three middle words, which are worth nothing and now say so out loud
-   instead of colouring themselves gold and letting a player infer otherwise. */
+   the same table. The two real boundaries land on the two real numbers: `devout` is `>= 65` and
+   `godless` is `< 21`, which is `<= 20` at every integer piety a player will ever read.
+
+   AND THE ONE POINT WHERE THAT IS NOT THE SAME THING, because a claim of "nothing moves" has to
+   be exact or it is not a claim. Piety is fractional — the drift is `p + (30 - p) * 0.03` — so a
+   house climbing out of the cellar passes through **20 < p < 21** for about three weeks, and the
+   bare `<= 20` let it out of the penalty there while the bar still showed it in the red. It is
+   godless for those weeks now. That is the only behavioural difference in this release, it is
+   worth about 1.5 points of unrest per crossing, and the fractional boundaries are pinned in
+   `checks/piety.mjs` so the next hand cannot move them without saying so. */
 const PIETY_TIERS = [
   { at:  0, word:"godless",   hue:"var(--blood)",   warmth:0,    unrest:0.5 },
   { at: 21, word:"lax",       hue:"var(--gold)",    warmth:0,    unrest:0   },
@@ -12900,7 +12906,14 @@ const omenIll = d => clamp(0.55 - pietyOf(d)/200, 0.2, 0.72);
 /* ---- WHAT THE BAND IS WORTH, AT THE BAR — #264's shape, one panel over ----
    The bar carried a word, a colour, and a line of prose saying a pious house "keeps the patrons
    and the crowd warm" and a godless one has "the streets restless — and the omens turn against
-   it". All three of those are true and not one of them is a number. */
+   it". All three of those are true and not one of them is a number.
+
+   AND THE PROSE WENT WHEN THE TERMS ARRIVED, which `dense` is what insisted on: villa/standing
+   came out at 412 words against a ceiling of 400. Those three claims are the warmth, the unrest
+   and the haruspex's odds — the same three this function now makes with the numbers in them — so
+   keeping both would be a fourth place to say one thing, which is the argument the town comparison
+   made one panel over. The sentence that is left ("Rome did nothing without the gods.") is the
+   frame and claims nothing. */
 const PIETY_TERM = {
   warmth: v => `+${v} with every patron, every week`,
   unrest: v => `+${v} unrest in the cells, every week`,
@@ -26317,8 +26330,8 @@ const SECT = {
                  </div>
                  {/* and what this band is worth, in the terms the week actually pays — #267 */}
                  <div style={{fontSize:"var(--fs-sm)",color:"var(--gold-line)",marginTop:5}}>{pietySays(S)}</div>
-                 <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"5px 0 9px"}}>
-                   Rome did nothing without the gods. A pious house keeps the patrons and the crowd warm; a godless one, the streets restless — and the omens turn against it.
+                 <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"5px 0 6px"}}>
+                   Rome did nothing without the gods.
                  </div>
                  {bg && (
                    <div className="panel" style={{padding:9,marginBottom:9,background:"var(--panel)",borderColor:"var(--gold-line)"}}>
