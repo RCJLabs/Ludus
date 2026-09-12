@@ -278,4 +278,5 @@
 {"v":"3.264.0","checks":194,"failed":["bulk"]},
 {"v":"3.264.0","checks":194,"failed":[]},
 {"v":"3.265.0","checks":195,"failed":[]},
-{"v":"3.266.0","checks":196,"failed":[]}]
+{"v":"3.266.0","checks":196,"failed":[]},
+{"v":"3.267.0","checks":197,"failed":[]}]

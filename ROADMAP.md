@@ -4389,6 +4389,67 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.267.0 — #271: the card was already there and nine tenths of it was silent, and the wager the item wanted is a certain loss
+
+**Two of #271's three citations are wrong.** `checks/odds.mjs` does not hold the book — it holds
+`winChance`, the arena panel's prediction against the sand, and its subject is which tactic the panel
+recommends. And *"the rival fighters are conjured per bout … until #266's roster exists"* is void
+twice over: **#266 was withdrawn in v3.262.0** precisely because the roster already exists.
+
+**The one that holds:** `bet` is own-bout only. The wager rides inside `doFight(d, p.gid, …)`,
+`makeBet(g, opp)` is built in the arena panel off YOUR man, and `bet.against` is the **fix** —
+betting against your own man, with a morale hit and a chance of being caught — not a stranger wager.
+
+## The card the item wanted to bet on is already there
+
+`probes/wager.mjs`, 300 weeks **with the player booking nothing**: **319 wins and 208 losses across
+147 distinct rival fighters, zero roster churn in the count.** The board resolves other men's bouts
+every week. Two sites do it and only one speaks:
+
+| | | |
+|---|---|---|
+| `RIVAL_MOVES.won` | 46 of 531 | **8.7%** — writes a chronicle line naming the town |
+| `rivalWeekly`'s roll | 485 of 531 | **91.3%** — wrote nothing at all |
+
+A rival's record moved and the only way to know was to have read his sheet the week before and the
+week after.
+
+## No wager, and the measurement is why
+
+A cold stranger wager returns **−20.5 denarii per hundred** — 3,000 bouts, the book quoting 0.455
+against a realised 0.448 at a 12% vig. And the player cannot have an edge, which is **structural**
+rather than a tuning question: on his own bout his private information is the drilling `betChance`
+passes as 0, and on a stranger's bout there is nothing he can know that the book cannot already see.
+
+That **inverts the item's Risk note.** The danger was never "coin from nothing"; it is a button
+nobody should press. So this release shows the card instead of taking money on it.
+
+## What shipped
+
+`noteRivalBout` records every off-screen result — both sites, the loud one marked — into a rolling
+`RIVAL_FORM` window of six, and the rival's own sheet carries **"His men, lately"** with
+`rivalFormWord` counting it: *"4 of his last 6 on the sand"*, each row naming the man, the result and
+his record.
+
+**It is a ledger and not a chronicle line, deliberately.** #101's wallpaper fault is that a line lit
+every week becomes furniture, and this fires on better than half of every house's weeks.
+
+**And it renders for a house you have never met.** `HouseLedger` returns early with *"You have never
+had a man on the same card as his"*, and the form block sits **outside** that return — the whole
+subject is bouts you were not in, so gating it behind having met him would put the one new thing in
+this release behind the one condition that makes it dull.
+
+## The field name nearly cost a release
+
+The first cut wrote `h.form = h.form || []`. **A rival house already has a `form`** — a number seeded
+`ri(-12,12)` and carried weekly by `h.form = clamp(h.form*0.94 + dv, …)`. An array there survives one
+line and then every rival's form is `NaN`, for ever, silently. `probes/wager.mjs` fell over it on the
+first run — *"number −9 is not iterable"* — and it is `h.lately` now. **Arm 2 of `checks/wager.mjs`
+is that bug, held:** every rival's `form` must still be a finite number after 260 played weeks.
+
+**Shipped:** `RIVAL_FORM`, `noteRivalBout`, `rivalForm`, `rivalFormWord`; the form block on the rival
+sheet. `checks/wager.mjs` (five arms) and `probes/wager.mjs`.
+
 ### v3.266.0 — #270: the bench was already built, and one term in a conjunction had nailed the door shut
 
 **#270 proposed a new system. It was already shipped.** `FREEDMEN.doctore` — *"He comes back to
@@ -11714,7 +11775,7 @@ is YOURS — his regard, his ties, his record are the house's — and that has t
 
 ---
 
-**#271 — Wagers On Other Men's Blood** *(new system · small–medium)*
+**#271 — Wagers On Other Men's Blood** *(new system · small–medium)* — **CLOSED v3.267.0. THE CARD WAS ALREADY THERE; THE WAGER IS A CERTAIN LOSS.** Two of three citations wrong: `odds.mjs` holds `winChance`, not the book, and the "#266 roster" clause is void because #266 was withdrawn. The board already resolves other men's bouts — **319 wins and 208 losses across 147 rival fighters in 300 weeks with the player booking nothing** — and **91.3% of them were silent** (`rivalWeekly`'s roll writes nothing; only `RIVAL_MOVES.won`, 8.7%, speaks). A cold stranger wager returns **−20.5 per hundred**, and the player can have no edge because on a bout he is not in there is nothing he can know that the book cannot: the risk is a button nobody presses, not coin from nothing. Shipped the card, not the book: `noteRivalBout` and "His men, lately" on the rival's sheet, rendering even for a house never met. `checks/wager.mjs`, `probes/wager.mjs`.
 
 The rope has `bet` and `betAgainst`, the lanista can earn `shrewd` ("five wagers won — the
 bookmakers' cut drops from 12% to 6%"), and `checks/odds.mjs` holds the book. **Every wager is on

@@ -7824,6 +7824,7 @@ const RIVAL_MOVES = {
   won: { weight:()=>1.6, when:(d,h)=>h.fighters.length>0,
     run(d,h){ const L=lanistaOf(h.name); const f = pick(h.fighters);
       f.wins++; f.pfame += ri(4,9); h.fame += ri(5,11);
+      noteRivalBout(d, h, f, true, true);                 /* the loud third — #271 */
       rivalPay(h, rivalFee(h) + rivalWin(h));             /* #256 — a third of their fighting is here */
       if(!f.nick && f.wins>=5) f.nick = freshNick(d);
       { const town = pick(["Nola","Cales","Suessa","Atella","Teanum"]);
@@ -8082,6 +8083,50 @@ const GRUDGE_HOLD  = 0.65;    /* the share of that week's forgetting it holds ba
 const metLast = (d, h) => { const m = (d.metHouse||{})[h]; return m && m.last != null ? m.last : null; };
 const grudgeFresh = (d, h) => { const t = metLast(d, h); return t != null && (d.week - t) < GRUDGE_FRESH; };
 const fadeRate = (d, h) => 1 * (lanistaOf(h.name).grudgeDecay || 1) * (grudgeFresh(d, h.name) ? 1 - GRUDGE_HOLD : 1);
+/* ---- WHAT THE OTHER HOUSES' MEN DID, WHICH NOBODY COULD SEE — audit item #271 ----
+   #271 asked for wagers on bouts the house is not in, and the verify-first found the bouts already
+   there: `probes/wager.mjs`, 300 weeks with the player booking NOTHING, counted **319 wins and 208
+   losses across 147 rival fighters, with no roster churn in the count at all**. The board has been
+   resolving other men's bouts all along.
+
+   TWO SITES RESOLVE THEM AND ONLY ONE SPEAKS. `RIVAL_MOVES.won` writes a chronicle line naming the
+   town — "They are talking about ${f.name} in Cales" — and its own note calls it "a third of their
+   fighting". The other two thirds are `rivalWeekly`'s weekly roll, `R() < 0.55` on a fit man, and
+   it writes **nothing**: no line, no record, no trace. A man's record moved and the only way to
+   know was to have been reading his sheet the week before and the week after.
+
+   IT IS A LEDGER AND NOT A CHRONICLE LINE, deliberately. #101's wallpaper fault is that a line lit
+   every week becomes furniture, and this fires on better than half of every house's weeks. It is
+   kept where a player goes to look at a rival — his sheet — and it is a short rolling window rather
+   than a career, because the save carries it.
+
+   NO WAGER. The other half of #271 was a book on these bouts, and the measurement refused it: a
+   cold stranger wager returns **-20.5 denarii per hundred** (3,000 bouts, the book quoting 0.455
+   against a realised 0.448 at a 12% vig). The player cannot have an edge either, and that is
+   structural rather than a tuning question: on his own bout his private information is the drilling
+   `betChance` passes as 0, and on a stranger's bout there is nothing he can know that the book
+   cannot already see. A wager here is a certain loss, so it would be a button nobody presses —
+   which is the opposite of the item's "coin from nothing" risk, and the reason this release shows
+   the card instead of taking money on it. */
+const RIVAL_FORM = 6;          /* how many of a house's recent results are kept on the sheet */
+/* ---- AND IT IS `lately`, NOT `form`, BECAUSE `form` IS TAKEN ----
+   The first cut of this wrote `h.form = h.form || []`. A rival house already HAS a `form`: a number
+   seeded `ri(-12,12)` at founding and carried each week by `h.form = clamp(h.form*0.94 + dv, ...)`.
+   An array there survives one line and then every rival house in the run has a form of NaN, for
+   ever, silently. `probes/wager.mjs` fell over it on the first run — "number -9 is not iterable" —
+   which is the only reason it is not in this release. */
+function noteRivalBout(d, h, f, won, loud){
+  const log = (h.lately = h.lately || []);
+  log.unshift({ w:d.week, name:f.name, nick:f.nick || null, won:!!won,
+    wins:f.wins||0, losses:f.losses||0, loud:!!loud });
+  if(log.length > RIVAL_FORM) log.length = RIVAL_FORM;
+}
+const rivalForm = h => (h && h.lately) || [];
+const rivalFormWord = h => { const L = rivalForm(h);
+  if(!L.length) return null;
+  const w = L.filter(x=>x.won).length;
+  return `${w} of his last ${L.length} on the sand`;
+};
 function rivalWeekly(d){
   if(!d.rivals) return;
   /* the standard of the age, read once — it is the same city for all three houses */
@@ -8158,10 +8203,12 @@ function rivalWeekly(d){
       const f = pick(fit);
       if(R()<0.56){
         f.wins++; f.pfame += ri(3,8); h.fame += ri(2,5);
+        noteRivalBout(d, h, f, true);
         if(!f.nick && f.wins>=5) f.nick = freshNick(d);
         if(R()<0.10) f.kills++;
       } else {
         f.losses++; h.fame += 1;
+        noteRivalBout(d, h, f, false);
         if(R()<0.05){ h.fighters = h.fighters.filter(x=>x.id!==f.id); }
         else if(R()<0.4){ const inj=pick(INJURIES); f.injury={name:inj[0],weeks:inj[1],pen:inj[2]}; }
       }
@@ -24330,11 +24377,37 @@ function HouseLedger({ S, h }){
   const bk = (S.book && S.book.house && S.book.house[h.name]) || null;
   const beats = (m.seen || []).filter(k => BEAT_WORD[k]);
   const watched = (h.fighters || []).filter(f => scoutLive(S, f)).length;
+  /* ---- WHAT HIS MEN HAVE BEEN DOING, WHICH IS NOT ABOUT YOU AT ALL — #271 ----
+     It sits OUTSIDE the early return below. That return fires for a house you have never shared a
+     card with, and the whole point of this ledger is the bouts you were not in: a rival's form is
+     readable before you have ever met him, and refusing to show it until you have would put the
+     one new thing in this release behind the one condition that makes it uninteresting. */
+  const form = rivalForm(h), formWord = rivalFormWord(h);
+  const formEl = form.length ? (
+    <div className="panel" style={{padding:"7px 9px",marginBottom:9,background:"var(--panel-2)"}}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="tag">His men, lately</span>
+        <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{formWord}</span>
+      </div>
+      {form.map((x,i)=>(
+        <div key={i} style={{fontSize:"var(--fs-sm)",marginTop:2,
+          color:x.won?"var(--laurel)":"var(--ink-2)"}}>
+          {x.name}{x.nick?`, ${x.nick}`:""} {x.won?"won":"lost"} — {x.wins}–{x.losses}
+          <span className="dim"> · {Math.max(1, S.week - x.w)}w ago{x.loud?", and he made sure Capua heard":""}</span>
+        </div>
+      ))}
+    </div>
+  ) : null;
   if(!bk || !bk.n) return (
-    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:9}}>
-      You have never had a man on the same card as his. Whatever is between you, it is not from the sand.
-    </div>);
+    <>
+      {formEl}
+      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:9}}>
+        You have never had a man on the same card as his. Whatever is between you, it is not from the sand.
+      </div>
+    </>);
   return (
+    <>
+    {formEl}
     <div className="panel" style={{padding:10,marginBottom:9}}>
       <div className="flex items-center justify-between gap-2">
         <span style={{fontSize:"var(--fs-md)"}}>{bk.n} card{bk.n===1?"":"s"} against him</span>
@@ -24358,6 +24431,7 @@ function HouseLedger({ S, h }){
         Between you: {beats.map(k=>BEAT_WORD[k]).join(", ")}.
       </div>}
     </div>
+    </>
   );
 }
 
@@ -35460,6 +35534,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     startDocOffer, answerDocOfferWith, loseDoctoreTo, docKeepFee, GRUDGE_DOCTORE, DOC_OFFER_WEEKS,
     succeedDoctore, docSuccessor, DOC_INSIDE_WINS, offerDoctore, doctoreFromGladiator,   /* #251 phase 3 */
     HOSTILE_MOVES, spiteWeight, RIVAL_DOC, rivalCan,
+    /* #271 — what the other houses' men did, which two thirds of the time nobody could see */
+    RIVAL_FORM, noteRivalBout, rivalForm, rivalFormWord, rivalWeekly,
     hostParty, throwFeast, walkTheCells, holdTourney, stageMunus,
     /* the gods: five of them, four real boons, and nothing had ever called either action */
     GODS, GOD_KEYS, makeOffering, swearVow, resolveVow, templeWeek,
