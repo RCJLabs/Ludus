@@ -4389,6 +4389,71 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.266.0 — #270: the bench was already built, and one term in a conjunction had nailed the door shut
+
+**#270 proposed a new system. It was already shipped.** `FREEDMEN.doctore` — *"He comes back to
+teach"* — makes a doctore whose skill is `40 + his own wins × 2.2`, charges **no fee**, flags him
+`fromHouse`, gives him a past line naming his wins under your colours, and moves every standing man
+**+9 morale and +7 regard**. That is the item's proposal down to its Risk note's requirement that
+the man be YOURS.
+
+**It had never once happened.** `probes/bench.mjs`, 16 houses × 1,893 weeks under a complete player:
+a freed or retired man was waiting in **68.4% of weeks**, and this outcome fired **0 times** — 0 of
+the 25 freedman outcomes that did fire, and **0 of 16 houses** ever had their own man in the chair.
+The #219 shape exactly: a system real, finished, and unreachable.
+
+**A conjunction must be split by term before anything can be fixed** — `nemesis` established that
+here and the RUINS table cites it. `need` was `!d.doctore && f.wins >= 8`, and of the 1,294 weeks a
+man was waiting:
+
+| | |
+|---|---|
+| a waiting man had 8+ wins | 986 (76.2%) |
+| the chair was **EMPTY** | 53 (4.1%) |
+| both at once | 7 of 1,893 weeks (**0.4%**) |
+
+The wins term was never holding it. A house that can afford a doctore has one, so the door asked for
+a coincidence.
+
+## What shipped
+
+**It is a choice now**, which is what the item actually wanted. He comes to the gate whether or not
+the chair is filled, and a house with a hired man in it decides: *"Give him the post"* or *"Keep
+Elandus"*. The moment is offered once either way. Turning him away costs the yard **4 points of
+regard** — the block had already worked out what was being offered.
+
+After the repair, two independent seed sets: **2 of 16 and 1 of 16 houses** put their own man in the
+chair, against 0 and 0 before. Rare, and **rare by design now rather than by a shut door**: `pick`
+over the waiting pool is uniform and only 30–37% of that pool ever had eight wins.
+
+## And the event's stub had dropped the two fields its outcomes read
+
+`data.man` carried `{ name, wins, cls }`. The run bodies read `f.age` and `f.regardAt`. Both were
+structurally undefined by the time they were asked for:
+
+- **`doctore`** — *"#251: his years are his own, not the market's"* could never fire. A freed
+  champion always took the market's age instead of his own.
+- **`lanista`** — `const bitter = f.regardAt != null && f.regardAt < 45` was **always false**, so a
+  man freed grudgingly always set up his yard without a grudge. `ri(28,42)` and the whole bitter
+  paragraph under it were unreachable **in an outcome that does fire**.
+
+Both are now driven directly in `checks/bench.mjs` rather than waited for — a branch that needs a
+0.4%-a-week event is a branch no check should be hoping to catch. Freed at regard 30: `bitter`,
+grudge 28. Freed at 80: not bitter, grudge 0.
+
+**And `EVENTS.freedman.run(d, ev)` took no `i`** — the player's answer was thrown away, so no
+freedman outcome could offer a choice even if it wanted to. It takes one now.
+
+**A check assertion corrected on the way.** The first skill-ladder arm asserted strict monotonicity
+on single draws and went red: a man of 12 wins made a *worse* doctore than one of 8. That is
+`makeDoctore`'s own `ri(-8,8)` — sixteen points of noise against 8.8 points of signal — not a fault.
+Twenty-five draws a rung, and the rungs stop at 19 because `40 + 20×2.2` is over the 82 ceiling:
+**8w → 56 · 13w → 69.2 · 19w → 80.1 · 40w → 80.6 (capped)**.
+
+**Shipped:** `FREEDMEN.doctore` un-gated and given `ask`/`no`; the widened `data.man`; `freedman`
+honouring its answer. `checks/bench.mjs` (five arms) and `probes/bench.mjs`. `scarBurden` on the
+test handle.
+
 ### v3.265.0 — #269: three of the four "never occurs" do occur, and the endings were written for a player who had already lost
 
 **`OVER_TEXT` is referenced in exactly ONE place in the file: the end screen.** Every word the game
@@ -11625,7 +11690,7 @@ one design decision in this item.
 
 ---
 
-**#270 — The Veteran's Bench** *(new system · medium)*
+**#270 — The Veteran's Bench** *(new system · medium)* — **CLOSED v3.266.0. THE SYSTEM WAS ALREADY BUILT; ONE TERM HAD NAILED THE DOOR SHUT.** `FREEDMEN.doctore` seats a freed champion at no fee with skill off his own record, flags him `fromHouse`, and moves every man's morale and regard — the item's proposal, shipped. It had fired **0 times in 16 houses / 1,893 weeks** (0 of 25 freedman outcomes). Split by term: a waiting man had 8+ wins in 76.2% of those weeks, the chair was empty in **4.1%**. It is a CHOICE now — give him the post or keep the man you are paying — and two seed sets put the house's own man in the chair in **2 of 16 and 1 of 16** houses against 0 and 0. Also fixed: the event's `data.man` stub dropped `age` and `regardAt`, so #251's "his years are his own" could never fire and `lanista`'s `bitter` branch was **always false in an outcome that does fire**; and `EVENTS.freedman.run` took no `i`, so the player's answer was thrown away. `checks/bench.mjs`, `probes/bench.mjs`.
 
 The complete player ends with an EMPTY yard: roster p50 **0 in all five seed sets** (v3.251.0),
 because `free`, `retire` and `sell` shed every eligible man and nothing in the game keeps one. Under
