@@ -16437,6 +16437,9 @@ function askWeek(d){
    Debt, ruin, rebellion, and the lanista dying. But there is now a law with heat, a
    reputation the town holds, patrons who can turn, and rivals with grudges — four
    systems that generate pressure and cannot conclude anything. They can now. */
+/* the notice these three give before they fire. It was the literal 6 in `ruinWeek` and nowhere
+   else; the list of doors in the settings prints it, so it is #150's same-call rule. — #269 */
+const RUIN_NOTICE = 6;
 const RUINS = {
   banned:  { need:d=>lawOf(d).heat >= 90 && (lawOf(d).edicts||[]).length >= 2 && inBreach(d).length >= 2 && lawOf(d).fines > 0,
     warnAt:72,
@@ -16501,7 +16504,7 @@ function ruinWeek(d){
       chron(d, R2.warn(d), "bad");
       return;
     }
-    if(d.week - d.flags.ruinWarn[k] < 6) return;
+    if(d.week - d.flags.ruinWarn[k] < RUIN_NOTICE) return;
     const rival = ((d.rivals||[]).sort((a,b)=>(b.grudge||0)-(a.grudge||0))[0]||{name:"a rival"}).name;
     d.over = { kind:k, name:d.name, men:d.gladiators.filter(g=>!isGone(g)).length,
       edicts:(lawOf(d).edicts||[]).length, rival, years:yearOf(d) };
@@ -25192,6 +25195,16 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
 const OVER_TEXT = {
   lanistaDied: o=>({ title:"THE STAIRS TO THE GALLERY", text:`${o.lan} does not come down to the yard one morning. He was ${o.age}, he had run ${o.name} for ${o.years} year${o.years===1?"":"s"}, and the work had been taking pieces off him for a while in a way that everyone had noticed and nobody had said. The doctore finds him. The men are told at the post and go back to it, because there is nothing else in the day for them to do. What happens to this house now is somebody else's business — a nephew, a creditor, or the block. You do not get to see which.` }),
   triumph: o=>({ title:"THE SAND AT ROME", text:`Your men took ${o.won} of three on the imperial sand, in front of the only crowd that has ever mattered. A freedman of the palace finds you afterward with a wooden case and no expression: a rudis cut from imperial oak, and a deed to land in Campania. ${o.name} need never send anyone to the sand again. Whether that is a reward or a joke is left to you. In Capua they will say you were lucky. In Rome they simply say your name.` }),
+  /* ---- AND THIS ONE CANNOT HAPPEN — audit item #269, recorded rather than deleted ----
+     `romeFall` is written by nothing. Every `d.over = {` site in the file is accounted for (there
+     are twelve kinds across ten sites, one of them parameterised over `RUIN_KEYS`), there is no
+     `over.kind =` assignment anywhere, and no dynamic kind but that one. `romeWeek` carries the
+     reason in its own comment — "the house comes home — Rome is a milestone, not the grave" — so
+     the ending was retired and its paragraph was left behind.
+     It is KEPT rather than cut: the text is good, the door could be reopened, and deleting it
+     would lose the only written account of what a bad trip to Rome used to cost. What it must not
+     do is hide a SECOND orphan, so `checks/epitaph.mjs` pins the set difference at exactly this
+     key — a new unreachable entry fails the gate, this one does not. */
   romeFall: o=>({ title:"SWALLOWED BY ROME", text:`${o.won===1?"One bout of three":"Nothing"}. The imperial sand took your best men in an afternoon and the crowd had forgotten them before the awnings came down. What is left of ${o.name} goes home down the Appian Way in two wagons instead of six, and the houses of Capua are careful not to laugh where you can hear them. A lanista who has been to Rome and come back like this does not get asked twice.` }),
   rebellion: o=>({ title:"THE HOUSE BURNS", text:`In the dead of night, ${o.leader} breaks his chains. The cells empty like a wound opening. By dawn your ludus is ash, your guards are fled or dead, and your name is a warning told to other lanistae. His name, they say, is already on the road to legend.` }),
   foreclosed: o=>({ title:"THE PAPER IS CALLED IN", text:`${o.lender} does not come himself. Two men with a magistrate's clerk arrive at the hour the gate opens and read out a number — ${o.owed} denarii — that has not had any relation to what you borrowed for a long time. They take the sand, the racks, the cells and the men in them. Nobody in Capua is surprised, and one or two are relieved it was not them. ${o.name} is a line in somebody's ledger now, and it balances.` }),
@@ -25204,6 +25217,55 @@ const OVER_TEXT = {
   ruin: ()=>({ title:"AN EMPTY HOUSE", text:"No men. No coin. A lanista with an empty ludus is only a man with a large, quiet building. The gates are shuttered, and the wind moves the sand where champions might have trained." }),
   emptied: o=>({ title:"THE CELLS STAY EMPTY", text:`${o.weeks} weeks. Slavers came to the gate and went away again, and the cells of ${o.name} stayed as empty as the day the last man went over the wall. ${o.gold >= 400 ? `There was coin in the box the whole time — ${o.gold} denarii of it — which is the part the other lanistae will find funny for years. ` : `There was never quite enough in the box to put it right, and each week there was a little less. `}A ludus is not a building and it is not a ledger; it is men, and after ${o.years} year${o.years===1?"":"s"} yours has none. The editors stop sending. The doctore takes work at another house. Capua does not so much forget you as stop having anything to forget.` }),
 };
+/* ---- HOW A HOUSE CAN END, WRITTEN DOWN BEFORE IT DOES — audit item #269 ----
+   `OVER_TEXT` is referenced in exactly ONE place in this file: the end screen. So every word the
+   game has ever written about how a house ends is read by a player who has already lost.
+
+   MEASURED (`probes/epitaph.mjs`, 35 lessons, 19 feats, and 1,898 distinct agenda lines collected
+   over played weeks rather than read off a table): `foreclosed` and `disgrace` score ZERO mentions
+   under a deliberately LOOSE term filter — and a loose filter over-reports, so a zero under one is
+   a real zero. `triumph` is the well-signposted one: a feat, and an agenda line counting the fame
+   still short of what Rome asks.
+
+   WHAT IS AND IS NOT LISTED HERE IS A DECISION, NOT AN OVERSIGHT. These nine are the ways a house
+   is TAKEN — information a player can act on. `closed` and `triumph` are the two that are played
+   toward, and they are deliberately left off: the item's own risk note is that naming `closed`
+   turns it into a goal, and a house run at it is the empty-yard house of v3.251.0 with a roster
+   median of nought. `oldAge` is off because it is not reachable — `ends` measured age >= 62 and
+   health >= 45 never co-occurring in 3,070 lanista-weeks.
+
+   THE TITLES COME FROM `OVER_TEXT` ITSELF rather than being retyped, so the name a player reads
+   here is the name he will read at the end. Every figure is the engine's own call — `creditLine`,
+   `EMPTY_LIMIT`, `RUIN_NOTICE`, the lender's multiple — so a moved dial moves this list with it. */
+const END_DOORS = [
+  { kind:"debt", term:"The box falls past the credit line",
+    at:d=>`the line is ${creditLine(d)}d and there is ${Math.round(d.gold)}d in the box` },
+  { kind:"ruin", term:"Nobody left who can stand, and not enough to buy one with",
+    at:d=>`under 150d is the mark; you hold ${Math.round(d.gold)}d` },
+  { kind:"emptied", term:`${EMPTY_LIMIT} weeks with nobody fit to send and nobody bought`,
+    at:d=>`${(d.flags && d.flags.idleYard) || 0} such weeks behind you` },
+  { kind:"foreclosed", term:"What you owe a lender passes four times what you took",
+    at:d=>d.loan ? `${owes(d)}d owed against the ${rnd(d.loan.principal * 4)}d that calls it in`
+                 : "no paper of yours is out" },
+  { kind:"rebellion", term:"The cells rise in the night and the stair is lost",
+    at:d=>`unrest stands at ${Math.round(d.unrest)}` },
+  { kind:"lanistaDied", term:"The lanista's health reaches nothing with no heir named",
+    at:d=>d.lanista ? `health ${Math.round(d.lanista.health)}, and ${d.heir ? "an heir is named" : "no heir is named"}`
+                    : "no lanista is seated" },
+  { kind:"banned", warned:true, term:"The aedile strikes the house from the roll",
+    at:d=>`heat ${Math.round(lawOf(d).heat)} of 90 · ${(lawOf(d).edicts||[]).length} of 2 edicts · ${inBreach(d).length} of 2 in breach` },
+  { kind:"disgrace", warned:true, term:"The editors stop asking, because you are the house that kills",
+    at:d=>`blood ${Math.round(repOf(d,"blood"))} of 88 · the front rows ${Math.round(facOf(d,"front"))}, and it wants 12 or under` },
+  { kind:"ruined", warned:true, term:"A rival takes it apart, a man and a card at a time",
+    at:d=>`the angriest grudge against you is ${Math.round(Math.max(0, ...(d.rivals||[]).map(h=>h.grudge||0)))} of 95` },
+];
+function houseEnds(d){
+  return END_DOORS.map(e=>{
+    let at = ""; try { at = e.at(d); } catch(err){ at = ""; }
+    return { kind:e.kind, title:OVER_TEXT[e.kind]({}).title, term:e.term, at, warned:!!e.warned };
+  });
+}
+
 
 /* Stamped into the page head at build time. Empty when the source is run raw. */
 const APP_VERSION = (typeof window !== "undefined" && window.__LVDVS_VERSION) || "";
@@ -29961,6 +30023,30 @@ export default function App(){
                 onClick={()=>{ setShowSettings(false); setGuideStep(0); setShowGuide(true); }}>Replay the opening guide</button>
               {/* #265 — what he has already said, re-openable. The list is built in the domain code
                   (`lessonsTold`) and this only prints it, the division `wifeWord` set. */}
+              {/* #269 — how a house can end, before it does. The list is built in the domain
+                  code (`END_DOORS`, `houseEnds`) and this only prints it; what is on it and what
+                  is deliberately off it is argued over that table. */}
+              <details className="sect" style={{marginBottom:7}}>
+                <summary style={{padding:"8px 10px",minHeight:"var(--tap)"}}>
+                  <span className="dim" style={{fontSize:"var(--fs-base)"}}>
+                    <span style={{color:"var(--gold-hi)"}}>How a house is lost</span> · {END_DOORS.length} ways
+                  </span>
+                </summary>
+                <div style={{padding:"0 10px 10px"}}>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:6}}>
+                    Every one of these has taken a house in Capua. Three of them give {RUIN_NOTICE} weeks' notice first; the rest do not.
+                  </div>
+                  {houseEnds(S).map(e=>(
+                    <div key={e.kind} style={{borderTop:"1px dotted var(--line)",paddingTop:6,marginTop:6}}>
+                      <div className="disp" style={{fontSize:"var(--fs-base)",color:"var(--blood)"}}>
+                        {e.title}{e.warned && <span className="dim" style={{color:"var(--ink-faint)"}}> · you are warned first</span>}
+                      </div>
+                      <div style={{fontSize:"var(--fs-md)"}}>{e.term}.</div>
+                      {e.at && <div style={{fontSize:"var(--fs-sm)",color:"var(--gold-line)"}}>{e.at}</div>}
+                    </div>
+                  ))}
+                </div>
+              </details>
               {(()=>{ const told = lessonsTold(S);
                 if(!told.length) return (
                   <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>
@@ -35332,6 +35418,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     hostParty, throwFeast, walkTheCells, holdTourney, stageMunus,
     /* the gods: five of them, four real boons, and nothing had ever called either action */
     GODS, GOD_KEYS, makeOffering, swearVow, resolveVow, templeWeek,
+    /* #269 — the nine ways a house is taken, and the notice three of them give */
+    END_DOORS, houseEnds, RUIN_NOTICE, RUINS, RUIN_KEYS,
     pietyOf, pietyWord, blessOf, blessLeft, offeringReady, OFFERING_COOL, illLuck,
     /* #267 — one ladder: the word, the hue, the two weekly terms and the omen's own odds */
     PIETY_TIERS, PIETY_WORDS, pietyRank, pietyTier, pietySays, omenIll,

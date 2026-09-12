@@ -362,7 +362,17 @@ export async function run({ p }){
                      years — and with an heir named, a lanista whose health reaches nought hands over
                      (`d.succession`, 1,135 weeks of it) rather than ending the run. So the ending is
                      written for a man the game does not produce.
-         closed      NOT REACHABLE, AND v2.89.0 CORRECTED WHY — the first answer here was a
+         closed      REACHABLE AND COMMON — CORRECTED v3.265.0, and the long note below is the
+                     history rather than the state. Two seed sets, 16 houses x 420 weeks an arm,
+                     every house run to its end: `closed` is **6 of 32** under a complete player and
+                     **0 of 32** under the reference. What changed is not this gate but the rope —
+                     the `free` lever did not exist when the note below was written, so "13 of 23
+                     men could be let go by none of them" was measuring a policy that never freed
+                     anybody. #269 also withdraws its own citation of "9 and 11 of 16": 6 of 32 is
+                     what two sets give. The blocker paragraph below is kept because its reasoning
+                     about `freed > lost` is still the reason that clause is gone.
+                     ---- AND THE ORIGINAL FINDING, WHICH WAS RIGHT ABOUT ITS OWN RUN ----
+                     NOT REACHABLE THEN, AND v2.89.0 CORRECTED WHY — the first answer here was a
                      sampling fault of mine. It said the best man in a 500-week house reached **8
                      wins** against a bar of ten, so nothing qualified. That figure was taken over
                      `activeG(d)` — the men standing in the yard at the moment of sampling — and a
