@@ -4389,6 +4389,68 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.273.0 — #277: the sweep closed, and the answer to the other fifteen is no
+
+**This release changes no game code, and that is the result rather than the omission.** #276 left
+fifteen of the twenty-nine dead fields untriaged and capped the class with a bare list. All fifteen
+are measured now (`probes/orphans.mjs`, 40 houses x 420 weeks), and **not one of them is worth
+repairing**. The deliverable is the accounting.
+
+## What the fifteen actually are
+
+| written in | fields |
+|---|---|
+| 100% of houses | `scenario` · `lastCheck` |
+| 63% | `avenging` |
+| 15% / 13% | `lookedAway` · `mentorLost` · `wedTo` |
+| 3% | `romeBid` |
+| 0 in 3,972 weeks | `cartel` · `paragonBought` · `wasYours` |
+| 0 by rope policy, not by a shut door | `turnedHimIn` · `softened` · `raised` · `eased` |
+
+`checks/promise.mjs`'s `KNOWN` is a reason-per-field record now instead of a set of names, in five
+classes — **10 redundant beside machinery that is live · 10 read but not by the game · 4 genuinely
+dead small tells · 3 unreachable at the measured rate · 2 refused with their own numbers**. Arm 1
+still fails on a thirtieth field, and it now also fails on a **stale** entry: a field that stops
+being dead has been repaired or deleted, and its reason is then a claim about code that is gone.
+
+## The probe was wrong four times, and each wrong turn is written into it
+
+This is the whole value of the pass, because every one of the four would have shipped as a finding.
+
+1. **Arm B read scalar deltas** and filed `ROME_TURNS.matched` as a dead event beside `offer`. It
+   writes `romeHardCard`, which *is* read — a runtime delta cannot see that. Checking the written
+   flag against the dead-29 took the figure from 63% to 29%.
+2. **`g.avenging = f.gid` looks like a revenge target and is not.** `f` is a FALLEN record, so that
+   is the **dead man's own id**; the killer is `f.killer`. Searching `d.circuit` for it found
+   nothing on 70 of 70 and would have published *"the named killer is never reachable"*. The real
+   path is live: `f.killer.fid` finds him on a rival's roster, `fal.avenged` fires on the win, and
+   the fallen list renders "avenged".
+3. **The editor arm read an `editorKey` off ordinary bill offers.** They carry no editor — only
+   bookings do — so *"the ledger moved on 0 of 205"* was true by construction. The premise was
+   wrong anyway: `petitionOdds` already reads `cardEditor`, `editorTrust` and `editorRec().bought`,
+   which #254 phase 2 built. The petition talks to the editor going in.
+4. **And the one that looked like the item.** `ROME_TURNS.offer`'s entire effect is
+   `d.flags.romeBid = 1` — the prose says a Roman familia names a figure for your best man, and
+   there is no figure and no decision — and because `r.turned` is set either way, drawing it spends
+   the city's one piece of business. But the three turns gate differently (`matched` wants one run,
+   `watched` a triumph, `offer` standing 55), so "29% of the time" assumed all three eligible.
+   Measured over 120 houses: **21 reached Rome, 17 had a turn fire, and all 17 were `matched`.**
+   Zero. It is unreachable in practice — the `year`/`woman` refusal a third time.
+
+## The pattern, now that the class is closed
+
+**A dead field looks like a missing system and usually is not.** Ten of the twenty-nine are
+duplicates of state the game keeps somewhere it does read — `lastCheck` is `g.scars[last].part`,
+written one line below the push that stores it; `avenging` is a back-pointer beside a working
+vengeance; the three petition marks sit beside an editor the odds already consult. Ten more are
+stamped for the gate. Three are real and unreachable. Four are small missing tells at 13-15%.
+
+`pairWord` was the exception, not the rule, and #276 found it at 23.6% of every conversation. The
+sweep's honest yield is **one repair in thirty fields**, and the way to know that was to count.
+
+**Shipped:** `probes/orphans.mjs`; `checks/promise.mjs`'s `KNOWN` rewritten as a reason-per-field
+record in five classes, plus a staleness arm. No game code.
+
 ### v3.272.0 — #276: the dead-flag sweep, and the promise the house makes in a quarter of its conversations
 
 **The audit queue is closed, so this release opened a class instead of an item.** A census of
