@@ -44,14 +44,80 @@ export const describe = "a word given to one of your own reaches his record, and
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
-/* the twenty-nine still standing at v3.272.0. Six are deliberate and six more are read by the
-   gate; the list is a CEILING on the class, not a to-do list. */
-const KNOWN = new Set(["avenging","cartel","damnati","demo","eased","everBorrowed","fold","fromYard",
-  "inside","kinBroken","lastCheck","lookedAway","mentorLost","oneMoreYear","paragonBought",
-  "raised","romeBid","scenario","softened","soldAt","stood","tookHouse","turnedHimIn","wantMatch",
-  "wasYours","watchful","wedTo","women","writtenOff"]);
-/* `pairWord` was the thirtieth and this release is why it is not here. It is deliberately NOT in
-   KNOWN: if the wire below is ever cut, arm 1 says so before arm 4 does. */
+/* ---- THE TWENTY-NINE, WITH A REASON APIECE — the sweep closed, v3.273.0 ----
+   #276 shipped this list as a bare set, which capped the class without saying anything about it: a
+   reader could tell that twenty-nine fields are written once and read nowhere and not one thing
+   about WHY, or which of them anybody had actually looked at. All twenty-nine are triaged now, the
+   rates are `probes/orphans.mjs`, and the entries carry the finding rather than pointing at it.
+
+   `pairWord` was the thirtieth and v3.272.0 is why it is not here. It is deliberately absent: if
+   that wire is ever cut, arm 1 says so before arm 4 does.
+
+   FIVE CLASSES. Nothing in `dup`, `rare` or `tell` is a bug list — they are measured refusals, and
+   the measuring is the deliverable. A field arriving here without a class is the failure. */
+const READ = "read, but not by the game";
+const DUP  = "redundant beside machinery that is live";
+const RARE = "unreachable, or near enough, at the measured rate";
+const TELL = "genuinely dead, and a small missing tell";
+const REF  = "refused with its own numbers";
+
+const KNOWN = {
+  /* ---- read elsewhere: the stylesheet, or a check that asserts the stamp ---- */
+  fold:         [READ, "the stylesheet reads it — `.plate[data-fold=\"1\"]{height:44px}`"],
+  inside:       [READ, "`checks/doctore.mjs` requires the succession offer to carry it"],
+  tookHouse:    [READ, "`checks/heir.mjs` asserts succession stamps it on the son's own record"],
+  watchful:     [READ, "`checks/vacancy.mjs` requires the newcomer to carry the tell"],
+  kinBroken:    [READ, "`checks/mistress.mjs` reports it"],
+  everBorrowed: [READ, "`probes/credit.mjs` reads it"],
+  writtenOff:   [READ, "`probes/cliff.mjs` reads it"],
+  fromYard:     [READ, "`checks/walls.mjs` — found by hand in #273 and pinned there"],
+  soldAt:       [READ, "`checks/walls.mjs` — found by hand in #273 and pinned there"],
+  stood:        [READ, "`checks/office.mjs` reads `d.election.stood`"],
+
+  /* ---- duplicates of state the game already keeps somewhere it does read ---- */
+  lastCheck:    [DUP,  "`g.scars.push(scarMark(target))` one line above stores the same part; "
+                     + "`g.scars[last].part` is `lastCheck`. Written in 40 of 40 houses, and "
+                     + "redundant in every one"],
+  avenging:     [DUP,  "looks like a revenge target and is not: `f` is a FALLEN record, so `f.gid` "
+                     + "is the DEAD man's id. The live path is `f.killer.fid` -> a rival's roster, "
+                     + "`fal.avenged` on the win, \"avenged\" in the fallen list. 70 men in 25 of "
+                     + "40 houses carry a back-pointer beside a system that works"],
+  paragonBought:[DUP,  "written in the same statement as `d.flags.paragonDone`, which is read"],
+  scenario:     [DUP,  "`d.scenario` is save data recording the opening; the five keys are read "
+                     + "off `SCENARIOS` where they are needed"],
+  women:        [DUP,  "`d.law.women` sits beside a live edict — `L.edicts` plus `EDICTS[k].check` "
+                     + "carry the whole consequence, heat and fines included"],
+  damnati:      [DUP,  "`d.law.damnati`, the same shape as `women` above"],
+  softened:     [DUP,  "the petition's mark on the offer. `petitionOdds` already reads the editor "
+                     + "going in — `cardEditor`, `editorTrust`, `editorRec().bought`, #254 phase 2 "
+                     + "— so the asking is priced; only the mark is unread. 240 grants in 40 houses"],
+  raised:       [DUP,  "as `softened`; 34 grants in 40 houses"],
+  eased:        [DUP,  "as `softened`; `mercy` needs a sine card on the bill and was askable 0 times"],
+  demo:         [DUP,  "`out.demo` on the tutorial fight, which already has `crux:false, pending:null`"],
+
+  /* ---- real, and not reached often enough to build on ---- */
+  romeBid:      [RARE, "`ROME_TURNS.offer`'s ENTIRE effect, and the prose says a Roman familia "
+                     + "names a figure for your best man. Over 120 houses: 21 reached Rome, 17 had "
+                     + "a turn fire, ALL 17 were `matched` — the three gate differently and `offer` "
+                     + "wants standing 55. Zero fires. The `year`/`woman` refusal a third time"],
+  cartel:       [RARE, "needs year 7 and a rival grudge >= 45; the median house lives 43 weeks. "
+                     + "0 in 3,972 played weeks"],
+  wasYours:     [RARE, "a man you lost to a poach, now on a rival's roster and never named as "
+                     + "yours. 0 in 3,972 played weeks"],
+
+  /* ---- dead, reachable, and small ---- */
+  lookedAway:   [TELL, "the war messenger's first branch — you sell men to the rising for coin. "
+                     + "15% of houses. Nothing refers to it again, `theRoad` included"],
+  turnedHimIn:  [TELL, "the same event's second branch. 0 under a rope that answers 0; driven, it "
+                     + "stamps 3 of 3, so the zero is policy and not a shut door"],
+  mentorLost:   [TELL, "the heir's mentor died and the boy's record keeps his id. 13% of houses"],
+  wedTo:        [TELL, "which way you placed a daughter — patron, magistrate or rival. Each kind "
+                     + "pays out on the day and none is remembered after. 13% of houses"],
+
+  /* ---- refused in #276, with the numbers beside the code refused ---- */
+  oneMoreYear:  [REF,  "its ask fires 0 times in 2,402 weeks; the gate is crossed on 1.2%"],
+  wantMatch:    [REF,  "7 fires in 2,402 weeks, all 7 outliving their own date, median 58 weeks"],
+};
 
 /* ---- STRIP COMMENTS AND NOTHING ELSE, AND THE REASON IS A FINDING ----
    The first cut of this parsed string and template state too, so that prose could not count as a
@@ -101,12 +167,23 @@ export async function run({ p, errors }){
 
   /* ---- 1. the class cannot grow unremarked ---- */
   const C = census();
-  const fresh = C.dead.filter(f=>!KNOWN.has(f));
+  const fresh = C.dead.filter(f=>!KNOWN[f]);
+  const tally = {};
+  for(const f of C.dead) if(KNOWN[f]) tally[KNOWN[f][0]] = (tally[KNOWN[f][0]]||0) + 1;
   lines.push(`1. census: ${C.fields} assigned fields · ${C.dead.length} written once and read nowhere `
-    + `· ${fresh.length} of them new since #276`);
+    + `· ${fresh.length} of them unaccounted for`);
+  for(const [cls, n] of Object.entries(tally)) lines.push(`   ${String(n).padStart(2)} ${cls}`);
   if(fresh.length)
-    fails.push(`${fresh.length} field${fresh.length===1?"":"s"} written once and read nowhere that #276 `
-      + `did not account for: ${fresh.join(", ")} — either read it, delete it, or add it to KNOWN with a reason`);
+    fails.push(`${fresh.length} field${fresh.length===1?"":"s"} written once and read nowhere that the `
+      + `sweep did not account for: ${fresh.join(", ")} — read it, delete it, or add it to KNOWN `
+      + `with a class and a reason`);
+  /* and the accounting has to stay honest in the other direction too: a field that is no longer
+     dead has been repaired or deleted, and its entry is then a claim about code that is gone */
+  const stale = Object.keys(KNOWN).filter(f=>!C.dead.includes(f));
+  if(stale.length)
+    fails.push(`${stale.length} field${stale.length===1?"":"s"} in KNOWN ${stale.length===1?"is":"are"} `
+      + `no longer written-once-read-nowhere: ${stale.join(", ")} — if that was deliberate, drop the `
+      + `entry, because it now describes code that does not exist`);
 
   const out = await p.evaluate(()=>{
     const A = window.__LVDVS;
