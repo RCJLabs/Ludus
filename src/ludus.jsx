@@ -1319,7 +1319,7 @@ function ripeFeud(d){
   return cands.sort((x,y)=>y.heat-x.heat)[0] || null;
 }
 function feudWeek(d){
-  if(d.pendingEvent || d.over || d.rome || d.city || d.travel) return;
+  if(d.pendingEvent || d.over || awayFromCapua(d)) return;
   const f = ripeFeud(d);
   if(!f) return;
   if(R() > 0.055 + Math.max(0, f.heat-60)*0.004) return;
@@ -2166,7 +2166,7 @@ const YARD = {
 const YARD_KEYS = Object.keys(YARD);
 /* you hear about it if you have an ear, and sometimes anyway */
 function yardWeek(d){
-  if(d.over || d.rome || d.city || d.travel) return;
+  if(d.over || awayFromCapua(d)) return;
   if(activeG(d).length < 2) return;
   if(R() > 0.16) return;
   const fit = YARD_KEYS.filter(k=>{ try { return YARD[k].need(d); } catch(e){ return false; } });
@@ -2423,7 +2423,7 @@ const RIVAL_BEATS = {
 };
 const RB_KEYS = Object.keys(RIVAL_BEATS);
 function rivalArc(d){
-  if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
+  if(d.over || awayFromCapua(d) || d.pendingEvent) return;
   d.metHouse = d.metHouse || {};
   for(const h of (d.rivals||[])){
     if(h.retired) continue;
@@ -3085,7 +3085,7 @@ const charterSkip = d => { if(d.charter) d.charter.skipped = true; };
    have not claimed it. Both are conditional and both resolve the moment you act on them,
    so neither becomes wallpaper. */
 function agendaCan(d, add){
-  if(d.over || d.city || d.travel || d.rome) return;
+  if(d.over || awayFromCapua(d)) return;
   /* the cells would take a feast — and it is worth throwing, which is not the same thing */
   if(d.unrest >= 35 && d.gold >= feastCost(d) + weeklyBill(d) && feastFresh(d) >= 0.6)
     add(d.unrest >= 55 ? 2 : 1, "ludus", "The cells would take a feast",
@@ -3202,7 +3202,7 @@ function agendaSquare(d, add){
    500 denarii, and asking a house that cannot feed itself to pick a philosophy is the `agendaCan`
    fault this project has already priced once, where advice goes quiet exactly when it is needed. */
 function agendaSchool(d, add){
-  if(d.doctrine || d.city || d.travel || d.rome) return;
+  if(d.doctrine || awayFromCapua(d)) return;
   if(d.week < 12) return;                       /* the opening has louder problems */
   const cheapest = Math.min(...DOC_KEYS.map(k=>DOCTRINES[k].cost));
   if(d.gold < cheapest + weeklyBill(d) * 6) return;
@@ -3220,7 +3220,7 @@ function agendaSchool(d, add){
    that works, costs little, and is never found. One line, not four, and it goes quiet once the
    house is staffed — two standing items on the villa tab is the #101 fault. */
 function agendaFolk(d, add){
-  if(d.city || d.travel || d.rome) return;
+  if(awayFromCapua(d)) return;
   /* ---- AND NOT IN THE OPENING, BECAUSE "CHEAP" IS NOT TRUE THERE ----
      The note over HOUSEHOLD called these hires cheap and strictly good. Cheap is a fact about a made
      house: 22 denarii a week against a new house's ENTIRE weekly bill of 30, which is a 73% rise in
@@ -3239,7 +3239,7 @@ function agendaFolk(d, add){
     `${H.name.toLowerCase()} from ${ask}d — ${H.line.replace(/\.$/, "").toLowerCase()}`);
 }
 function agendaGods(d, add){
-  if(d.city || d.travel || d.rome) return;
+  if(awayFromCapua(d)) return;
   const pi = pietyOf(d);
   if(pietyRank(pi) === 0){
     add(2, "villa:standing:temple", "This house is keeping no rites at all",
@@ -4792,7 +4792,7 @@ const yardWalls = d => rnd(400 + bayStandard(d) * 22);
 const yardPrice = lin => Math.round(((lin && lin.worth || 0) + (lin && lin.walls || 0)) * YARD_DISCOUNT);
 /* the yard that is dark, unsold, and has not already been put to you */
 function offerYard(d){
-  if(d.over || d.rome || d.city || d.travel || d.succession) return null;
+  if(d.over || awayFromCapua(d) || d.succession) return null;
   const h = lastDark(d);
   if(!h || !h.lineage || h.lineage.sold || h.lineage.asked) return null;
   h.lineage.asked = d.week;
@@ -6102,7 +6102,7 @@ function callElection(d){
     c.base += ri(6,15); c.rival = c.rival ? c.rival : h.name; } });
   /* whether the house is standing in the forum for this decides how it hears about it, and is
      remembered on the election so the result can say what the lanista's part in it was */
-  const away = !!(d.rome || d.city || d.travel);
+  const away = !!(awayFromCapua(d));
   d.election = { week:d.week, cands, backed:null, spent:0, done:false, away: away ? 1 : 0 };
   const names = cands.map(c=>c.name.split(" ")[2]).join(", ");
   chron(d, away
@@ -6163,7 +6163,7 @@ function resolveElection(d){
     d.fame = Math.max(0, d.fame-8);
     patronsOf(d).forEach(p=>{ if(p.rank==="magistrate") p.favor = clamp(p.favor-14,0,100); }); recomputeFavor(d);
     chron(d, `${won.name} takes the aedileship. He knows exactly whose name was on the other man's subscription list, because everyone does.`, "bad");
-  } else if(E.away && (d.rome || d.city || d.travel)){
+  } else if(E.away && (awayFromCapua(d))){
     chron(d, `${won.name} takes the aedileship. The whole of it happened while the house was on the road — no subscription list carried your name, because nobody in Capua could find you to ask. He has no particular view of you, and for the next year he is the man who decides whose men are on the card.`);
   } else {
     chron(d, `${won.name} takes the aedileship. You backed nobody and he has no particular view of you, which is its own kind of position.`);
@@ -6972,7 +6972,7 @@ function slaverAtTheGate(d){
 }
 /* each week a rival's patience for a contested man may run out — buy him now or lose him */
 function marketWeek(d){
-  if(d.rome || d.city || d.travel) return;
+  if(awayFromCapua(d)) return;
   const contested = (d.market||[]).filter(g=>g.contested && !g.paragon);
   for(const g of contested){
     if(R() < 0.28){
@@ -10003,7 +10003,7 @@ const HER_KEYS = Object.keys(HER_ASKS);
    cool, once through a weighted-by-freshness order, one `pendingEvent` — beside it rather than
    inside it, which is what "ASKS-shaped" has to mean for somebody who is not on the roster. */
 function womanWeek(d){
-  if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
+  if(d.over || awayFromCapua(d) || d.pendingEvent) return;
   const w = wifeOf(d); if(!w) return;
   const dm = domusOf(d);
   if(d.week - (w.married || 1) < HER_FROM) return;
@@ -10266,7 +10266,7 @@ function childYear(d, c, age){
   chron(d, sayOf(lines, K), "info");
 }
 function familyWeek(d){
-  if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
+  if(d.over || awayFromCapua(d) || d.pendingEvent) return;
   const dmm = domusOf(d);
   /* ---- A WIDOWER'S CHILDREN USED TO STOP GROWING UP, fixed in v2.95.0 ----
      This was `if(!dmm.wife){ …match…; return; }` — an early return that skipped the child loop at
@@ -10432,7 +10432,7 @@ const bookedFor = (d, key) => (d.deadlines||[]).find(x=>x.kind==="booking" && x.
 function offerBooking(d){
   if((d.deadlines||[]).some(x=>x.kind==="booking")) return null;
   const men = activeG(d).filter(g=>g.pfame>=25 && !isAuctor(g));
-  if(!men.length || d.city || d.travel || d.rome) return null;
+  if(!men.length || awayFromCapua(d)) return null;
   const g = pick(men);
   const soon = nextFestivals(d, 3).filter(f=>!f.rest && weeksUntil(d,f)>=2 && weeksUntil(d,f)<=6);
   if(!soon.length) return null;
@@ -10471,7 +10471,7 @@ function failBooking(d, x){
 function offerChallenge(d){
   if((d.deadlines||[]).some(x=>x.kind==="challenge")) return null;
   const h = (d.rivals||[]).filter(x=>x.grudge>=45).sort((a,b)=>b.grudge-a.grudge)[0];
-  if(!h || d.city || d.travel || d.rome) return null;
+  if(!h || awayFromCapua(d)) return null;
   const men = activeG(d).filter(g=>g.pfame>=20);
   if(!men.length) return null;
   const g = men.reduce((m,x)=>x.pfame>m.pfame?x:m, men[0]);
@@ -10483,7 +10483,7 @@ function offerChallenge(d){
 /* the magistrate wants money by a date */
 function offerLevy(d){
   if((d.deadlines||[]).some(x=>x.kind==="levy")) return null;
-  if(d.fame < 90 || d.city || d.travel || d.rome) return null;
+  if(d.fame < 90 || awayFromCapua(d)) return null;
   const amt = rnd(140 + d.fame*0.5 + R()*140);
   return { amount:amt, due: d.week + ri(3,6), what: pick([
     "repairs to the amphitheatre's awnings","the aedile's games next spring",
@@ -14205,6 +14205,25 @@ function bayWorth(d, key){
     rusting: (d.known && d.known[key] > 0 && d.city !== key) };
 }
 
+/* ---- WHERE THE HOUSE IS STANDING, WRITTEN ONCE — audit item #268 ----
+   "Not in Capua" was spelled out inline **forty-three times**, in seven different orderings of the
+   same three fields, and `probes/camp.mjs` found eleven of the thirty-six drawn events carrying one
+   of them as the first line of `make`. That is not eleven design decisions about where a card can
+   happen; it is one idiom copied eleven times, and the same idiom copied thirty-two more times
+   across the week. A concept the program states forty-three times is a concept the program has not
+   named.
+
+   IT IS A FUNCTION DECLARATION, NOT A CONST. The call sites run from line 1,322 onward and this
+   sits at fourteen thousand — a `const` would be in the temporal dead zone for any of them reached
+   during module evaluation, and proving that none are is a worse bargain than hoisting.
+
+   WHAT IT DOES NOT COVER, deliberately: the Rome-excluding form WITHOUT `d.rome` is a DIFFERENT
+   predicate and stands at four sites — the patron decay, `askWant`, the word said in Capua, and the
+   party — because Capua's patrons credit what they saw and a house at Rome is a house they read
+   about. (A fifth reads the inverse, `!d.city`, and wants the house to BE in a town.) Folding any
+   of those in would be a silent behaviour change wearing a refactor's clothes, which is the fault
+   #267 spent a release not making. They are left exactly as they are. */
+function awayFromCapua(d){ return !!(d.city || d.travel || d.rome); }
 const CITIES = {
   pompeii: { name:"Pompeii", travel:1, purse:1.2, taste:"blood",
     blurb:"A loud, rich, vulgar little town with a stone amphitheatre older than Rome's and an appetite to match.",
@@ -14325,6 +14344,15 @@ const bayWide  = d => bayKnownTotal(d) >= 150;
 const bayRomeCut = d => Math.round(bayKnownTotal(d)/180 * 150);                       // up to 150 fame off the Rome bar
 
 function setOut(d, key){
+  /* ---- NOT `awayFromCapua` — audit item #268, and the refactor made this mistake ITSELF ----
+     This guard reads "at Rome, or already travelling, or already standing in the town you are
+     asking for", and that last term is an EQUALITY, not a truthiness test: `setOut` deliberately
+     carries a house from one town straight to another, so being in a town is no bar unless it is
+     THIS town. The 43-site substitution matched the `d.rome || d.travel || d.city` prefix and left
+     `awayFromCapua(d)===key` — a boolean compared to a string, always false — so the whole guard
+     collapsed to `if(!C)` and a house already on the road could set out again.
+     `checks/roads.mjs` caught it in one line. The comment over `awayFromCapua` warns against
+     exactly this, a hundred and twenty lines above where it happened. */
   const C = CITIES[key]; if(!C || d.rome || d.travel || d.city===key) return false;
   d.travel = { to:key, weeks:C.travel, home:false };
   d.flags.lastTravelled = d.week;
@@ -14960,7 +14988,7 @@ function sagaBeat(d){
   s.renown = clamp(s.renown + 2, 0, 100);
 }
 function igniteSaga(d){
-  if(d.saga || d.city || d.travel || d.rome) return;
+  if(d.saga || awayFromCapua(d)) return;
   const cand = activeG(d).filter(g=>!isAuctor(g) && !isDamn(g) && g.pfame>=40 && g.wins>=8);
   if(!cand.length) return;
   if(d.flags.sagaCool && d.week - d.flags.sagaCool < 18) return;
@@ -15595,7 +15623,7 @@ function theirRead(d, g, offer){
   return clamp(1 - age/(WATCH_KEEPS+2), 0.25, 1);
 }
 function watchWeek(d){
-  if(!d.rivals || d.rome || d.city || d.travel || d.over) return;
+  if(!d.rivals || awayFromCapua(d) || d.over) return;
   const keen = d.rivals.filter(h=>!h.away && h.grudge >= 42);
   if(!keen.length || R() > 0.16) return;
   const h = keen.sort((a,b)=>b.grudge-a.grudge)[0];
@@ -16387,7 +16415,7 @@ const askPick = (pool, d) => { let sum = 0; for(const x of pool) sum += askWeigh
   for(; i < pool.length - 1; i++){ r -= askWeight(d, pool[i]); if(r < 0) break; }
   return pool.splice(i, 1)[0]; };
 function askWeek(d){
-  if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
+  if(d.over || awayFromCapua(d) || d.pendingEvent) return;
   const pool = askPool(d);
   if(!pool.length) return;
   if(R() > 0.06) return;
@@ -16604,7 +16632,7 @@ const answerRow = d => {
      house object at all. Everything below only ever ADDS to this line. */
   const plain = pg ? { urgency:2, tab:"men",
     label:`${pg.name} is being talked to`, sub:`House ${d.poach.house}` } : null;
-  if(d.over || d.city || d.travel || d.rome) return plain;
+  if(d.over || awayFromCapua(d)) return plain;
   const live = (d.rivals||[]).filter(h=>!h.retired);
   const h = pg ? live.find(x=>x.name === d.poach.house)
     : live.filter(x=>(x.grudge||0) >= GAM_ACCOUNT).sort((a,b)=>(b.grudge||0)-(a.grudge||0))[0];
@@ -17002,7 +17030,7 @@ const FM_KEYS = Object.keys(FREEDMEN);
    reader reads both lists. Nothing here draws a number while both are empty, which is why the
    reference player's signature does not move. */
 function freedWeek(d){
-  if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
+  if(d.over || awayFromCapua(d) || d.pendingEvent) return;
   /* a man who left this house free outranks the week's random draw — freed by the rudis, or
      released from the oath at the end of a long career; the yard remembers both the same way */
   const pool = (d.freed||[]).concat(d.retired||[]).filter(f=>!f.became && d.week - f.week >= 5);
@@ -17065,7 +17093,7 @@ function settleHunt(d, won, x){
   else chron(d, `${x.name} went out for the man who killed ${x.fallenName}, and did not get him. It is not finished.`, "bad");
 }
 function kinWeek(d){
-  if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
+  if(d.over || awayFromCapua(d) || d.pendingEvent) return;
   if(d.flags.kinCool && d.week - d.flags.kinCool < 8) return;
   if(activeG(d).length >= ((d.law && d.law.cap) || 99)) return;
   const pool = (d.fallen||[]).filter(f=>f.gid && !f.kinCame && d.week-f.week>=4 && d.week-f.week<=70);
@@ -17081,7 +17109,7 @@ function kinWeek(d){
     data:{ f, vengeful } };
 }
 function fallenWeek(d){
-  if(d.over || d.rome || d.city || d.travel) return;
+  if(d.over || awayFromCapua(d)) return;
   const fav = (d.fallen||[]).filter(f=>f.gid && (f.fans||0)>=45);
   if(!fav.length || R()>0.10) return;
   const f = pick(fav), short = (f.name||"him").split(",")[0];
@@ -17137,7 +17165,7 @@ const pactBlocks = (d, offer) => { const p = pactOf(d); if(!p) return false;
   const P = PACTS[p.kind]; if(!P || !P.exclusive) return false;
   return !!(offer && offer.festival && !offer.city && offer.editor !== p.editor); };
 function offerPact(d){
-  if(d.pact || d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
+  if(d.pact || d.over || awayFromCapua(d) || d.pendingEvent) return;
   if(d.week < 20 || d.fame < 55) return;
   if((d.flags.pactsSeen||0) >= 3) return;
   if(R() > 0.045) return;
@@ -17603,7 +17631,7 @@ const BOOK_LINES = [
   (d,a,ago)=>`${ago} years on, and the block still calls that corner of the yard by ${a.name}'s name. The men who do it could not tell you who he was.`,
 ];
 function bookWeek(d){
-  if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
+  if(d.over || awayFromCapua(d) || d.pendingEvent) return;
   if(d.week % BOOK_EVERY !== 0) return;
   const dead = bookDead(d);
   if(dead.length < BOOK_MIN) return;
@@ -17617,7 +17645,7 @@ function bookWeek(d){
   chron(d, BOOK_LINES[i](d, a, ago), "info");
 }
 function foreWeek(d){
-  if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
+  if(d.over || awayFromCapua(d) || d.pendingEvent) return;
   const F = (d.forebears||[]);
   if(!F.length) return;
   const f = F[F.length-1];
@@ -17633,7 +17661,7 @@ function foreWeek(d){
   chron(d, pool[i](d, f, who), "info");
 }
 function lateWeek(d){
-  if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
+  if(d.over || awayFromCapua(d) || d.pendingEvent) return;
   d.flags.lateSeen = d.flags.lateSeen || [];
   const fit = LATE_KEYS.filter(k=>!d.flags.lateSeen.includes(k) && (()=>{ try{ return LATE[k].need(d); }catch(e){ return false; } })());
   if(!fit.length) return;
@@ -17870,7 +17898,7 @@ const lawWord = d => { const h = lawOf(d).heat;
 /* an edict arrives, and it is aimed at houses like yours */
 function edictWeek(d){
   const L = lawOf(d);
-  if(d.over || d.rome || d.city || d.travel) return;
+  if(d.over || awayFromCapua(d)) return;
   if(d.week < 22 || L.edicts.length >= 3) return;
   if(R() > 0.055) return;
   const fit = EDICT_KEYS.filter(k=>!hasEdict(d,k));
@@ -17890,7 +17918,7 @@ function edictWeek(d){
 /* the inspector, who does not send word */
 function lawWeek(d){
   const L = lawOf(d);
-  if(d.over || d.rome || d.city || d.travel) return;
+  if(d.over || awayFromCapua(d)) return;
   const breach = inBreach(d);
   /* ---- THE HEAT WAS A NUMBER THAT DID NOTHING ----
      Every gambit says it puts heat on a house the magistrate is already watching, and
@@ -18040,7 +18068,7 @@ const PARAGON_REACH = 0.88;
 const PARAGON_GAP = 90;
 const PARAGON_ODDS = 0.055;
 function paragonWeek(d){
-  if(d.over || d.rome || d.city || d.travel) return;
+  if(d.over || awayFromCapua(d)) return;
   if(paragonOf(d)) return;
   if(d.flags.paragonDone && d.week - d.flags.paragonDone < PARAGON_GAP) return;
   if(d.week < 30 || d.fame < 120) return;
@@ -21497,7 +21525,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
 const EVENTS = {
   ludusNight: {
     make(d){
-      if(d.rome || d.city || d.travel || d.games || d.munera || d.pendingEvent) return null;
+      if(awayFromCapua(d) || d.games || d.munera || d.pendingEvent) return null;
       if(activeG(d).length<2) return null;
       if(R()>0.5) return null;
       return nightEvent(d, pickNight(d));
@@ -21626,7 +21654,7 @@ const EVENTS = {
       return `You tell ${PR(A).him} the card is set. ${PR(A).He} nods, the way someone nods when they have learned something they suspected.`; } },
   mentor: {
     make(d){
-      if(d.city||d.travel||d.rome) return null;
+      if(awayFromCapua(d)) return null;
       const act = activeG(d);
       if(act.length<3) return null;
       const vets = act.filter(g=>!isMentored(g) && g.wins>=4 && (g.age>=29 || g.wins>=8));
@@ -21656,7 +21684,7 @@ const EVENTS = {
   /* ===== ARC: the foundling (a boy at the gate, and what he becomes weeks later) ===== */
   foundling: {
     make(d){
-      if(d.city||d.travel||d.rome) return null;
+      if(awayFromCapua(d)) return null;
       if(d.fame < 12) return null;
       if((d.arcs||[]).some(a=>a.id==="foundlingBack")) return null;
       if(d.flags.foundlingCool && d.week - d.flags.foundlingCool < 24) return null;
@@ -21724,7 +21752,7 @@ const EVENTS = {
   /* ===== ARC: a life owed (a mercy on the sand, repaid weeks later) ===== */
   owedLife: {
     make(d){
-      if(d.city||d.travel||d.rome) return null;
+      if(awayFromCapua(d)) return null;
       if(!d.flags.everCloth) return null;
       if(d.flags.owedDone) return null;
       if((d.arcs||[]).some(a=>a.id==="owedBack")) return null;
@@ -21764,7 +21792,7 @@ const EVENTS = {
   /* ===== the mob calls for its favourite by name ===== */
   crowdCalls: {
     make(d){
-      if(d.city||d.travel||d.rome) return null;
+      if(awayFromCapua(d)) return null;
       const favs = activeG(d).filter(isFavourite);
       if(!favs.length) return null;
       if(d.flags.calledFav && d.week - d.flags.calledFav < 8) return null;
@@ -22005,7 +22033,7 @@ const EVENTS = {
       return `You answer it in front of the same people who heard him ask. ${c.name} against ${c.foe}, inside ${c.due-d.week} weeks.`; } },
   sacramentum: {
     make(d){ const men = unsworn(d);
-      if(!men.length || d.city || d.travel || d.rome) return null;
+      if(!men.length || awayFromCapua(d)) return null;
       const g = men[0];
       const free = isAuctor(g), cond = isDamn(g);
       return { id:"sacramentum", title:"The Oath",
@@ -22068,7 +22096,7 @@ const EVENTS = {
       try { return F.run(d, ev.data.man || { name:"He", wins:0 }); } catch(e){ return `He is seen about the town.`; } } },
   omen: {
     make(d){
-      if(d.rome || d.city || d.travel || d.week < 8) return null;
+      if(awayFromCapua(d) || d.week < 8) return null;
       if(d.flags.omenWk && d.week - d.flags.omenWk < 6) return null;
       const soon = nextFestivals(d, 1)[0];
       const near = soon && weeksUntil(d, soon) <= 1;
@@ -22183,7 +22211,7 @@ const EVENTS = {
      that buries him remembers you were there. */
   patronGone: {
     make(d){
-      if(d.city || d.travel || d.rome) return null;
+      if(awayFromCapua(d)) return null;
       if(d.flags.patronDied && d.week - d.flags.patronDied < PATRON_GAP) return null;
       const p = patronOld(d); if(!p) return null;
       const held = Math.floor((d.week - (p.since||0)) / YEAR_WEEKS);
@@ -22222,7 +22250,7 @@ const EVENTS = {
      measured as out of them. */
   roomFire: {
     make(d){
-      if(d.city || d.travel || d.rome) return null;
+      if(awayFromCapua(d)) return null;
       if(d.flags.roomBurned && d.week - d.flags.roomBurned < ROOM_FIRE_GAP) return null;
       const k = roomAblaze(d); if(!k) return null;
       const B = BUILDINGS[k];
@@ -22254,7 +22282,7 @@ const EVENTS = {
       d.unrest = clamp(d.unrest + 8, 0, 100);
       return `You hold them at the wall and let it burn, and it takes the stores with it — ${ev.data.stores} denarii of steel and grain, gone by sunrise. Nobody is hurt. The men stand in the cold watching the house that owns them come down a floor, and something in how quietly they watch is worth minding.`; } },
   bayCall: {
-    make(d){ if(d.city || d.travel || d.rome || d.fame < 90) return null;
+    make(d){ if(awayFromCapua(d) || d.fame < 90) return null;
       const men = activeG(d).filter(g=>g.pfame >= 22);
       if(!men.length) return null;
       const key = pick(Object.keys(CITIES));
@@ -22275,7 +22303,7 @@ const EVENTS = {
       setOut(d, ev.data.key);
       return `The advance comes up front and the wagons go out inside the week. ${C.name} has asked for one of your men by name, which has not happened before.`; } },
   damnatio: {
-    make(d){ if(d.city || d.travel || d.rome) return null;
+    make(d){ if(awayFromCapua(d)) return null;
       if(rosterFull(d)) return null;
       const n = ri(1,2);
       const crimes = shuffled(CRIMES).slice(0,n);
@@ -22663,6 +22691,74 @@ const EV_DIE = {
   whispers:{w:8,cool:0}, stolenSteel:{w:8,cool:0},
 };
 const evTune = k => EV_DIE[k] || { w:1, cool:0 };
+/* ---- AND WHICH OF THEM NEED CAPUA — audit item #268 ----
+   `probes/camp.mjs` asked every one of the thirty-six drawn events four times off ONE saved stream
+   position — at home, in a town, on the road between towns, and at Rome — so the only thing that
+   differed was where the house was standing. Eleven refuse away. TWENTY-FIVE fire at identical
+   rates to the decimal, which is the number the item "the road has cards and nothing else" was
+   missing: the die is two thirds intact on the road, not empty.
+
+   Nothing in the die tells a town from the road between towns from Rome. All eleven carry the same
+   guard, in the same place — the first line of `make` — which is why it now has a name.
+
+   THIS IS A LIST AND NOT A READ OF `String(make)`, the way `EV_DRAWN` finds the stubs two
+   declarations down. The shipping build minifies (`minify: !TEST` in build.js), so a regex on the
+   identifier `awayFromCapua` would match eleven times in the test bundle and ZERO times in the game
+   a player downloads — a number wrong only for players, which no check running against the test
+   build could ever see. `checks/camp.mjs` binds the list to the behaviour instead, asking each
+   make() both ways off one stream position, so the two cannot drift apart in silence. */
+const EV_HOME = ["ludusNight","mentor","foundling","owedLife","crowdCalls","sacramentum",
+  "omen","patronGone","roomFire","bayCall","damnatio"];
+/* ---- AND THE ROAD SAYS WHAT IT COSTS, WHERE THE ROAD IS CHOSEN — #264's shape, two panels over ----
+   The circuit panel offered a purse multiplier, a crowd temperament, a road length and a local
+   standing bar. Every one of those is the road's SIDE of the trade and there was nothing at all on
+   the other side of it — the panel said "Nothing you have built in Capua travels", which is true,
+   carries no number, and is not even the part that costs most. A player weighing a tour could see
+   the whole of the upside and none of the price.
+   Both figures are counted off the tables rather than written down: lift a guard and the first
+   number falls on its own, add a night card and the second rises. #150's rule is that the shown
+   number and the thing behind it are the same call, and these are. */
+function roadSays(){
+  /* ONE CLAUSE, NOT TWO, AND `scroll` IS WHY. Both facts on the circuit panel cost 45px of a face
+     already 67px over its baseline, and the arena's ceiling is the one this check says has crept
+     2.8 -> 3.1 -> 3.2 across three releases. A line that pushes a face past its scroll budget is
+     not legibility. So the two facts went to the two places they are actually met: the die's count
+     here, where a tour is chosen, and the night deck below, beside the walk that is its only door.
+     That is a better answer than one long line in one place, and the budget is what found it. */
+  return `Away from Capua, ${EV_HOME.length} of the week's ${EV_DRAWN.length} questions never come up.`;
+}
+/* ---- AND WHAT THE ARENA FACE GAVE UP TO CARRY IT, WHICH IS THE BETTER HALF OF THIS ----
+   `scroll` holds the arena to 3.2 screens and the face was already 67px over its baseline BEFORE
+   this release, with about 16px of headroom. Three things fell out of that budget, and all three
+   are improvements rather than concessions:
+
+   1 · The count went INTO the circuit panel's own sentence rather than into a block beneath it. The
+       sentence read "Nothing you have built in Capua travels" — which is `roadSays()` with the
+       number taken out — so the count REPLACES that clause instead of being added under it.
+   2 · The night deck moved to the cells section, beside the walk that is its only door, which is
+       where a player meets it anyway. Two facts, two places, each where it is met.
+   3 · `c.blurb` came out of the town blocks. Each town printed TWO flavour sentences one above the
+       other, `c.blurb` and the custom's `say`, both of them "what this crowd is like", and only the
+       second names a mechanic ("a card without mercy fills the tiers"). The blurb is also the
+       chronicle line `setOut` writes the week you go — so it was not lost, it was said twice.
+
+   The arena finished at 2,574px against a 2,618 baseline: 44px SMALLER than this release found it,
+   and no ceiling raised. A face budget that forces a better arrangement is doing its job. */
+/* the other half, where the walk is */
+function cellsAwaySays(){
+  return `The tables travel with the familia. The cells do not — and the walk down to them is the `
+    + `only door to ${NIGHT_KEYS.length} more things a night can turn up.`;
+}
+/* ---- AND THE TWO ACTIONS THAT ANSWER THE ROAD DIFFERENTLY, ONE ABOVE THE OTHER ----
+   The cells section offers a feast and a walk, both of them an evening spent on the familia. The
+   walk refuses on the road and says so; the feast is not gated anywhere — not in `throwFeast`, not
+   on the button — so it simply works. Both are correct: the men eat wherever they are, and there
+   are no cells to walk in a camp. But the section said nothing about the difference, so a player
+   in Pompeii met one live button and one refusal with no account of why. NEITHER GATE MOVES here;
+   the asymmetry is named, in one line, where it is met.
+   It also matters more than it looks: `walkTheCells` is the ONLY caller of `pickNight`, so the
+   walk's gate is the whole of the road's access to the night deck — which is what `roadSays`
+   counts above, and what the item's `did.walk` 364 -> 8 was a symptom of without naming it. */
 /* ---- AND AN EVENT THIS HOUSE HAS NEVER MET WEIGHS MORE — #245 phase 3 ----
    Measured before this (`probes/dice.mjs`, 16 x 420, two seed sets): first-time die events per
    hundred weeks fell 19.7 / 3.7 / 3.2 / 1.3 and 15.7 / 6.0 / 3.3 / 1.3 by quarter, and a house met a
@@ -26757,6 +26853,9 @@ const SECT = {
             <span className="gold" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>{cost}d</span>
           </div>
           <div className="dim" style={{fontSize:"var(--fs-md)",margin:"3px 0 7px"}}>Meat, honeyed wine, and a night without the whip. Loyalty is cheaper than rebellion.</div>
+          {awayFromCapua(S) && <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",margin:"0 0 7px",color:"var(--gold-line)"}}>
+            {cellsAwaySays()}
+          </div>}
           {reach < 0.95 && (
             <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",margin:"0 0 7px"}}>
               {activeG(S).length} at the tables, and a house of this standing cannot set them the way it once did.
@@ -31572,14 +31671,17 @@ export default function App(){
                 <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:5}}>
                   Capua counts for nothing on this sand — the editor here weighs what he has seen with his own eyes. Purses ×{C.purse.toFixed(2)}.
                 </div>
+                {/* and the other side of that trade, counted rather than asserted — #268 */}
+                <div style={{fontSize:"var(--fs-sm)",color:"var(--gold-line)",marginTop:4}}>{roadSays()}</div>
                 <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={goHome}>Break camp and go home</button>
               </div>
             );
             return (
               <div className="panel" style={{padding:13}}>
                 <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,marginBottom:3}}>THE CIRCUIT</div>
+                {/* in the sentence, not under it — see over `roadSays`. #268 */}
                 <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
-                  Three towns down the bay who have never heard of you. Nothing you have built in Capua travels — but neither do your grudges.
+                  Three towns down the bay who have never heard of you. {roadSays()} Your grudges do not travel either.
                 </div>
                 <CampaniaMap S={S}/>{/* #250 — the bay, drawn. It REPLACES `CircuitLedger`: see its head */}
                 {bayHolder(S) && (
@@ -31597,7 +31699,7 @@ export default function App(){
                   return (
                     <div key={k} style={{borderTop:"1px dotted var(--line)",paddingTop:9,marginTop:9}}>
                       <div className="disp" style={{fontSize:"var(--fs-base)",color:knownIn(S,k)?"var(--ink-hi)":"var(--ink-dim)"}}>{c.name}</div>
-                      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{c.blurb}</div>
+                      {/* `c.blurb` came out here — see over `roadSays`. #268 */}
                       {/* the town's own politics: who runs its games, what it wants, whose sand it is */}
                       {(()=>{ const P = (S.bayPol||{})[k], CU = CITY_CUSTOM[k]; if(!CU) return null;
                         return (
@@ -35121,6 +35223,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     calendarRows, CAL_TONE, YearWheel, CalRow,   /* #255 — the year as a wheel, and the rows it pins */
     heirOfAge, HEIR_AGE, yearsAtHead,   /* #253 — a boy's age is his own */
     EV_DIE, EV_DRAWN, evTune, evPool, evPick, EV_FRESH, evWeight,   /* #245 phases 2-3 — the weighted, cooled, fresh die */
+    /* #268 — where the house is standing, once; which cards need Capua; and what the road costs */
+    awayFromCapua, EV_HOME, roadSays, cellsAwaySays, NIGHT, NIGHT_KEYS, pickNight,
     ASK_DIE, ASK_FRESH, askPool, askWeight, askPick,   /* #245 phase 4 — the asks through the same door */
     togaEvent,   /* #237 phase 4/5 — so a check can drive the toga trigger against an already-named son */
     /* the summit: the gate, the letter, the bar, and the trip's own clock */
