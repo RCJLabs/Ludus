@@ -4389,6 +4389,53 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.271.0 — #275: the item said eleven and named the wrong four, and the gloss belongs in the label
+
+**"Bearing" is not a quantity.** The man's sheet prints `demeanor(g.defiance)` under that label, so
+bearing and defiance are **one number with two names** — which is also why a search for "defiance"
+misses the lesson that defines it. **Eleven is ten.**
+
+**And of the four #275 says have a lesson — `regard`, `acclaim`, `unrest`, `form` — only `form`
+does.** Measured against all 35 lesson texts under every name a player could meet each term by
+(`probes/terms.mjs`):
+
+| | |
+|---|---|
+| **defined in a lesson** | bearing/defiance · favour · form |
+| **mentioned only** | fatigue (*"Conditioning builds wind and sheds fatigue"* — what moves it, not what it is) · standing (the **verb**, *"who is standing in them"*) |
+| **named nowhere** | regard · acclaim · known · welcome · morale · unrest |
+
+So the item's list is very nearly inverted: the three it credits with lessons have none, and three
+it does not mention do. **`welcome` is the one claim of the item's that holds**, and it is the
+constant #263 spent a release on.
+
+## The answer is the label, not a legend
+
+The risk note is #101's wallpaper fault — eleven definitions on every sheet is furniture — and the
+standing panel had already found the shape a release ago. It printed **`Unrest — ends a run`**: the
+gloss *inside* the label, costing no line at all. That string is sourced from `TERM_SAYS` now rather
+than hardcoded beside it, and the same shape is given to the others:
+
+> `Regard — what he thinks of you` · `Acclaim — what the street says of the house`
+> `Local standing — what one town has seen of you` · `Welcome — how long a town keeps wanting you`
+> `Morale — whether he fights or goes through it`
+
+**A term the gatekeeper already defines gets no second, shorter definition.** That is arm 2, and it
+is the risk note held as a rule: bearing, favour and form carry no gloss.
+
+## What this release does not do, and why
+
+**Only two of the six have a labelled print site to extend** — `unrest` and `morale`. `regard`,
+`acclaim`, `known` and `welcome` reach the screen as bare word-chips or inside prose, with no label
+to hang a definition on. Adding one would be exactly the furniture the item's own risk note forbids.
+
+That is the finding rather than an omission: **the gap is not that the words are missing, it is that
+four of these quantities are never printed beside their own name.** The words are written and in the
+domain code, ready for whichever panel gains a labelled row for them.
+
+**Shipped:** `TERM_NAME`, `TERM_SAYS`, `termLabel`; the `unrest` and `morale` labels sourced from it.
+`checks/terms.mjs` (four arms) and `probes/terms.mjs`.
+
 ### v3.270.0 — #274: the item's own falsification clause resolved the other way, and a man has a town of his own
 
 **#274 set its own test:** *"If a tourer fights evenly across the three towns, a per-town following
@@ -11794,7 +11841,7 @@ where the number is.
 
 ---
 
-**#275 — A One-Line Definition Where The Number Is** *(usability · medium)* — opened by #265.
+**#275 — A One-Line Definition Where The Number Is** *(usability · medium)* — opened by #265. **CLOSED v3.271.0. ELEVEN IS TEN AND THE WRONG FOUR WERE NAMED.** "Bearing" is `defiance` under another label, and of the four the item credits with lessons (`regard`, `acclaim`, `unrest`, `form`) **only `form` has one** — while `defiance`, `favour` and `form` are defined and `standing`'s hits are the verb. Named nowhere: regard · acclaim · known · welcome · morale · unrest. `welcome` is the one claim that holds. Shipped `TERM_SAYS` and the gloss INSIDE the label (`Unrest — ends a run`, the shape the standing panel already found), with a rule that a term the gatekeeper defines gets no second definition. Only `unrest` and `morale` had a labelled site to extend — the other four reach the screen as bare word-chips, which is the finding. `checks/terms.mjs`, `probes/terms.mjs`.
 
 The game runs on eleven derived quantities — `regard`, `defiance`, `standing`, `favour`, `acclaim`,
 `known`, `welcome`, `unrest`, `morale`, `fatigue`, `bearing` — each with its own decay, its own

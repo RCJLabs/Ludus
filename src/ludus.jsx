@@ -6392,6 +6392,47 @@ function offerDoctore(d, g, kind){
   return false;
 }
 const potentialWord = (p,g)=> p<50?"a modest ceiling": p<70?`promise in ${PR(g).him}`: p<85?"exceptional promise":"a fire the arena has not yet seen";
+/* ---- A ONE-LINE DEFINITION WHERE THE NUMBER IS — audit item #275 ----
+   The game runs on ten derived quantities, each with its own decay, its own readers and its own
+   scale, and the sheets print them as bare numbers.
+
+   THE ITEM SAID ELEVEN AND NAMED THE WRONG FOUR. "Bearing" is not a quantity: the man's sheet
+   prints `demeanor(g.defiance)` under that label, so bearing and defiance are ONE number with two
+   names — which is also why a search for "defiance" misses the lesson that defines it. And of the
+   four the item says have a lesson — `regard`, `acclaim`, `unrest`, `form` — only `form` does.
+   Measured against all 35 lesson texts under every name a player could meet each term by
+   (`probes/terms.mjs`):
+
+     DEFINED IN A LESSON   bearing/defiance · favour · form   ("Bearing tells you how much fire is
+                           in them", "Favor is not a number you bank", "Form is the four weeks
+                           between his last bout and his next")
+     MENTIONED ONLY        fatigue ("Conditioning builds wind and sheds fatigue" — what moves it,
+                           not what it is) · standing (the VERB, "who is standing in them")
+     NAMED NOWHERE         regard · acclaim · known · welcome · morale · unrest
+
+   `welcome` is the one claim of the item's that holds, and it is the constant #263 spent a release
+   on.
+
+   AND THE ANSWER IS THE LABEL, NOT A LEGEND. The item's own risk note is #101's wallpaper fault —
+   eleven definitions on every sheet is furniture — and the standing panel already found the shape
+   a release ago: it prints "Unrest — ends a run", the gloss inside the label, costing no line at
+   all. That string is sourced from here now rather than hardcoded there, and the same shape is
+   given to the others. `RITE_TERM` (#264) is the division: the words live in the domain code and
+   the panel only prints them. */
+const TERM_NAME = { regard:"Regard", defiance:"Bearing", standing:"Standing", favour:"Favour",
+  acclaim:"Acclaim", known:"Local standing", welcome:"Welcome", unrest:"Unrest",
+  morale:"Morale", fatigue:"Fatigue", form:"Form" };
+/* only the six no lesson names carry a gloss. A term the gatekeeper already defines does not get a
+   second, shorter definition somewhere else — that is the furniture the risk note is about. */
+const TERM_SAYS = {
+  regard:  "what he thinks of you",
+  acclaim: "what the street says of the house",
+  known:   "what one town has seen of you",
+  welcome: "how long a town keeps wanting you",
+  unrest:  "ends a run",
+  morale:  "whether he fights or goes through it",
+};
+const termLabel = k => TERM_SAYS[k] ? `${TERM_NAME[k]} — ${TERM_SAYS[k]}` : (TERM_NAME[k] || k);
 const demeanor = dv=> dv<25?"Compliant": dv<45?"Watchful": dv<65?"Restless": dv<85?"Defiant":"A storm barely chained";
 const unrestWord = u=> u<25?"Docile": u<45?"Restless": u<65?"Simmering": u<80?"Mutinous":"On the edge of fire";
 /* ---- THE THREE TERMS, NAMED, BECAUSE A SCREEN HAS TO BE ABLE TO COUNT THEM — #190 ----
@@ -32286,7 +32327,7 @@ export default function App(){
                     one that does not fit a number and has nowhere else to be: how close the cells
                     are to ending the run. */}
                 <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-sm)",marginBottom:3}}>
-                  <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:"var(--fs-micro)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Unrest — ends a run</span>
+                  <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:"var(--fs-micro)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{termLabel("unrest")}</span>
                   <span style={{color: S.unrest>=68?"var(--blood)":S.unrest>=45?"var(--gold)":"var(--laurel)",flexShrink:0}}>{unrestWord(S.unrest)}</span>
                 </div>
                 <div className="track" style={{height:6}}>
@@ -32980,7 +33021,7 @@ export default function App(){
                 </div>
               ))}
               <div>
-                <div className="flex justify-between" style={{fontSize:"var(--fs-base)"}}><span className="dim">Morale</span><span>{rnd(selG.morale)}</span></div>
+                <div className="flex justify-between" style={{fontSize:"var(--fs-base)"}}><span className="dim">{termLabel("morale")}</span><span>{rnd(selG.morale)}</span></div>
                 <Bar v={selG.morale} color={LAUREL}/>
               </div>
               <div>
@@ -35679,6 +35720,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     GODS, GOD_KEYS, makeOffering, swearVow, resolveVow, templeWeek,
     /* #269 — the nine ways a house is taken, and the notice three of them give */
     END_DOORS, houseEnds, RUIN_NOTICE, RUINS, RUIN_KEYS,
+    /* #275 — the ten quantities, and a gloss for the six no lesson names */
+    TERM_NAME, TERM_SAYS, termLabel,
     pietyOf, pietyWord, blessOf, blessLeft, offeringReady, OFFERING_COOL, illLuck,
     /* #267 — one ladder: the word, the hue, the two weekly terms and the omen's own odds */
     PIETY_TIERS, PIETY_WORDS, pietyRank, pietyTier, pietySays, omenIll,
