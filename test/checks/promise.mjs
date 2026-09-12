@@ -306,7 +306,7 @@ export async function run({ p, errors }){
   const PR = out.poorRudis;
   lines.push(`2. and \`year.no\` in a house that cannot pay: he stays ${PR && PR.stays} `
     + `· chronicled ${PR && PR.said} · on his record ${PR && PR.onRecord} `
-    + `(a recorded gap inside \`grantRudis\`, which has two callers — not this table's)`);
+    + `(#279: \`grantRudis\` has THREE callers and none reaches that branch — refused, not pending)`);
   if(PR && !PR.stays) fails.push("a house with no gold freed a man anyway");
   if(PR && !PR.said) fails.push("`grantRudis` refused the manumission and said nothing");
 
