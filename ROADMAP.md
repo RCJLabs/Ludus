@@ -4389,6 +4389,62 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.270.0 — #274: the item's own falsification clause resolved the other way, and a man has a town of his own
+
+**#274 set its own test:** *"If a tourer fights evenly across the three towns, a per-town following
+is three numbers that move together and buys nothing over `pfame`; if it concentrates, the system has
+a place to live."*
+
+`probes/following.mjs`, 16 houses × 420 weeks an arm. **The touring house does fight evenly** —
+capua 24% · pompeii 26% · neapolis 27% · puteoli 23% — **and its men do not:**
+
+| arm | man's distance from his own house's town mix | same men re-drawn from that mix | |
+|---|---|---|---|
+| tour | **0.47** | 0.14 | **+0.33** |
+| stay | 0.00 | 0.00 | +0.00 |
+| never leaves Capua | 0.05 | 0.04 | +0.02 |
+
+The null is the whole reading: **a man with six bouts across four towns looks concentrated by
+chance**, so the observed spread means nothing until the same men are re-drawn from their house's own
+mix. Under the two concentrating policies the men *are* their house, and the house's `knownIn`
+already carries it. Under the touring one they are not.
+
+There is one roster and it travels whole, so a man cannot go anywhere by himself — but **which weeks
+he fought decides which towns ever saw him**, and that is not the house's answer.
+
+**Two of the item's citations are wrong.** `probes/capua.mjs` splits home against away and never by
+*which* town, so the figure the clause turns on had never been measured. And the `tour` lever goes
+*"to whichever of the three towns knows the house least"* — it **equalises by construction**, so
+reading an even split out of it would be reading the policy back out of itself.
+
+## What shipped — wired to one thing
+
+A following per man per town, in the house's own shape at a lower ceiling (`MAN_FOLLOW_CAP` 40
+against a school's 100). Gained where he fights (`cityAfter`, the singles caller only), bled where he
+is not (`bayWeek`, the same clock and the same `BAY_DECAY`).
+
+**Read by exactly one roll:** the editor's box in `missioScore`, beside `ctx.favor`, which is already
+the *house's* local standing away — the item's own sentence is that the missio away *"reads the man's
+local name as well as the house's"*.
+
+**And `Math.min(MISSIO_CAP, …)` is what makes it a system rather than a bonus.** A man of 40 renown
+gains 8.8 of missio score from a full local name; **a man of 400, whose box already sits at the
+28-point cap on renown alone, gains nothing at all** — 95.7 → 95.7. The following is for the man the
+town has not heard of. That is arm 4, and it is the load-bearing one.
+
+**A melee or a hunt still builds the house's standing and nobody's name** — a gap named in the code
+rather than half-filled, because the one consumer wired here is a singles roll.
+
+**On his sheet, only where it differs from his renown**, per the item's own #101 note: the town that
+knows him on his own account, and what the town you are standing in makes of him.
+
+**Shipped:** `MAN_FOLLOW_CAP`, `manFollow`, `manBestTown`; `cityAfter`'s `who`, `bayWeek`'s per-man
+bleed, `ctx.hisTown`. `checks/following.mjs` (five arms) and `probes/following.mjs`. `App` 5837 →
+5849, `doFight` 357 → 359.
+
+**This re-phases:** the missio roll moved, so every seeded fixture downstream of a mercy decision
+away from Capua re-phases with it.
+
 ### v3.269.0 — #273: the yard buys men, not a facility — and a full house pays thousands for nobody
 
 **#273 said the verify-first *is* the whole item until answered, and its Risk note said not to open
@@ -11956,7 +12012,7 @@ build without it.
 
 ---
 
-**#274 — A Champion's Following** *(new system · medium)*
+**#274 — A Champion's Following** *(new system · medium)* — **CLOSED v3.270.0. THE FALSIFICATION CLAUSE RESOLVED THE OTHER WAY.** The touring house fights evenly (24/26/27/23) and **its men do not**: median town-mix distance **0.47** against a re-drawn null of **0.14**, +0.33 over the sampling; under `stay` and at home it is +0.00 and +0.02. Two citations wrong: `capua.mjs` never split by which town, and the `tour` lever equalises by construction. Shipped a per-man per-town following in the house's shape at a lower cap, wired to ONE roll — the editor's box in `missioScore` — where `Math.min(MISSIO_CAP, …)` means a man of 400 renown gains nothing and a man of 40 gains 8.8. `checks/following.mjs`, `probes/following.mjs`.
 
 `known` is per house per town — `knownIn(d, k)`, capped at 60, decaying 0.55 a week in every town
 you are not standing in — and it prices the road: a house known the length of the bay reaches Rome
