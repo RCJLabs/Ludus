@@ -24,6 +24,18 @@
    because if coverage is flat in lifespan then the gates are the fault, and if it climbs steeply
    then lifespan is, and those want opposite repairs.
 
+   ---- THE ANSWER, SO THIS IS NOT RE-OPENED BY SOMEBODY READING THE NUMBERS COLD ----
+   The median house meets 16 of 85. #282 weighed that and CLOSED IT AS THE INTENDED BARGAIN: a
+   replay game shows a slice per run, and eighty houses reached 54 of the 64 events between them.
+   Pulling the late gates down to where houses live would make the game's own thresholds lie about
+   what they are for, and making the player's verbs widen the run would turn attention into a
+   content unlock in a game where working the cells is the largest lever because it keeps men
+   alive. Both were refused.
+
+   THIS IS THEREFORE A STANDING INSTRUMENT, NOT AN OPEN ITEM. Run it when content is added: it says
+   whether the addition reached anybody, and the bands say which houses it reached. A table that
+   grows while the median house stays at sixteen situations has been written for the six per cent.
+
    TWO ARMS, for the reason every measurement in this sweep has needed them. The reference rope is
    a POLICY: it walks only above unrest 22 (#281), frees on sight (#279), tours only when invited
    (#280). An engaged arm walks every week it can and tours deliberately. Neither is "the player";

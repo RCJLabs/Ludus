@@ -4453,10 +4453,29 @@ game built for replay shows a slice per run on purpose, and eighty houses did re
 events **between them**. The content is not dead; it is distributed.
 
 What the numbers do settle is the shape of the choice: **the late content exists for about six per
-cent of houses**, and no way of playing found here changes a player's share of it. Whether that is
-the intended bargain is a design decision and is recorded here rather than taken.
+cent of houses**, and no way of playing found here changes a player's share of it.
 
-**Shipped:** `probes/depth.mjs`. No game code.
+## And the decision is taken: that is the bargain
+
+**#282 is CLOSED as answered, not deferred.** The fifth is the intended slice. A house that dies at
+fifty-one weeks having met four cards of sixty-four has had the game this project set out to build,
+and the eighty houses that reached fifty-four of sixty-four between them are the shape a replay game
+is supposed to have. The 44% dying inside a year is the identity, not a defect in the delivery of
+content around it.
+
+Two repairs were weighed against that and are refused with it. **Pulling the late gates down** to
+where houses actually live would buy coverage by making the game's own thresholds lie about what
+they are for — `cartel` wants year 7 because a cartel is a thing an established house is offered.
+And **making the player's verbs widen the run** rather than trade channels would turn attention into
+a content unlock, which is the opposite of a game where working the cells is the largest lever
+*because it keeps men alive*, not because it shows you more cards.
+
+So nothing is built, and the instrument stays. `probes/depth.mjs` is the standing measure of this
+figure: when content is added, it says whether the addition reached anybody, and the bands say which
+houses it reached. A table that grows while the median house stays at sixteen situations has been
+written for the six per cent, and this is where that gets noticed.
+
+**Shipped:** `probes/depth.mjs`, as a standing instrument. No game code, and none intended.
 
 ### v3.277.0 — #281: the night deck is healthy, my first measurement of it was not, and the fix I built was for the wrong cause
 
