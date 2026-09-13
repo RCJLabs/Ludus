@@ -4389,6 +4389,76 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.277.0 — #281: the night deck is healthy, my first measurement of it was not, and the fix I built was for the wrong cause
+
+**No game change, and three corrections — two of them mine.**
+
+#268 named the five-card night deck as the road's largest missing content. Before deciding anything
+about where it can be reached, the question was whether it works where it already lives.
+
+## #268's citation for it is wrong
+
+Its note, in `checks/camp.mjs`: *"`walkTheCells` is the ONLY caller of `pickNight`, so its gate is
+the whole of the road's access."* There are **two** — `walkTheCells` behind `R()<0.5`, and
+`EVENTS.ludusNight.make` behind `R()>0.5` and the die drawing it at all. The conclusion survives
+(`ludusNight.make` opens with its own `awayFromCapua(d)` guard, so both doors are shut on the road)
+but by a different route than the one given. Corrected in place.
+
+## And my first measurement was worse
+
+The first run reported **a night on 0.4% of weeks and two of the five cards NEVER DEALT**. Both
+figures were artefacts of my own probe:
+
+1. **The rope hardly ever walks.** Its cells step is `if(d.unrest >= 22 && walkTheCells(d))`, and
+   #280 measured home unrest at a mean of **3.0** — so the reference player took **0 walks in 3,423
+   weeks**. Counting nights against that policy measures the policy, not the deck. The `free:true`
+   trap of #279, caught this time before publishing.
+2. **I read the walk's night after the rope had already answered it.** The walking arm called
+   `walkTheCells`, then `R.lanista`, then looked at `d.pendingEvent` — and the rope answers the
+   week's question and nulls it. 730 walks produced 8 recorded nights where the coin alone predicts
+   about 365.
+
+Corrected, against a player who walks every week `walkReady` allows:
+
+| | |
+|---|---|
+| nights | **275 in 3,238 weeks — 8.5% of weeks** |
+| cards dealt | **all five** |
+| dice | eligible 66.2% of weeks · 61.1% of the deal · in 34 of 40 houses |
+| brawl | 32.4% · 25.8% · in 22 |
+| cracking | 12.5% · 7.6% · in 14 |
+| night | 12.3% · 4.0% · in 7 |
+| steadied | 1.7% · 1.5% · in 3 |
+
+**The deck is healthy.** "Never dealt" was measurement error, not a finding.
+
+## What is left is real, and the fix I built for it was aimed at the wrong cause
+
+What ONE house sees, walking: **a median of 4 nights drawn from 2 of the 5 cards, the most-repeated
+seen 3 times. Zero of forty houses saw all five; eleven of thirty-seven saw only one.**
+
+`pickNight` is `pick(fit)` — uniform over eligible — and it is the only draw table in the file with
+no weights at all (`ROME_TURNS`, `RIVAL_BEATS`, `LATE`, `PETITIONS`, `WORDS` and `ASK_DIE` all carry
+them). So I built the `ASK_DIE` repair: a weight per card times `NIGHT_FRESH` for one this house has
+never been dealt, spending the same single `R()` so nothing re-phased.
+
+**It did not work, and measuring the fix is the only reason I know that.** Median still 2 of 5
+distinct, most-repeated still 3x, all five still 0 houses. Two reasons, both in the numbers already
+taken: **one card is alone in the pool on 34.8% of weeks**, where weights are irrelevant; and the
+median house gets **about four nights in its life**, so five distinct cards is not reachable in the
+draws available. The variety ceiling is house lifespan, not the picker.
+
+So it was reverted. Shipping it would have meant a comment claiming a measured benefit that the
+measurement denied — and the share shifts it did produce (cracking 7.6% -> 10.2%) came from
+unpaired arms whose houses lived different lengths, which is not a claim I can make.
+
+**The two candidate causes are named rather than acted on:** the house's median life against a deck
+of five, and `dice`'s `need` — `activeG(d).length>=3`, the only gate in the deck that asks for a
+roster rather than a situation, which is why it is so often alone in the pool and takes 61% of the
+deal. Gating it would cut total nights, which is the trade nobody has priced.
+
+**Shipped:** `probes/lamp.mjs`; `checks/camp.mjs`'s only-caller citation corrected. No game code.
+
 ### v3.276.0 — #280: the road was not thin and underpaid, it was thin and winning
 
 **#268's ceiling question, answered the other way, and the first game change in five releases.**
