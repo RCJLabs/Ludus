@@ -4389,6 +4389,102 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.279.0 — #283: the one gate in the night deck that asked for a roster instead of a situation
+
+**#281 left this priced but not taken, and the price turned out to be negative.** Four of the five
+night cards describe a state the house is actually in — a rival tie at strength, a man under 38
+morale, unrest past 22, a veteran holding the block together. The fifth asked
+`activeG(d).length>=3` and then took `twoDistinct(activeG(d))`: three men exist, so here are two of
+them at random. It was eligible on 58% of weeks and took **58% of the deal**.
+
+## And its `build` could spend the card on nothing
+
+Every branch of `dice`'s `run` calls `addTie` — **making a relationship is the card's whole
+mechanical job** — and `twoDistinct` could hand it two men who already had one. A debt between two
+established brothers thickens a tie instead of creating one.
+
+`dicePairs` is the gate and the cast in one place: men `DICE_IDLE` weeks off the sand, with no tie
+between them. #150's same-call rule — the two men the card is about are the two men it was allowed
+for.
+
+## The trade was priced first, and two of the three candidates were wrong
+
+Expected deals per card, computed from the pool composition over 2,958 played weeks:
+
+| gate | eligible | dice's share | total nights |
+|---|---|---|---|
+| current (`roster >= 3`) | 57.9% | 58% | 100% |
+| `idle` alone | **64.2%** | 62% | 107% |
+| `untied` alone | 54.3% | 56% | 102% |
+| **`idle` + `untied`** | 43.2% | 48% | 92% |
+
+**`idle` on its own is more permissive than the roster gate it replaces** — a house with three men
+usually has idle ones, and the idle test needs only two. The intuition that men gamble when they
+have time on their hands would have loosened the gate, not tightened it.
+
+## And the live measurement disagreed with the static one, in the right direction
+
+The static sum holds eligibility fixed, and it cannot see that `dice` FEEDS `brawl`: `brawl.need`
+wants a rival tie at 30, and `dice` is one of about eighteen things that make ties. The obvious fear
+is that gating it starves the card downstream. Measured live, 40 houses x 420 weeks, a player who
+walks every week he can:
+
+| | before | after |
+|---|---|---|
+| nights | 8.5% of weeks | **9.2%** |
+| dice's share | 61.1% | **54.1%** |
+| brawl eligible | 32.4% | **40.7%** |
+| brawl's share | 25.8% | **32.8%** |
+| `night`, in houses | 7 of 40 | **12 of 40** |
+| most-repeated card in one house | 3x | **2x** |
+
+**Nights went up, not down**, and `brawl` gained on both measures — because `dice` now only fires on
+untied pairs, so every card it deals makes a NEW relationship instead of thickening one. It became a
+better tie-generator, which is what `brawl` eats. The feedback runs the opposite way from the fear.
+
+## What it does not do, stated because #281 shipped nothing for want of saying it
+
+**A house still meets a median of 2 of the 5 cards.** That ceiling is house lifespan — #282 measured
+the median house at four nights in its life and closed it as the intended bargain — and nothing here
+moves it. `cracking` and `steadied` gain nothing in absolute terms either; the beneficiaries are
+`brawl` and `night`. This is a design-consistency and deck-share release, and it is not a variety
+release.
+
+## The check caught its own fixture
+
+Arm 1 asserts that five idle men who all already have ties do NOT open the card. The first cut tied
+all ten pairs of a five-man house and the gate opened anyway — because `addTie` refuses at
+`MAX_TIES`, which is 3, and a complete graph on five men wants four ties a man. **The fixture had
+silently failed to establish the state it was testing.** Four men is a complete graph at exactly
+MAX_TIES, and the arm now reports whether the fixture achieved its own premise rather than assuming
+it.
+
+## And it broke `works`, which turned out to be a fault in `works`
+
+The gate came back 203/204. `checks/works.mjs` arm 4 reported *"no rival house commissioned anything
+in 458 played weeks — the bay puts up about twelve over a run this size, so this is the call in
+`rivalWeekly` having gone rather than a quiet season."*
+
+**The call had not gone** — the bench arm in the same run commissioned and finished one normally.
+What had changed was the DENOMINATOR: the fixture plays five houses for up to 380 weeks each and
+they die when they die, so the played weeks moved **747 → 458** when this release re-phased the
+stream. Arm 4 asserted a stochastic rate against a moving denominator without normalising, and both
+halves of its own prose were wrong: the run that PASSED it commissioned six, not twelve.
+
+The first thing checked was whether this release had shortened houses, because that would have been
+a real regression and the honest reason to revert. Paired on the same sixty seeds: **total weeks
+4,811 → 4,994, houses alive at 420 weeks 1 → 3**, median 53w → 51w. It lengthens them slightly. The
+`works` fixture's particular five houses got shorter; the population did not.
+
+So the repair is to the check, and it is a strengthening rather than a weakening: **twelve houses
+instead of five** — 1,647 played weeks and fourteen bay commissions, where five gave four to eight
+hundred and a handful — and arm 4 now computes its expectation from the weeks actually played (one
+commission per 125), asserting only when zero would be unlikely and reporting with its reasoning
+when it would not. Nine seconds instead of seven.
+
+**Shipped:** `DICE_IDLE`, `dicePairs`; `NIGHT.dice`'s `need` and `build`; `checks/knuckle.mjs`
+(four arms); `checks/works.mjs` arm 4 normalised and its sample raised.
+
 ### v3.278.0 — #282: the median house meets a fifth of what is written, and no way of playing changes that
 
 **Eight releases kept arriving at this from different directions and never once looked at it head
