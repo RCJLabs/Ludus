@@ -9191,6 +9191,15 @@ const gById = (d,id) => d.gladiators.find(g=>g.id===id);
 const bothActive = (d,a,b) => { const A=gById(d,a), B=gById(d,b); return A&&B&&A.status==="active"&&B.status==="active" ? [A,B] : null; };
 function twoDistinct(pool){ if(!pool || pool.length<2) return null; const a=pick(pool); const rest=pool.filter(x=>x.id!==a.id); if(!rest.length) return null; return [a, pick(rest)]; }
 
+/* men gamble when they are not fighting, and a debt makes a relationship where there was none */
+const DICE_IDLE = 3;        /* weeks off the sand before there is time for knucklebones */
+function dicePairs(d){
+  const m = activeG(d).filter(g => d.week - (g.lastFought == null ? -9 : g.lastFought) >= DICE_IDLE);
+  const out = [];
+  for(let i=0;i<m.length;i++) for(let j=i+1;j<m.length;j++)
+    if(!tieBetween(d, m[i].id, m[j].id)) out.push([m[i].id, m[j].id]);
+  return out;
+}
 const NIGHT = {
   /* two men with bad blood, and the block choosing sides */
   brawl: {
@@ -9293,9 +9302,18 @@ const NIGHT = {
     }
   },
   /* a debt over dice, and how you let it land */
+  /* ---- THE ONLY GATE IN THIS DECK THAT ASKED FOR A ROSTER RATHER THAN A SITUATION — #283 ----
+     `need` was `activeG(d).length>=3` and `build` took `twoDistinct(activeG(d))`: three men exist,
+     so here are two of them at random. Every other card in the deck describes a state the house is
+     actually in. Measured (#281), it was eligible on 58% of weeks and took 58% of the deal, and a
+     house that works its cells met a median of 2 of the 5 cards.
+     A debt over knucklebones wants men with time on their hands and no history between them yet —
+     the card's whole mechanical job is to CREATE the tie, and picking a pair that already has one
+     spends it on nothing. `dicePairs` is the gate and the cast in one place, so the two men the
+     card is about are the two men it was allowed for: #150's same-call rule. */
   dice: {
-    need: d => activeG(d).length>=3,
-    build: d => { const two = twoDistinct(activeG(d)); return two ? { aid:two[0].id, bid:two[1].id } : null; },
+    need: d => dicePairs(d).length > 0,
+    build: d => { const pr = pick(dicePairs(d)); return pr ? { aid:pr[0], bid:pr[1] } : null; },
     make: (d, s) => { const m=bothActive(d,s.aid,s.bid); if(!m) return null; const [A,B]=m;
       return { title:"A Debt Over Dice",
         text:`${B.name} owes ${A.name} more than ${PR(B).he} can pay, lost over knucklebones, and the whole block is enjoying it more than either of them. The kind of small thing that becomes a large thing if it sits.`,
@@ -36097,6 +36115,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     RUINS, RUIN_KEYS, facOf, lawOf, inBreach,
     COUNSEL, WHISPERS, YARD, LATE, LATE_KEYS, lateWeek, foreWeek, FORE_LINES, FORE_EVERY, servedUnder,
     FORE_LINES_BACK,   /* #272 — the same six shapes for a master who is upstairs */
+    DICE_IDLE, dicePairs,   /* #283 — the gate and the cast of `dice`, in one place */
     bookWeek, BOOK_LINES, BOOK_EVERY, BOOK_MIN, bookDead, NIGHT, ASKS, REFUSE_REASONS, RIVAL_MOVES, FREEDMEN, AFTERS, FEUD_CAUSES, griefStricken, isAuctor, refuseCandidate, refuseWeek, endRefusal, refusing, canFight, refuseOdds, refuseRisk, REF_KEYS,   /* #201 — everything the refusal gate reads */   /* #186 — eleven registers no probe could reach; the account is in checks/voice.mjs */
     /* #196 — the conversation the player starts. WORDS is a register like the eleven above, so
        `voice` requires it here, and it is free to sit on its own line now that `bulk` ends App at
