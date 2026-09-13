@@ -4389,6 +4389,75 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.278.0 — #282: the median house meets a fifth of what is written, and no way of playing changes that
+
+**Eight releases kept arriving at this from different directions and never once looked at it head
+on.** `ASKS.year` fires 0 times in 2,402 weeks (#277). `romeBid` reaches 0 of 120 houses (#277).
+`cartel` wants year 7 and fires 0 times in 3,972 weeks (#277). The night deck deals a median of 4
+cards from 5, and 0 of 40 houses saw all five (#281). `oldAge` wants a healthy lanista of 62 and
+found none in 3,070 lanista-weeks (#118). Each was written up as a fault in its own system. They
+are one fact about the game.
+
+## The measurement
+
+`probes/depth.mjs`, 80 houses x 420 weeks an arm, counting five tables of written situations —
+`EVENTS` 64, `NIGHT` 5, `ASKS` 5, `WORDS` 4, `AMBITIONS` 7, eighty-five in all.
+
+**The median house meets 16 of the 85. Nineteen per cent.**
+
+And it is almost entirely a question of how long it lives. The reference arm, by band:
+
+| how long it lived | houses | events met |
+|---|---|---|
+| died inside 30w | 22 | **4 / 64** |
+| 30–60w | 25 | 9 / 64 |
+| 60–120w | 16 | 14 / 64 |
+| 120–250w | 12 | 22 / 64 |
+| past 250w | 5 | **35 / 64** |
+
+A house that lives five times as long meets nearly nine times the die. **Forty-seven of eighty died
+inside sixty weeks having seen four to nine cards of sixty-four**, and five of eighty got far enough
+to see thirty-five.
+
+## And playing better does not help
+
+The engaged arm walks its cells every week it can, holds the week's conversation every week it can,
+and tours deliberately. It lives longer — median 62w against 51w — and meets **15 of 85. Eighteen
+per cent.** The same fifth, differently distributed: it is the only arm that ever meets `WORDS`
+(4 of 4, against 0 of 4 for a player who never sits down with a man), and it pays for that by
+standing away from Capua on **67% of its weeks**, where eleven of the thirty-six drawn cards refuse
+to fire (#268). Engagement trades one channel for another; it does not open the game up.
+
+**What no house of eighty ever reached**, reference arm: `owedLife`, `owedBack`, `sagaFreedom`,
+`primacy`, `defected`, `word`, `roomFire`, `whispers`, `stolenSteel`, `uprising` — and the `night`
+card of the night deck, and the `year` ask.
+
+## Two wrong turns on the way, both caught
+
+**`words 0/4` in every band of both arms** was the probe's omission, not a finding: `WORDS` is
+reached only through `haveWordWith`, the verb #196 built for the player, and neither arm called it.
+With the conversation added the engaged arm meets all four.
+
+**And a "single question slot" finding that does not exist.** `endWeek` draws the die only
+`if(!d.pendingEvent ...)`, so a walk that turns up a night appears to crowd out the week's card. The
+first cut measured that at "60% of the week's question goes to the player's own verbs" — on an arm
+that takes no player verbs at all. It was counting a `pendingEvent` carried over from the previous
+`endWeek`, which is ordinary flow. There is no crowding: the rope answers the pending question
+before `endWeek` runs, exactly as the UI makes a player answer before a week can end.
+
+## What this is not
+
+It is **not** a bug report, and the fifth is not obviously wrong. #99 measured 44% of houses dying
+inside a year and this project has treated that as the game's texture ever since, deliberately. A
+game built for replay shows a slice per run on purpose, and eighty houses did reach 54 of the 64
+events **between them**. The content is not dead; it is distributed.
+
+What the numbers do settle is the shape of the choice: **the late content exists for about six per
+cent of houses**, and no way of playing found here changes a player's share of it. Whether that is
+the intended bargain is a design decision and is recorded here rather than taken.
+
+**Shipped:** `probes/depth.mjs`. No game code.
+
 ### v3.277.0 — #281: the night deck is healthy, my first measurement of it was not, and the fix I built was for the wrong cause
 
 **No game change, and three corrections — two of them mine.**
