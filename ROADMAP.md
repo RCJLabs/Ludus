@@ -12378,12 +12378,12 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
-## AFTER THE QUEUE — v3.272.0 to v3.278.0, seven releases and two game changes
+## AFTER THE QUEUE — v3.272.0 to v3.279.0, eight releases and three game changes
 
 The third pass closed on #275 at v3.271.0, and with it the last item anybody had written down. What
 follows was not an audit pass. It had no queue: each item came out of the one before it, and the
 question each time was **where is the next thing worth measuring**, not which entry is next on a
-list. Seven releases, **two game changes and five refusals**, and the refusals are the reason to
+list. Eight releases, **three game changes and five refusals**, and the refusals are the reason to
 read this section.
 
 | | shipped | |
@@ -12395,6 +12395,7 @@ read this section.
 | v3.276.0 | **#280** | the road was winning, and now it costs the men something |
 | v3.277.0 | #281 | the night deck is healthy; my measurement was not |
 | v3.278.0 | #282 | the median house meets a fifth of what is written |
+| v3.279.0 | **#283** | the one night-deck gate that asked for a roster, not a situation |
 
 ## What was actually built
 
@@ -12413,6 +12414,14 @@ go wrong, and skipping a question is skipping a problem.** And nothing on the ro
 the same house standing away ran morale +17.0 and defiance −12.0 against itself at home. Priced, not
 fed.
 
+**`dice`'s gate (#283).** Four of the five night cards describe a state the house is in; the fifth
+asked `activeG(d).length>=3` and then took two men at random — and every branch of its `run` calls
+`addTie`, so it could spend its whole mechanical purpose re-tying a pair that already had one.
+`dicePairs` is the gate and the cast in one place. **The price #281 had priced turned out to be
+negative**: nights went 8.5% → 9.2% of weeks and `brawl`'s eligibility 32.4% → 40.7%, because a card
+that only fires on untied pairs is a better tie-generator, and a rival tie at 30 is what `brawl`
+eats.
+
 ## And five refusals, each with the number that settled it
 
 `grantRudis`'s unrecorded sentence has three callers and none reaches it. The fifteen remaining dead
@@ -12424,7 +12433,9 @@ written situations**, which #282 closed as the intended bargain rather than a fa
 ## THE METHOD FINDING, WHICH IS THE POINT OF THIS SECTION
 
 Every one of these releases was wrong about something before it was right, and the errors fall into
-four kinds. They are worth naming because three of the four look exactly like good practice.
+five kinds. They are worth naming because four of the five look exactly like good practice — a
+second arm, a named precedent, a note in this file, a check that fails loudly. Only the first is
+obviously a mistake once you see it, and it is the one that recurred most.
 
 **1 · Reading a rope policy back out of itself.** The reference rope is not a player; it is a set of
 levers. `free:true` frees an eligible man by testing `rudisEligible` ITSELF, so measuring the
@@ -12457,19 +12468,49 @@ median still 2 of 5 distinct cards — because one card is alone in the pool on 
 median house gets four nights in its life. Reverted. **Measuring the fix is the only reason anybody
 knows.**
 
+**5 · A check asserting more than its sample can support.** #283 re-phased the stream and
+`checks/works.mjs` reported *"no rival house commissioned anything in 458 played weeks — this is the
+call in `rivalWeekly` having gone."* The call had not gone; the bench arm in the same run was
+commissioning normally. What moved was the DENOMINATOR — the fixture plays five houses until they
+die, so its played weeks went **747 → 458** — and the arm asserted a stochastic rate against it
+without normalising. Its own prose was wrong too: the run that PASSED it commissioned six, not the
+twelve it claimed. Three readings were available (the change broke the game, the check needs
+re-baselining, the check over-asserts) and **only a paired lifespan measurement separated them**:
+same sixty seeds, total weeks 4,811 → 4,994 and houses alive at 420w 1 → 3. The repair was to the
+check and it is a strengthening — twelve houses, 1,647 played weeks, and an expectation computed
+from the weeks actually played.
+
+**AND ONE THAT RAN THE OTHER WAY, which is the same lesson wearing different clothes.** #283's gate
+was priced statically first: expected deals per card, summed over the pool composition, said it
+would cost 8% of nights. That calculation **holds eligibility fixed**, and it therefore could not
+see that `dice` FEEDS `brawl`. Live, nights went up and `brawl` gained on both measures. A static
+model of a system with feedback is a fourth arm whose policy contains the answer. And the obvious
+reading of the card — *men gamble when they have time on their hands* — measured **more permissive**
+than the roster gate it was meant to tighten (64.2% against 57.9%); only `idle` AND `untied`
+together tightened anything.
+
 ## The rule the run leaves behind
 
 Plausibility, precedent and a clean implementation are not evidence. This codebase is old enough that
-the plausible wrong answer is usually available and usually well-written, and the four kinds above
-are what it looks like from the inside. Three things caught all of them and cost minutes each: **a
-second arm whose policy does not contain the answer; a zero interrogated before it is published; and
-the fix measured after it is built.**
+the plausible wrong answer is usually available and usually well-written, and the five kinds above
+are what it looks like from the inside. Four things caught all of them and cost minutes each:
 
-Two threads are left open and priced rather than taken. `dice`'s `need` is `activeG(d).length>=3` —
-the only gate in the night deck that asks for a roster rather than a situation, which is why it takes
-61% of the deal; gating it would cut total nights, and nobody has priced that trade. And the `sand`
-overflow is unidentified, with the check now naming the widest overhanging descendant so the next
-occurrence diagnoses itself.
+- **a second arm whose policy does not contain the answer** — and a static model of a system with
+  feedback is such a policy, which is how #283's gate was priced at a cost it did not have;
+- **a zero interrogated before it is published**, because a zero looks like a finding and is usually
+  a lookup;
+- **the fix measured after it is built**, which is the only reason #281's weighting was reverted and
+  #283's gate was kept;
+- **and a red check read as a question rather than a verdict.** `works` offered three readings —
+  the change broke the game, the check needs re-baselining, the check over-asserts — and picking
+  between them took one paired measurement. Two of the three would have been wrong, and one of those
+  two is the comfortable one.
+
+**Of the two threads this section originally left open, one is closed and one is not.** `dice`'s
+`need` was taken in #283 and the trade it was waiting on priced out the other way. The `sand`
+overflow remains unidentified after five eliminated hypotheses, with the check now naming the widest
+overhanging descendant so the next occurrence diagnoses itself rather than misattributing the
+overflow to text that provably cannot cause it.
 
 
 ## A THIRD AUDIT PASS — v3.259.0, written off the partial-player sweep
@@ -28969,7 +29010,7 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.278.0 — the median house meets a fifth of what is written, and that is the bargain*
+*Last updated: v3.279.0 — the one gate in the night deck that asked for a roster, not a situation*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
