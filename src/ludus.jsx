@@ -23990,16 +23990,27 @@ function grantRudis(d, gid, bought){
          anyway", and the man's own card. A priced action that silently does nothing while the screen
          says otherwise is the exact fault this audit has spent a dozen releases finding, and it took
          about ten minutes to introduce one. It returns false now and both callers read it. */
-      /* ---- AND "NOT FORGIVE" IS A SENTENCE WITH NOTHING BEHIND IT — a #276 finding, unfixed ----
-         `checks/promise.mjs` arm 2 requires every branch of every ASK to reach the man's own
-         record or take him off the roster. Four of the five now do. `year.no` is "Free him now",
-         and it passes on the branch that frees him — but when the house cannot pay, HE STAYS, this
-         line tells the player he will not forgive it, and no `remember` call is made, so what he
-         will not forgive is nowhere in him. The check reports the state rather than failing on it.
-         It is deliberately not repaired here: the fault is `grantRudis`'s, not the ask's, and this
-         function has two callers (the ask and the man's own card), so the record belongs at this
-         line for both — which is a decision about what a man makes of a house that meant well and
-         was broke, and that is a different question from the one #276 asked. */
+      /* ---- "NOT FORGIVE" HAS NOTHING BEHIND IT, AND THAT IS CORRECT — #276 opened, #279 closed ----
+         #276 recorded this as a gap: the line tells the player the man will not forgive it and no
+         `remember` call is made, so what he will not forgive is nowhere in him. It said the record
+         belonged here rather than in the ask because `grantRudis` had "two callers".
+
+         IT HAS THREE, AND NONE OF THEM CAN REACH THIS BRANCH IN PRACTICE:
+           - the man's own card gates its button on `canAffordRudis`, which is this same test, so
+             it cannot arrive here at all — it shows `${fee}d — you do not have it` instead;
+           - `stashAnswer` checks `d.gold < yours` FIRST and then puts his own bag in before
+             calling, so the house always holds the fee by the time it gets here, and it rolls the
+             bag back exactly if the call still fails;
+           - `ASKS.year.no` calls it bare — and that ask fired **0 times in 2,402 played weeks**
+             (#277), its gate crossed on 1.2% of eligible weeks in 5 of 40 houses.
+
+         So a `remember` call on this line would be written for nobody. The sentence stays as it
+         is, which is a chronicle line on a path the game reaches about never, and `probes/earned.mjs`
+         carries the numbers. What that probe went looking for instead — whether the agenda's
+         "has earned the rudis" line, which is guarded on `d.gold >= fee + weeklyBill(d)`, goes
+         quiet on the houses that most need it — is measured and REFUSED there too: against a
+         player who acts only when told, the line speaks on 85.0% of earned-weeks and exactly one
+         man in fifty-one was never mentioned. */
       if(!canAffordRudis(d, gid)){
         chron(d, `${fullName(gc)} has earned the rudis and this house cannot pay for it — ${fee} denarii for the manumission, and the strongbox holds ${rnd(d.gold)}. He stays, which he will understand and not forgive.`, "bad");
         return false;

@@ -4389,6 +4389,64 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.275.0 — #279: the sentence with nothing behind it is on a path nobody walks, and the line it led to is already doing its job
+
+**Two refusals, both measured, and no game code.** #276 recorded a gap in `grantRudis`: when the
+house cannot pay the manumission it chronicles *"He stays, which he will understand and not
+forgive"*, and no `remember` call is made, so what he will not forgive is nowhere in him. It
+deferred the repair on the grounds that the function has "two callers".
+
+## It has three, and none of them reaches that branch
+
+| caller | why it cannot get there |
+|---|---|
+| the man's own card | gates its button on `canAffordRudis`, the same test — it shows `{fee}d — you do not have it` instead |
+| `stashAnswer` | checks `d.gold < yours` **first**, then puts his own bag in before calling, so the house always holds the fee — and rolls the bag back exactly if the call still fails |
+| `ASKS.year.no` | calls it bare — and that ask fired **0 times in 2,402 played weeks** (#277), its gate crossed on 1.2% of eligible weeks in 5 of 40 houses |
+
+A `remember` call on that line would be written for nobody.
+
+## And the better item it led to is measured harmless
+
+Tracing the callers turned up something with a much better claim. The agenda carries the line that
+tells you a man has earned his freedom, and its own note says why it exists: *"the ending nobody
+reaches was gated on NOTICING, and 146 of those 227 men died first."* Then it guards the line:
+
+    if(d.gold >= fee + weeklyBill(d))
+      add(1, "men", `${g.name} has earned the rudis`, ...)
+
+**The game appeared to tell you a man had earned his freedom only if you could already afford it** —
+the `agendaCan` fault this file names over `agendaSchool`, *"where advice goes quiet exactly when it
+is needed"*, committed by the very line that exists because nobody was noticing.
+
+**The first measurement of it could not decide anything, and saying why is the useful part.** The
+reference rope carries `free:true` and frees an eligible man because it tests `rudisEligible`
+ITSELF, not because the panel told it — so measuring the agenda against it reads the policy back
+out of itself. That is #274's `tour` lever again, which equalises by construction. It produced a
+confident, worthless result: 26 of 28 freed, median 1 week standing there, nobody dead.
+
+Against the arm that can decide — `free:false`, a player who acts when he is told and not before:
+
+| | control (`free:true`) | **the deciding arm (`free:false`)** |
+|---|---|---|
+| earned-weeks | 50 | **655** |
+| the agenda said so | 58.0% | **85.0%** |
+| suppressed | 42.0% | **15.0%** |
+| men who crossed the bar | 21 | **51** |
+| never told about, once | 1 | **1 (and he left, not died)** |
+
+**The line speaks on 85% of the weeks and about fifty of the fifty-one men.** Twenty of them die,
+and the house is told about nearly every one — so what kills them is the player not acting, which
+is a choice the game is about, not a notice it withholds. The guard costs one man in fifty-one.
+
+There is a small joke in the control column: a player who frees on sight is suppressed **more often**
+(42% against 15%), because paying for manumissions is what makes a house too poor to be told about
+the next one.
+
+**Shipped:** `probes/earned.mjs`; the `grantRudis` note rewritten from a pending gap into a closed
+one with the caller analysis; `checks/promise.mjs` arm 2's line corrected from "two callers" to
+three and from pending to refused. No game code.
+
 ### v3.274.0 — #278: the overflow check named the one thing in the box that could not be the cause
 
 **A real failure, five wrong hypotheses, and no repair — because the check's message pointed at the
