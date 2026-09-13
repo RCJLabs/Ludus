@@ -12282,6 +12282,100 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
+## AFTER THE QUEUE — v3.272.0 to v3.278.0, seven releases and two game changes
+
+The third pass closed on #275 at v3.271.0, and with it the last item anybody had written down. What
+follows was not an audit pass. It had no queue: each item came out of the one before it, and the
+question each time was **where is the next thing worth measuring**, not which entry is next on a
+list. Seven releases, **two game changes and five refusals**, and the refusals are the reason to
+read this section.
+
+| | shipped | |
+|---|---|---|
+| v3.272.0 | **#276** | the dead-flag sweep — a census, and `pairWord` |
+| v3.273.0 | #277 | the other fifteen, triaged and refused |
+| v3.274.0 | #278 | the overflow check that named the wrong element |
+| v3.275.0 | #279 | `grantRudis` is on a path nobody walks |
+| v3.276.0 | **#280** | the road was winning, and now it costs the men something |
+| v3.277.0 | #281 | the night deck is healthy; my measurement was not |
+| v3.278.0 | #282 | the median house meets a fifth of what is written |
+
+## What was actually built
+
+**`pairWord` (#276).** A census of every field assigned on an object against every read of it —
+538 fields, 30 written once and read nowhere — and the thirty clustered into one table. `WORDS.beside`
+is the third most common thing a man says to you (**260 of 1,104 conversations, 23.6%**), its answer
+is *"Put them out together when you can"*, and it wrote `d.flags.pairWord = d.week`: a house-wide
+number with no room for the two men. The game fought **330 pair bouts** and honoured the word on
+**22 of 260 — 8.5%, the coincidence rate.** It carries its two names now, wired to one site.
+
+**The road's running cost (#280).** #268 refused to put content on the road and deferred the ceiling
+question. Measured paired, the road was not thin and underpaid — **it was thin and winning**: 62w
+against 53w, 404 gold against 111, `closed` 10 of 40 against 0 of 40, while standing away 69% of
+weeks and seeing eleven fewer cards. Because **eleven of the week's thirty-six cards are things that
+go wrong, and skipping a question is skipping a problem.** And nothing on the road touched the men —
+the same house standing away ran morale +17.0 and defiance −12.0 against itself at home. Priced, not
+fed.
+
+## And five refusals, each with the number that settled it
+
+`grantRudis`'s unrecorded sentence has three callers and none reaches it. The fifteen remaining dead
+fields are ten duplicates of live state, three unreachable, and four small tells. The `sand` overflow
+is real, rare and still unidentified after five eliminated hypotheses. The night deck is healthy
+(8.5% of weeks for a player who walks, all five cards dealt). And the median house meets **16 of 85
+written situations**, which #282 closed as the intended bargain rather than a fault.
+
+## THE METHOD FINDING, WHICH IS THE POINT OF THIS SECTION
+
+Every one of these releases was wrong about something before it was right, and the errors fall into
+four kinds. They are worth naming because three of the four look exactly like good practice.
+
+**1 · Reading a rope policy back out of itself.** The reference rope is not a player; it is a set of
+levers. `free:true` frees an eligible man by testing `rudisEligible` ITSELF, so measuring the
+agenda's "has earned the rudis" line against it produced a confident, worthless result pointing the
+opposite way from the truth (#279). Its cells step is `unrest >= 22` and home unrest averages 3.0, so
+the reference player took **0 walks in 3,423 weeks** and the night deck read as nearly dead (#281).
+#274 had already named this exact fault in the `tour` lever, which equalises by construction. **Any
+arm whose policy contains the answer cannot be asked the question** — every measurement in this run
+needed a second arm, and the ones that shipped wrong numbers were the ones that had only one.
+
+**2 · A probe bug that produces a finding rather than a crash.** `g.avenging = f.gid` looks like a
+revenge target; `f` is a FALLEN record, so it is the dead man's own id, and searching `d.circuit` for
+it found nothing on 70 of 70 and would have published *"the killer is never reachable"*. An editor
+key read off ordinary bill offers is always null, so *"the ledger moved on 0 of 205"* was true by
+construction. A night read after the rope had answered and nulled it turned 730 walks into 8 recorded
+nights where the coin alone predicts 365. **A zero is the most dangerous result a probe can return**,
+because it looks like a finding and is usually a lookup.
+
+**3 · A citation in this project's own notes being wrong.** #239: *"`woman` was the only one of the
+five ASKS whose branches never called `remember`"* — it was one of four. #268: *"`walkTheCells` is
+the only caller of `pickNight`"* — there are two. #276: *"`grantRudis` has two callers"* — there are
+three, and none reaches the branch the item was about. All three conclusions happened to survive;
+none of the stated reasons did. **The notes in this file are evidence, not authority.**
+
+**4 · A fix that looks right, follows a named precedent, and does nothing.** `pickNight` is the only
+draw table in the file with no weights, and the fix was `ASK_DIE`'s: a weight per card times a
+freshness term, spending the same single `R()` so nothing re-phased. It matched every other table,
+cost nothing, and the comment would have read well. **It did not move the thing it was built for** —
+median still 2 of 5 distinct cards — because one card is alone in the pool on 34.8% of weeks and the
+median house gets four nights in its life. Reverted. **Measuring the fix is the only reason anybody
+knows.**
+
+## The rule the run leaves behind
+
+Plausibility, precedent and a clean implementation are not evidence. This codebase is old enough that
+the plausible wrong answer is usually available and usually well-written, and the four kinds above
+are what it looks like from the inside. Three things caught all of them and cost minutes each: **a
+second arm whose policy does not contain the answer; a zero interrogated before it is published; and
+the fix measured after it is built.**
+
+Two threads are left open and priced rather than taken. `dice`'s `need` is `activeG(d).length>=3` —
+the only gate in the night deck that asks for a roster rather than a situation, which is why it takes
+61% of the deal; gating it would cut total nights, and nobody has priced that trade. And the `sand`
+overflow is unidentified, with the check now naming the widest overhanging descendant so the next
+occurrence diagnoses itself.
+
+
 ## A THIRD AUDIT PASS — v3.259.0, written off the partial-player sweep
 
 The second pass closed on #263. This one was asked for in a shape — **three items on usability and
@@ -28779,4 +28873,8 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.151.0 — the records shelf moved to the villa, where the house's own business is*
+*Last updated: v3.278.0 — the median house meets a fifth of what is written, and that is the bargain*
+
+*(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
+document was last touched, and is itself the least-touched thing in it, is the same fault as a
+`chron` line nothing sets — see #276. It is updated with the release now or not at all.)*
