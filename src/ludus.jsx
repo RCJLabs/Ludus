@@ -14463,6 +14463,53 @@ const awayIn = d => (d.city && CITIES[d.city]) ? CITIES[d.city] : null;
    Capua's patrons neither ask nor credit wants while you are down the bay —
    their standing decays as it always has, which over a long stay is the whole
    ladder quietly letting go of you. A tour is untouched; an emigration bleeds. */
+/* ---- THE FAMILIA LIVES ON WAGONS — #280, and it is a COST because the road was winning ----
+   #268 counted the road's content, found eleven of thirty-six drawn events refuse to fire away and
+   the five-card night deck unreachable (`walkTheCells` is `pickNight`'s only caller), and refused
+   to add any: its risk note said content on the road decides the ceiling before anyone has decided
+   it. Measured paired at v3.276.0, same seeds to both arms, 40 houses x 420 weeks, `tour:true`
+   against `road:false`:
+
+     median life  62w against 53w (paired 10-4-26)   ·   median gold  404 against 111
+     median bouts  62 against  42                    ·   men freed    165 against  46
+     `closed`      10 of 40 against 0 of 40          ·   died of debt   5 against  11
+
+   **The road was not thin and underpaid. It was thin and WINNING** — because eleven of the week's
+   cards are things that GO WRONG, and skipping a question is skipping a problem. And nothing on
+   the road touched the men: every location guard in this file against morale, regard, defiance and
+   unrest returned nothing, so the road's whole price was opportunity. Measured, the same house
+   standing away ran **regard +17.6, morale +17.0, defiance -12.0, unrest -2.8** against itself at
+   home. Living on the road was better for the familia than living in the ludus.
+
+   So this is priced rather than fed. There are no cells on the road, no square, no doctore and no
+   walk — the balance table calls working the cells the largest single lever in the game — and a
+   familia that sleeps in carts for a season frays. It is keyed to weeks away from CAPUA so moving
+   on does not reset it, it is free for the first `ROAD_FRESH` weeks so a tour is untouched and an
+   emigration bleeds (the same bargain `STAY_FRESH` strikes below), and it draws NO `R()` — a cost
+   that re-phased the die would move every seeded fixture in the suite. */
+const ROAD_FRESH = 6;      // weeks away from Capua before the wagons start to tell
+const ROAD_BITE  = 0.85;   // morale a week past that
+const ROAD_EDGE  = 0.60;   // defiance a week past that
+const roadWeeks = d => (awayFromCapua(d) && d.flags && d.flags.leftCapua != null)
+  ? Math.max(0, d.week - d.flags.leftCapua) : 0;
+const roadWear  = d => Math.max(0, roadWeeks(d) - ROAD_FRESH);
+const roadSaysWear = d => { const n = roadWear(d); return !n ? null
+  : `${n} week${n===1?"":"s"} of it now, and no cells to walk them down to`; };
+function wagonWeek(d){
+  if(d.over || !awayFromCapua(d) || !roadWear(d)) return;
+  activeG(d).forEach(g=>{
+    g.morale   = clamp((g.morale==null?50:g.morale) - ROAD_BITE, 0, 100);
+    g.defiance = clamp((g.defiance||0) + ROAD_EDGE, 0, 100);
+  });
+  /* #101's wallpaper rule: a line every week of a fifty-week tour is furniture. It says this once
+     per departure, on the week the wear starts, and `wagonSaid` clears when the wagons come home. */
+  if(!d.flags.wagonSaid){
+    d.flags.wagonSaid = d.week;
+    chron(d, `The familia has been on the road ${roadWeeks(d)} weeks. There is no square to drill on `
+      + `and no cells to walk down to at night, and it is starting to show in how they speak to each `
+      + `other and to you.`, "bad");
+  }
+}
 const STAY_FRESH = 6;      // weeks in one town before the welcome starts to wear
 const stayWeeks = d => (d.city && d.flags && d.flags.cityArrived!=null) ? Math.max(0, d.week - d.flags.cityArrived) : 0;
 const welcomeOf = d => clamp(1 - Math.max(0, stayWeeks(d) - STAY_FRESH) * 0.045, 0.6, 1);
@@ -14512,6 +14559,13 @@ function setOut(d, key){
      `checks/roads.mjs` caught it in one line. The comment over `awayFromCapua` warns against
      exactly this, a hundred and twenty lines above where it happened. */
   const C = CITIES[key]; if(!C || d.rome || d.travel || d.city===key) return false;
+  /* #280 — the week the wagons left CAPUA, which is not the week they last moved. `lastTravelled`
+     below is stamped on every departure, town to town included, so a house that keeps moving
+     resets it for ever; that is the same shape as `welcomeOf`, which #263 noted "does not reset
+     when the wagons move on" of the patron decay and does reset here. The familia's wear has to be
+     the second kind or the tour policy — break camp the same week, go to the next town — dodges it
+     by construction, which is the whole reason it is worth measuring. */
+  if(!d.city && d.flags.leftCapua == null) d.flags.leftCapua = d.week;
   d.travel = { to:key, weeks:C.travel, home:false };
   d.flags.lastTravelled = d.week;
   d.games = null;
@@ -14530,7 +14584,8 @@ function travelWeek(d){
     d.travel.weeks--;
     d.gold -= 25;
     if(d.travel.weeks<=0){
-      if(d.travel.home){ d.city = null; delete d.flags.cityArrived; d.flags.staleSaid = 0;
+      if(d.travel.home){ d.city = null; delete d.flags.cityArrived; delete d.flags.leftCapua;
+        delete d.flags.wagonSaid; d.flags.staleSaid = 0;
         chron(d, `Capua again. The gate needs oiling and somebody has been sleeping in your chair.`, "event"); }
       else { d.city = d.travel.to;
         const C = CITIES[d.city];
@@ -23860,6 +23915,7 @@ function endWeek(d){
   templeWeek(d);
   featWeek(d);
   travelWeek(d);
+  wagonWeek(d);                 /* #280 — what the road costs the men, which was nothing */
   if(!d.city && !d.travel) primusWeek(d);
   ambWeek(d);
   repairWeek(d);
@@ -32203,6 +32259,10 @@ export default function App(){
                 </div>
                 {/* and the other side of that trade, counted rather than asserted — #268 */}
                 <div style={{fontSize:"var(--fs-sm)",color:"var(--gold-line)",marginTop:4}}>{roadSays()}</div>
+                {/* #280 — and what it is costing the men RIGHT NOW, which is a running number and
+                    so belongs beside the button that ends it rather than in the trade above */}
+                {roadSaysWear(S) && <div style={{fontSize:"var(--fs-sm)",color:"var(--blood-hi)",marginTop:4}}>
+                  The wagons are telling on them — {roadSaysWear(S)}.</div>}
                 <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={goHome}>Break camp and go home</button>
               </div>
             );
@@ -35801,6 +35861,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     CITIES, CITY_CUSTOM, cityCustom, cityServed, cityAfter, knownIn, cityTier, bayPol,
     missioPlace, mercyAt, MERCY_CASE, bayRomeCut, bayStandard, circuitQuality, cityMissio, cityPurse, cityCrowd,
     setOut, comeHome, stayWeeks, welcomeOf,
+    ROAD_FRESH, ROAD_BITE, ROAD_EDGE, roadWeeks, roadWear, roadSaysWear, wagonWeek,   /* #280 */
     /* what a fortune can be spent on once the yard is finished */
     beginWork, workOpen, workDone, workOn, workUpkeep, WORKS, MONUMENTS, ALL_WORK_KEYS,
     /* the term every perk is read through — #140 needed it to ask what the tomb's `say` was

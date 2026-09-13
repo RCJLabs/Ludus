@@ -4389,6 +4389,81 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.276.0 — #280: the road was not thin and underpaid, it was thin and winning
+
+**#268's ceiling question, answered the other way, and the first game change in five releases.**
+#268 counted the road's content — eleven of thirty-six drawn events refuse to fire away, and the
+five-card night deck is unreachable because `walkTheCells` is `pickNight`'s only caller — and
+refused to add any, on the grounds that content on the road decides the ceiling before anyone has
+decided it. That was the right refusal. The decision it deferred resolves against adding content.
+
+## Measured paired, the same seeds to both arms
+
+40 houses x 420 weeks, `tour:true` against `road:false`:
+
+| | tours (69% of weeks away) | stays |
+|---|---|---|
+| median life | **62w** | 53w |
+| median gold | **404** | 111 |
+| median bouts | **62** | 42 |
+| men freed | **165** | 46 |
+| `closed` — the gates stand open | **10 of 40** | **0 of 40** |
+| died of debt | 5 | 11 |
+| paired on life | **10 wins, 4 losses, 26 ties** | |
+
+**The road was WINNING**, on every measure taken, while the house stood away more than two weeks in
+three and saw eleven fewer questions a week. Because eleven of the week's thirty-six cards are
+things that GO WRONG, and skipping a question is skipping a problem: the road's content loss was a
+mechanical gain.
+
+## And nothing on the road touched the men
+
+Every location guard in the file, against morale, regard, defiance and unrest: **nothing**.
+`awayFromCapua(d)` gates thirty-odd weekly phases and not one of them was a price the familia paid
+for living on wagons. Measured, the same house standing away ran **regard +17.6, morale +17.0,
+defiance −12.0, unrest −2.8** against itself at home. **Living on the road was better for the men
+than living in the ludus** — with no cells, no square, no doctore and no walk, which the balance
+table calls the largest single lever in the game.
+
+So the cost was not too small. It was absent, and the repair is a mechanism.
+
+## `wagonWeek`, and the one property it turns on
+
+The familia frays. Past `ROAD_FRESH` (6) weeks, **morale −0.85 and defiance +0.60 a week**, applied
+to every active man, and **keyed to weeks away from CAPUA rather than weeks in one town.**
+
+That key is the whole design. `welcomeOf` keys to residence and resets when the wagons move on —
+which is precisely how `tour:true` plays, breaking camp the same week for the town that knows the
+house least. #263 had already noticed the distinction, writing of the patron decay that it "does
+not reset when the wagons move on, and a house that lives on the road pays it every week." **A cost
+keyed the first way would have been dodged by construction and measured as free.** Arm 1 of
+`checks/wagons.mjs` is that property and nothing else.
+
+It draws **no `R()`** — a weekly cost on the stream would re-phase every seeded fixture in the
+suite — and it says so **once per departure**, not every week of a fifty-week tour.
+
+## What it moved, and what it deliberately did not
+
+| same house, away against at home | before | after |
+|---|---|---|
+| morale | +17.0 | **+8.7** |
+| defiance | −12.0 | **+2.6** (flipped) |
+| unrest | −2.8 | −1.6 |
+| regard | +17.6 | **+17.7 — untouched** |
+
+Regard is a memory ledger written by `remember`: what the PLAYER did. Morale and defiance are
+condition. The wagons wear on condition and have no business editing what a man remembers of you.
+
+And on the outcome: **gold 404 → 218** against a stayer's 111, so the road's advantage went from
+3.6× to 2.0×; **houses alive at 420 weeks went 2 → 0** against the stayer's 3; paired life 10-4-26
+→ 9-6-25. The road still pays more coin and still reaches `closed` 10 of 40, **which is the point** —
+it was priced, not killed. The tour is a choice now rather than the answer.
+
+**Shipped:** `ROAD_FRESH`, `ROAD_BITE`, `ROAD_EDGE`, `roadWeeks`, `roadWear`, `roadSaysWear`,
+`wagonWeek`; `d.flags.leftCapua` stamped on the departure from Capua and cleared on arrival home;
+the running cost on the in-town panel beside the button that ends it; `checks/wagons.mjs` (six arms),
+`probes/wagons.mjs`. `bulk` App 5849 → 5853, with the reason.
+
 ### v3.275.0 — #279: the sentence with nothing behind it is on a path nobody walks, and the line it led to is already doing its job
 
 **Two refusals, both measured, and no game code.** #276 recorded a gap in `grantRudis`: when the
