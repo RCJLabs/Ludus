@@ -19,8 +19,14 @@
    TWO OF THE ITEM'S FOUR HEADLINE NUMBERS ARE ROPE COUNTERS, not gates. `did.feast` 284 -> 12 is an
    action with NO city gate anywhere — not in `throwFeast`, not on its button; it works on the road
    and always did. `did.walk` 364 -> 8 is a real gate, and it is the bigger one the item did not
-   name: `walkTheCells` is the only caller of `pickNight`, so its gate is the whole of the road's
-   access to the five-card night deck.
+   name: `walkTheCells` gates the road's access to the five-card night deck.
+
+   THAT SENTENCE READ "the only caller of `pickNight`" UNTIL #281 COUNTED THEM. There are two:
+   `walkTheCells`, behind `R()<0.5`, and `EVENTS.ludusNight.make`, behind `R()>0.5` and the die
+   drawing it at all. The conclusion survives — `ludusNight.make` opens with its own
+   `awayFromCapua(d)` guard, so both doors are shut on the road — but by a different route than the
+   one given, and a citation that names one caller where there are two is the fault this suite
+   exists to catch. `probes/lamp.mjs` carries the count.
 
    ---- SAMPLING CANNOT CLOSE THIS, AND THE SECOND ARM IS WHY ----
    Thirteen of the thirty-six were never eligible at home in any sampled state, so no paired test
