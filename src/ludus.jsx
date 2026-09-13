@@ -24881,13 +24881,38 @@ function Beast({ art, pose, wounds, dead }){
     /* wary, low, working round him rather than at him */
     circle: { x:-6,  rot:2,  y:2,  sy:0.95 },
     lunge:  { x:22,  rot:-5, y:0,  sy:1    },
+    /* ---- THE TWO THAT WENT OUT THROUGH THE FRAME — #284, and it took three releases ----
+       `.arena` is `overflow:hidden`, and a beast's figure sits at `right: calc(50% - 160px)`, which
+       on the 352px frame a phone gives it leaves **sixteen pixels** between its box and the edge.
+       Side B carries `scaleX(-1)`, so a LOCAL -x is a RIGHTWARD move on screen, and `driven` at
+       x:-30 walked thirty pixels into a sixteen-pixel gap. `rear` did it a second way: rot:-16
+       mirrors to +16, and rotating a 150x146 box by sixteen degrees widens its bounding box by
+       about twenty-seven.
+
+       Measured, with each pose settled past its own .24s transition — which is the whole reason
+       #278 could not find this, because it read the box before the animation had moved it:
+
+           idle 345   lunge 326   rear 364 (over 11)   driven 368 (over 15)
+
+       against a clientWidth of 352. Fifteen is exactly the number the gate had been reporting
+       about once in a hundred runs since before #278.
+
+       The excursions come in to fit the gap rather than the stance moving, because moving the
+       beast left crowds the man it is fighting: he ends at 156 and it begins at 186, and twelve of
+       those thirty pixels are the only air in the composition.
+
+       `hurt` came in with them and it was NOT reported by anything. Its x:-16 is the same rightward
+       sixteen, and with the other two fixed it measured 347 of 352 — five pixels of margin on a
+       baseline that varies by beast across at least 310 to 345. That is the next report rather than
+       a safe pose, so every rightward excursion is bounded at twelve now, which is what the gap
+       allows with the worst baseline seen. */
     /* up on the back legs, or gathered to come — either way, front off the sand */
-    rear:   { x:8,   rot:-16,y:-6, sy:1.06 },
+    rear:   { x:8,   rot:-9, y:-6, sy:1.06 },
     recoil: { x:-12, rot:6,  y:0,  sy:1    },
     /* it felt that one. Turning, head down, not finished */
-    hurt:   { x:-16, rot:9,  y:4,  sy:0.9  },
+    hurt:   { x:-12, rot:9,  y:4,  sy:0.9  },
     /* it has had enough of him and wants the gate */
-    driven: { x:-30, rot:4,  y:3,  sy:0.92 },
+    driven: { x:-12, rot:4,  y:3,  sy:0.92 },
     dead:   { x:0,   rot:0,  y:0,  sy:1    },
   }[pose] || { x:0, rot:0, y:0, sy:1 };
   const bodyY = 96 - A.ht;

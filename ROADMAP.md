@@ -12378,13 +12378,13 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
-## AFTER THE QUEUE — v3.272.0 to v3.279.0, eight releases and three game changes
+## AFTER THE QUEUE — v3.272.0 to v3.280.0, nine releases and three game changes
 
 The third pass closed on #275 at v3.271.0, and with it the last item anybody had written down. What
 follows was not an audit pass. It had no queue: each item came out of the one before it, and the
 question each time was **where is the next thing worth measuring**, not which entry is next on a
-list. Eight releases, **three game changes and five refusals**, and the refusals are the reason to
-read this section.
+list. Nine releases, **three game changes and five refusals — one of which the ninth release
+overturned**, and the refusals are the reason to read this section.
 
 | | shipped | |
 |---|---|---|
@@ -12396,6 +12396,7 @@ read this section.
 | v3.277.0 | #281 | the night deck is healthy; my measurement was not |
 | v3.278.0 | #282 | the median house meets a fifth of what is written |
 | v3.279.0 | **#283** | the one night-deck gate that asked for a roster, not a situation |
+| v3.280.0 | #284 | the `sand` overflow, found — three beast poses out through the frame |
 
 ## What was actually built
 
@@ -12422,7 +12423,7 @@ negative**: nights went 8.5% → 9.2% of weeks and `brawl`'s eligibility 32.4% �
 that only fires on untied pairs is a better tie-generator, and a rival tie at 30 is what `brawl`
 eats.
 
-## And five refusals, each with the number that settled it
+## And five refusals, each with the number that settled it — one of them overturned
 
 `grantRudis`'s unrecorded sentence has three callers and none reaches it. The fifteen remaining dead
 fields are ten duplicates of live state, three unreachable, and four small tells. The `sand` overflow
@@ -12430,12 +12431,37 @@ is real, rare and still unidentified after five eliminated hypotheses. The night
 (8.5% of weeks for a player who walks, all five cards dealt). And the median house meets **16 of 85
 written situations**, which #282 closed as the intended bargain rather than a fault.
 
+**The `sand` refusal did not hold, and that is the best thing in this section.** It was filed three
+times — #274 eliminated five hypotheses, #278 enumerated the beast poses and cleared them, #279 left
+it open — and each refusal was correct on the evidence it had. What broke it was #278's own repair:
+the check was changed to name the widest overhanging DESCENDANT rather than the text being clipped,
+so when the failure next surfaced — **run 58 of a hundred** — it named `<svg>` and pointed straight
+at the beast. `driven`'s `x:-30`, under side B's `scaleX(-1)`, is thirty pixels RIGHTWARD into a
+sixteen-pixel gap; `rear`'s `rot:-16` mirrors to +16° and widens a 150×146 box by about twenty-seven.
+Both are bounded at twelve now — and `hurt`, which nothing had ever reported and which measured
+**347 of 352** once the other two were fixed, is bounded with them rather than left standing as the
+next report on a baseline that varies by beast from 310 to 345. **A refusal is a statement about the
+evidence, not about the fault**, and the thing that overturned this one was an instrument improvement
+shipped by a release that refused it.
+
+**And the check no longer waits to be lucky.** `sand` now sweeps every beast pose settled past its own
+transition against the arena's padding box, on every run that draws a hunt — *all 8 beast poses inside
+a 352px frame*. It reads the pose table out of `src/ludus.jsx` rather than copying it, so a pose added
+later is covered without anybody remembering; it checks the transform template it composes against the
+one actually on the element, so the one narrow way it could go stale fails loudly instead of passing
+empty; and it says so in `lines` on a run where the bill drew no hunt, because **coverage that quietly
+disappears reads exactly like coverage that passed** — which is the other half of how this lasted three
+releases. Proved by reverting `driven` to `x:-30` with the arm in place: **`FAIL — the beast's driven
+pose leaves the arena by 15px to the right on a 352px frame`**, the same fifteen the gate had been
+reporting once in a hundred runs. A one-in-a-hundred report is now a one-in-one.
+
 ## THE METHOD FINDING, WHICH IS THE POINT OF THIS SECTION
 
 Every one of these releases was wrong about something before it was right, and the errors fall into
-five kinds. They are worth naming because four of the five look exactly like good practice — a
-second arm, a named precedent, a note in this file, a check that fails loudly. Only the first is
-obviously a mistake once you see it, and it is the one that recurred most.
+six kinds. They are worth naming because five of the six look exactly like good practice — a
+second arm, a named precedent, a note in this file, a check that fails loudly, a sweep that clears
+every case. Only the first is obviously a mistake once you see it, and it is the one that recurred
+most.
 
 **1 · Reading a rope policy back out of itself.** The reference rope is not a player; it is a set of
 levers. `free:true` frees an eligible man by testing `rudisEligible` ITSELF, so measuring the
@@ -12480,6 +12506,18 @@ same sixty seeds, total weeks 4,811 → 4,994 and houses alive at 420w 1 → 3. 
 check and it is a strengthening — twelve houses, 1,647 played weeks, and an expectation computed
 from the weeks actually played.
 
+**6 · An instrument that reads the value before the system has produced it.** #278 enumerated all
+seven beast poses against the arena's clip box and reported no overflow on any of them. The beast's
+`<svg>` carries `transition: transform .24s`, and the enumeration measured the bounding box in the
+same frame it wrote the transform — so it read the box the beast was leaving, not the one it was
+going to. The tell was sitting in its own output and nobody read it: **`svgRight` came back identical
+at 293 for all seven poses**, with `took=true` each time. Seven different transforms cannot produce
+one number. Settled past 340ms the same sweep reads `idle 345 · lunge 326 · rear 364 · driven 368`
+against a clientWidth of 352, and `driven`'s fifteen over is exactly what the gate had been reporting
+about once in a hundred runs. **The correct hypothesis was tested in #278, returned zero, and was
+discarded on the strength of it** — which is kind 2 arriving by a route that looks like thoroughness
+rather than a bug.
+
 **AND ONE THAT RAN THE OTHER WAY, which is the same lesson wearing different clothes.** #283's gate
 was priced statically first: expected deals per card, summed over the pool composition, said it
 would cost 8% of nights. That calculation **holds eligibility fixed**, and it therefore could not
@@ -12492,13 +12530,15 @@ together tightened anything.
 ## The rule the run leaves behind
 
 Plausibility, precedent and a clean implementation are not evidence. This codebase is old enough that
-the plausible wrong answer is usually available and usually well-written, and the five kinds above
-are what it looks like from the inside. Four things caught all of them and cost minutes each:
+the plausible wrong answer is usually available and usually well-written, and the six kinds above
+are what it looks like from the inside. Five things caught all of them and cost minutes each:
 
 - **a second arm whose policy does not contain the answer** — and a static model of a system with
   feedback is such a policy, which is how #283's gate was priced at a cost it did not have;
 - **a zero interrogated before it is published**, because a zero looks like a finding and is usually
   a lookup;
+- **a constant across a sweep treated as the same alarm as a zero** — seven poses returning one
+  number is not a finding about the poses, it is the instrument saying it never measured them;
 - **the fix measured after it is built**, which is the only reason #281's weighting was reverted and
   #283's gate was kept;
 - **and a red check read as a question rather than a verdict.** `works` offered three readings —
@@ -12506,11 +12546,11 @@ are what it looks like from the inside. Four things caught all of them and cost 
   between them took one paired measurement. Two of the three would have been wrong, and one of those
   two is the comfortable one.
 
-**Of the two threads this section originally left open, one is closed and one is not.** `dice`'s
-`need` was taken in #283 and the trade it was waiting on priced out the other way. The `sand`
-overflow remains unidentified after five eliminated hypotheses, with the check now naming the widest
-overhanging descendant so the next occurrence diagnoses itself rather than misattributing the
-overflow to text that provably cannot cause it.
+**Both threads this section left open are closed.** `dice`'s `need` was taken in #283 and the trade
+it was waiting on priced out the other way. The `sand` overflow was found in #284, by the improved
+check that #278 shipped alongside its own wrong answer — which is the most useful thing any of these
+releases did: **the release that could not solve the problem left behind an instrument that solved
+it six releases later.** When a hunt fails, sharpen what did the hunting before closing the file.
 
 
 ## A THIRD AUDIT PASS — v3.259.0, written off the partial-player sweep
@@ -29010,7 +29050,7 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.279.0 — the one gate in the night deck that asked for a roster, not a situation*
+*Last updated: v3.280.0 — the `sand` overflow, found at last by the instrument the release that could not find it left behind*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a

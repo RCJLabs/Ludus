@@ -22,6 +22,7 @@
    beautifully and books nothing is the fault this project has shipped twice. */
 
 import { found, endWeek, clearAll, tab, click, waitSaved, slot , forge, settle } from "../harness.mjs";
+import { readFileSync } from "node:fs";
 
 export const name = "sand";
 export const describe = "a bout runs in a real browser, from the card to the verdict";
@@ -105,7 +106,16 @@ const overlay = (p, where) => p.evaluate(([where, FT, FP, FC])=>{
                     : (c.className || "")).trim().slice(0, 20),
               txt:(c.innerText || "").trim().slice(0, 18) };
           }
-          bad.push(`"${txt.slice(0,28)}" is cut off, ${over}px hidden — `
+          /* ---- AND WHICH BOX IS DOING THE CLIPPING, WHICH #278 STILL DID NOT SAY ----
+             That release added the overhanging DESCENDANT and thought the job done. It never named
+             the failing CONTAINER, so a reader had to infer it from the text — and the whole of
+             #278's arithmetic rested on the guess that it was `.arena`. A diagnostic that makes you
+             guess which element failed is the same fault, one level up, as one that names the wrong
+             element's text. */
+          const who = `${e.tagName.toLowerCase()}`
+            + `${e.className ? "." + String(e.className).trim().split(/\s+/).join(".") : ""}`
+            + ` ${Math.round(pr.width)}px wide`;
+          bad.push(`<${who}> clips its own content: "${txt.slice(0,28)}" is cut off, ${over}px hidden — `
             + (worst
               ? `widest overhang ${worst.oh}px by <${worst.tag}`
                 + `${worst.cls ? ` class="${worst.cls}"` : ""}${worst.txt ? ` text="${worst.txt}"` : ""}>`
@@ -242,7 +252,7 @@ export async function run({ p, errors }){
     await clearAll(p, 14);
   };
 
-  let tableDone = false;
+  let tableDone = false, posesDone = false;
   for(const [label, rowRe, men] of WANT){
     await restock();
     await tab(p, "arena"); await p.waitForTimeout(320); await settle(p); /* the page turn is 420ms and the wait above is shorter — see settle() */
@@ -411,6 +421,81 @@ export async function run({ p, errors }){
           + (who ? ` (the beast drawn was ${who})` : ""));
       }
     }
+    /* ---- EVERY POSE, SETTLED, AGAINST THE FRAME IT HAS TO FIT IN — #284 ----
+       The overflow this check reports was a BEAST POSE, and the beast only takes a pose the
+       hunt's beats ask for, so the gate saw it about once in a hundred runs and three releases
+       refused it. Waiting for the arena to deal you `driven` on a phone frame is not a test.
+
+       #278 did enumerate the poses, cleared all seven, and was wrong for a reason worth keeping:
+       the `<svg>` carries `transition: transform .24s`, so a box measured in the frame that WRITES
+       the transform is the box the beast is leaving. Its own output said so — `svgRight` came back
+       identical for all seven poses — and a constant across a sweep is the same alarm as a zero.
+       Every pose below is settled past its own transition before it is measured.
+
+       The table is read out of `src/ludus.jsx` rather than copied here, so a pose added or moved
+       is covered without anybody remembering to come back; and the transform TEMPLATE the check
+       composes is checked against the one actually on the element first, so the narrow way this
+       could go stale fails loudly instead of passing empty. */
+    if(onSand && /hunt/i.test(label)){
+      posesDone = true;
+      const POSES = (()=>{
+        const src = readFileSync(new URL("../../src/ludus.jsx", import.meta.url), "utf8");
+        const m = src.match(/function Beast\([\s\S]*?const P = \{([\s\S]*?)\n  \}\[pose\]/);
+        if(!m) return null;
+        const out = [];
+        for(const line of m[1].split("\n")){
+          const g = line.match(/^\s*([a-z]+):\s*\{([^}]*)\}/);
+          if(!g) continue;
+          const num = k => { const v = g[2].match(new RegExp(k + ":\\s*(-?[\\d.]+)")); return v ? +v[1] : null; };
+          out.push({ name:g[1], x:num("x")||0, y:num("y")||0, rot:num("rot")||0, sy:num("sy")==null?1:num("sy") });
+        }
+        return out.length ? out : null;
+      })();
+
+      if(!POSES) bad.push("the beast's pose table could not be read out of src/ludus.jsx — "
+        + "this arm is measuring nothing and #284 can come back unseen");
+      else {
+        const seen = await p.evaluate(async ([poses])=>{
+          const svg = document.querySelector('svg[viewBox="0 0 160 146"]');
+          const box = svg && svg.closest(".arena");
+          if(!svg || !box) return { absent:true };
+          const was = svg.style.transform;
+          const SHAPE = /^translate\(-?[\d.]+px, *-?[\d.]+px\) rotate\(-?[\d.]+deg\) scale\(1, *-?[\d.]+\)$/;
+          const drift = !SHAPE.test(was.trim()) && !/^translate\(6px, *26px\) rotate\(14deg\)$/.test(was.trim());
+          /* `overflow:hidden` clips at the PADDING box, which is why the failing report read
+             "354px wide" against a clientWidth of 352 — the frame carries a border. */
+          const cs = getComputedStyle(box);
+          const bl = parseFloat(cs.borderLeftWidth) || 0, br = parseFloat(cs.borderRightWidth) || 0;
+          const rows = [];
+          for(const P of poses){
+            svg.style.transform =
+              `translate(${P.x}px,${P.y}px) rotate(${P.rot}deg) scale(1,${P.sy})`;
+            await new Promise(r=>setTimeout(r, 340));   /* the transition is .24s — see above */
+            const s = svg.getBoundingClientRect(), b = box.getBoundingClientRect();
+            rows.push({ name:P.name,
+              right: Math.round(Math.max(0, s.right - (b.right - br))),
+              left:  Math.round(Math.max(0, (b.left + bl) - s.left)) });
+          }
+          svg.style.transform = was;
+          return { rows, drift, was, frame: box.clientWidth };
+        }, [POSES]);
+
+        if(seen.absent) lines.push("  the hunt drew no beast figure — poses unmeasured this run");
+        else {
+          if(seen.drift) bad.push(`the beast's live transform is "${seen.was}", which is not the shape `
+            + `this arm composes — the check is no longer measuring the poses the game draws`);
+          const out = seen.rows.filter(r=>r.right || r.left);
+          for(const r of out.slice(0,4))
+            bad.push(`the beast's \`${r.name}\` pose leaves the arena by `
+              + `${r.right ? r.right + "px to the right" : ""}${r.right && r.left ? " and " : ""}`
+              + `${r.left ? r.left + "px to the left" : ""} on a ${seen.frame}px frame — `
+              + `\`.arena\` is overflow:hidden, so that much of the animal is cut off`);
+          if(!out.length)
+            lines.push(`  all ${seen.rows.length} beast poses inside a ${seen.frame}px frame `
+              + `(settled past the .24s transition, which is what #278 did not do)`);
+        }
+      }
+    }
     if(!onSand){ bad.push(`${label}: "${sent}" did not put anybody on the sand`); await clearAll(p, 10); continue; }
     const scene = await p.evaluate(()=>{
       const t = (document.body.innerText||"").replace(/\s+/g," ");
@@ -491,6 +576,11 @@ export async function run({ p, errors }){
     bad.push(`${drove.length} bouts were fought through the real screens and the record book still says ${booked}`);
   if(!drove.some(d=>d.cruxes > 0))
     lines.push("  (no crux came up in any of them — the moment a word from the box would matter is chance, not a fault)");
+  /* the beast is only on screen when the bill drew a hunt, so say plainly when the pose sweep
+     did not run. Coverage that quietly disappears on some weeks is how #284 lasted three
+     releases — a check that measures nothing must not read the same as one that measured. */
+  if(!posesDone)
+    lines.push("  (the bill drew no hunt this run, so the beast's poses were not swept — see the #284 arm)");
   if(errors.length) bad.push(`${errors.length} page errors: ${errors.slice(0,2).join(" | ")}`);
 
   return { pass: bad.length === 0, why: bad.slice(0,5).join("; ") || null, lines };
