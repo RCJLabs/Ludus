@@ -4459,8 +4459,31 @@ silently failed to establish the state it was testing.** Four men is a complete 
 MAX_TIES, and the arm now reports whether the fixture achieved its own premise rather than assuming
 it.
 
+## And it broke `works`, which turned out to be a fault in `works`
+
+The gate came back 203/204. `checks/works.mjs` arm 4 reported *"no rival house commissioned anything
+in 458 played weeks — the bay puts up about twelve over a run this size, so this is the call in
+`rivalWeekly` having gone rather than a quiet season."*
+
+**The call had not gone** — the bench arm in the same run commissioned and finished one normally.
+What had changed was the DENOMINATOR: the fixture plays five houses for up to 380 weeks each and
+they die when they die, so the played weeks moved **747 → 458** when this release re-phased the
+stream. Arm 4 asserted a stochastic rate against a moving denominator without normalising, and both
+halves of its own prose were wrong: the run that PASSED it commissioned six, not twelve.
+
+The first thing checked was whether this release had shortened houses, because that would have been
+a real regression and the honest reason to revert. Paired on the same sixty seeds: **total weeks
+4,811 → 4,994, houses alive at 420 weeks 1 → 3**, median 53w → 51w. It lengthens them slightly. The
+`works` fixture's particular five houses got shorter; the population did not.
+
+So the repair is to the check, and it is a strengthening rather than a weakening: **twelve houses
+instead of five** — 1,647 played weeks and fourteen bay commissions, where five gave four to eight
+hundred and a handful — and arm 4 now computes its expectation from the weeks actually played (one
+commission per 125), asserting only when zero would be unlikely and reporting with its reasoning
+when it would not. Nine seconds instead of seven.
+
 **Shipped:** `DICE_IDLE`, `dicePairs`; `NIGHT.dice`'s `need` and `build`; `checks/knuckle.mjs`
-(four arms).
+(four arms); `checks/works.mjs` arm 4 normalised and its sample raised.
 
 ### v3.278.0 — #282: the median house meets a fifth of what is written, and no way of playing changes that
 

@@ -93,7 +93,16 @@ export async function run({ p, errors }){
     /* 3, 4 and 5 — over real play, with the works policy on so the door is walked through */
     let weeks = 0, openWeeks = 0, nagWeeks = 0, mine = 0, rivStarted = 0, rivDone = 0;
     let secondLine = 0;
-    for(let h=0; h<5; h++){
+    /* ---- TWELVE HOUSES, NOT FIVE, AND THE REASON IS ARM 4 ----
+       Arm 4 asserts that the bay commissions at least one work over the run, to catch the call in
+       `rivalWeekly` going missing. At five houses the run lands somewhere between four and eight
+       hundred PLAYED weeks depending on how long the fixture's houses happen to live — and that
+       varies with any change anywhere that re-phases the stream. On v3.279.0 an edit to the night
+       deck moved it from 747 weeks to 458, the bay commissioned nothing, and the arm reported the
+       call as GONE while the bench arm in the same run was commissioning and finishing normally.
+       The rate is about one per 125 played weeks, so five houses was only ever a handful of
+       expected commissions and zero was a one-in-forty accident. Twelve makes it decisive. */
+    for(let h=0; h<12; h++){
       const d = A.newGameState("Works", "clean", "WORKS-R"+h, null);
       const seen = new Set(), rseen = new Set();
       for(let w=0; w<380; w++){
@@ -190,14 +199,29 @@ export async function run({ p, errors }){
       bad.push(`the reference player finished no work in ${r.weeks} weeks with \`works:true\` on — the `
         + `policy exists so that "0 engagements" can be shown to be the rope and not the game`);
   }
-  /* 4 — and the bay is on the ladder. The bench carries the mechanism; this one carries the WIRING,
-     at a bar the rate cannot flip: the bay commissions about twelve over a run this size, and all
-     that is asked is one. `rivalStone` on the handle proves the function works and nothing else —
-     if its call in `rivalWeekly` went, only this would notice. */
-  if(!r.rivStarted)
-    bad.push(`no rival house commissioned anything in ${r.weeks} played weeks — the bay puts up about `
-      + `twelve over a run this size, so this is the call in \`rivalWeekly\` having gone rather than `
-      + `a quiet season`);
+  /* 4 — and the bay is on the ladder. The bench carries the mechanism; this one carries the WIRING:
+     `rivalStone` on the handle proves the function works and nothing else — if its call in
+     `rivalWeekly` went, only this would notice.
+
+     IT IS ASSERTED AGAINST THE WEEKS ACTUALLY PLAYED, which the first version of this arm did not
+     do. It said "about twelve over a run this size" and asked for one, and both halves were wrong:
+     the run that passed it commissioned SIX, not twelve, and "a run this size" is not a constant —
+     the fixture plays 380 weeks a house and the houses die when they die, so the denominator moves
+     with anything that re-phases the stream. The measured rate is about one per 125 played weeks.
+     Zero is only evidence of a missing call when enough weeks were played for zero to be unlikely;
+     below that the arm reports and says why, rather than calling a quiet run a broken one. */
+  const RIV_PER = 125;                      /* played weeks per bay commission, measured */
+  const rivExpect = r.weeks / RIV_PER;
+  if(rivExpect >= 6){                       /* P(none | 6) is about 1 in 400 */
+    if(!r.rivStarted)
+      bad.push(`no rival house commissioned anything in ${r.weeks} played weeks, which expects about `
+        + `${rivExpect.toFixed(1)} at one per ${RIV_PER} — this is the call in \`rivalWeekly\` having `
+        + `gone rather than a quiet season`);
+  } else {
+    lines.push(`  arm 4 REPORTED, not asserted: ${r.weeks} played weeks expects only `
+      + `${rivExpect.toFixed(1)} bay commissions, and zero out of that is a coin-flip's worth of `
+      + `evidence. The bench arm below carries the mechanism.`);
+  }
   if(!r.rivBench)
     bad.push(`the fixture house has no rivals, so the arm that checks the bay builds measured nothing`);
   else {
