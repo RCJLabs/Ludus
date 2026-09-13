@@ -105,7 +105,16 @@ const overlay = (p, where) => p.evaluate(([where, FT, FP, FC])=>{
                     : (c.className || "")).trim().slice(0, 20),
               txt:(c.innerText || "").trim().slice(0, 18) };
           }
-          bad.push(`"${txt.slice(0,28)}" is cut off, ${over}px hidden — `
+          /* ---- AND WHICH BOX IS DOING THE CLIPPING, WHICH #278 STILL DID NOT SAY ----
+             That release added the overhanging DESCENDANT and thought the job done. It never named
+             the failing CONTAINER, so a reader had to infer it from the text — and the whole of
+             #278's arithmetic rested on the guess that it was `.arena`. A diagnostic that makes you
+             guess which element failed is the same fault, one level up, as one that names the wrong
+             element's text. */
+          const who = `${e.tagName.toLowerCase()}`
+            + `${e.className ? "." + String(e.className).trim().split(/\s+/).join(".") : ""}`
+            + ` ${Math.round(pr.width)}px wide`;
+          bad.push(`<${who}> clips its own content: "${txt.slice(0,28)}" is cut off, ${over}px hidden — `
             + (worst
               ? `widest overhang ${worst.oh}px by <${worst.tag}`
                 + `${worst.cls ? ` class="${worst.cls}"` : ""}${worst.txt ? ` text="${worst.txt}"` : ""}>`
