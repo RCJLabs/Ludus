@@ -12415,7 +12415,7 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
-## AFTER THE QUEUE — v3.272.0 to v3.282.0, eleven releases, three game changes and two instruments
+## AFTER THE QUEUE — v3.272.0 to v3.283.0, twelve releases, three game changes and two instruments
 that had been lying since they were written
 
 The third pass closed on #275 at v3.271.0, and with it the last item anybody had written down. What
@@ -12437,6 +12437,7 @@ overturned**, and the refusals are the reason to read this section.
 | v3.280.0 | #284 | the `sand` overflow, found — three beast poses out through the frame |
 | v3.281.0 | **#285** | **the rope ends its own week — #282 stepped it twice and is withdrawn** |
 | v3.282.0 | **#286** | **what each face shows — the inventory that refutes two of my own proposals** |
+| v3.283.0 | **#287** | **the debt paid: three probes re-taken, three releases confirmed, one rewritten** |
 
 ## What was actually built
 
@@ -12680,6 +12681,61 @@ number that was wrong was the prose.
 table. Before a proposal about pacing: check what steps the week. Both failures were the same
 failure — **an instrument answering a narrower question than the one being asked, and nothing in
 its output saying so.**
+
+## #287 — PAYING THE DEBT #285 CREATED
+
+#285 corrected thirteen probes and banner-marked their recorded figures as *not evidence until
+re-run*. Three of them carried live conclusions: `promise` (#276), `earned` (#279) and `wagons`
+(#280). Re-taken correctly:
+
+**#276 — STANDS.** `beside` is still the third most common thing a man says (58 of 334 words,
+17.4%, behind `wants` and `grudge`), and the house honoured the word on **5 of 58 named pairs —
+8.6%**, against the 8.5% it shipped on. Same rank, same conclusion, the coincidence rate. Its
+census half never depended on stepping — a static read of the source, green in the gate at 540
+assigned fields and 29 dead.
+
+**#277 — STANDS.** `ASKS.year` is still the door nobody opens: in the pool on **1.7%** of eligible
+weeks.
+
+**#279 — STANDS, AND HARDER.** Of 282 men who crossed the rudis bar, the agenda announced
+**97.9%** and suppressed 2.1% — and **0 of 282 were never told at all**. #279 refused to touch the
+suppression as measured-harmless, and the corrected number says harmless more strongly than the
+number it refused on.
+
+**#280 — ITS DIRECTION HOLDS AND EVERY FIGURE IT QUOTED WAS WRONG.** Re-taken over 40 paired
+houses, with `wagonWeek`'s pricing already applied:
+
+| | tours | stays | tour's paired record |
+|---|---|---|---|
+| median life | 264 | **421** | 8W 23L 9T |
+| median gold | **12,565** | 3,946 | 29W 5L 6T |
+| median bouts | 242 | **386** | 9W 25L 6T |
+| men freed | **278** | 219 | 24W 10L 6T |
+| men buried | **452** | 1,126 | 2W 32L 6T |
+| `closed` | **30 of 40** | 4 of 40 | |
+
+**The shorter life is not a worse one, and reading it as one would have been the whole error.**
+`closed` is the ending where enough men walk out free. Thirty of forty touring houses REACH it and
+stop; twenty-one of forty staying houses are merely still alive at the cap. The tourer finishes the
+game and the stayer keeps playing. Read correctly the road wins *harder* than #280 believed —
+three times the coin, two fifths the burials, the good ending seven times as often — **and it wins
+with the pricing already in place**, so `wagonWeek` under-corrected. What the pricing did reach is
+defiance: the road's advantage there went from −12.0 to **+0.1**, which is the lever doing exactly
+its job while morale stayed +8.2 in the road's favour.
+
+## And a failure mode worth its own name: the header outlives the measurement
+
+`wagons.mjs` quoted median life, gold, bouts, freed and `closed` in its header — and **no longer
+produced any of them.** The arm had been narrowed at some point to the morale question alone. So
+when #285 found the stepping fault, the one probe whose conclusion most needed re-running had
+nothing to re-run: its headline existed only as prose about a measurement that no longer happened.
+
+It takes its own headline again now. **A number in a probe's header that the probe does not print
+is not a measurement; it is a memory** — and it ages exactly like the citations in this file that
+#285 and #286 both caught.
+
+**Seven probes still carry the banner** — `bench`, `camp`, `epitaph`, `following`, `orphans`,
+`steward`, `walls`. None of them carries a shipped decision, which is why they waited.
 
 
 ## A THIRD AUDIT PASS — v3.259.0, written off the partial-player sweep
@@ -29179,7 +29235,7 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.282.0 — what each face shows, because a grep for a component name is not an instrument for whether a screen exists*
+*Last updated: v3.283.0 — the debt paid: #276, #277 and #279 stand, #280's direction holds and every number it quoted was wrong*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a

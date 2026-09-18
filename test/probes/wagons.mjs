@@ -1,12 +1,22 @@
-/* ---- STEPPING CORRECTED IN v3.281.0 — NUMBERS IN THIS HEADER PREDATE IT ----
-   This probe called `A.endWeek(d)` after `R.lanista(...)`. The rope ends its own week
-   (`fin(A.endWeek,[d])`, harness.mjs:1603) and the harness's `play()` loops it alone, so every
-   iteration played a week and then ran a second, EMPTY one — the player acting every other week,
-   the weekly bill landing twice per action. See #285 and `probes/depth.mjs`.
+/* ---- RE-TAKEN AT v3.283.0. #280's DIRECTION HOLDS; EVERY NUMBER IT QUOTED WAS WRONG. ----
+   This probe double-stepped the week until #285, AND it had stopped producing the paired outcome
+   figures its own header quoted — so when the stepping fault was found there was nothing left to
+   re-run. Both are fixed: the arm records life, gold, bouts, freed, buried and the ending again.
 
-   The extra call is gone. ANY FIGURE RECORDED BELOW WAS TAKEN BEFORE THAT AND IS NOT TRUSTWORTHY
-   until re-run — on `depth.mjs` the same fault moved median house life from 51w to 317w. The
-   conclusions may well survive; the numbers have not been re-taken. */
+   Re-taken, 40 paired houses, WITH `wagonWeek`'s pricing already in place:
+
+       median life     264  against  421     (tour 8W 23L 9T)
+       median gold   12565  against 3946     (tour 29W 5L 6T)
+       median bouts    242  against  386     (tour 9W 25L 6T)
+       men freed       278  against  219     (tour 24W 10L 6T)
+       men buried      452  against 1126     (tour 2W 32L 6T)
+       `closed`      30 of 40       4 of 40
+
+   THE SHORTER LIFE IS NOT A WORSE ONE. `closed` is the ending where enough men walk out free:
+   thirty of forty touring houses REACH it and stop, while twenty-one of forty staying houses are
+   simply still alive at the cap. The tourer finishes the game; the stayer keeps playing. Read that
+   way the road wins harder than #280 thought — three times the coin, two fifths the burials, and
+   the good ending seven times as often — and it wins with the pricing already applied. */
 /* WHAT THE ROAD COSTS THE MEN, WHICH IS CURRENTLY NOTHING — #268's ceiling question, priced.
 
      node test/probes/wagons.mjs 40 420
@@ -59,7 +69,7 @@ await found(p); await clearAll(p, 20); await installRope(p);
 
 const out = await p.evaluate(([H, W, MOST])=>{
   const A = window.__LVDVS, R = window.__ROPE;
-  const miss = ["newGameState","endWeek","activeG","regardOf","CITY_KEYS"].filter(k=>A[k]==null);
+  const miss = ["newGameState","activeG","regardOf","CITY_KEYS","houseRecord"].filter(k=>A[k]==null);
   if(miss.length) return { why:`the handle is missing ${miss.join(", ")}` };
 
   const arm = (lever, tag)=>{
@@ -67,6 +77,12 @@ const out = await p.evaluate(([H, W, MOST])=>{
     const acc = { home:{ n:0, reg:0, mor:0, def:0, unr:0, men:0 },
                   away:{ n:0, reg:0, mor:0, def:0, unr:0, men:0 } };
     let weeks = 0, deaths = 0, escapes = 0, refusals = 0, uprisings = 0;
+    /* ---- AND THE OUTCOME PER HOUSE, WHICH THIS PROBE'S OWN HEADER QUOTED AND STOPPED TAKING ----
+       #280's decision rested on "the road is winning" — median life, gold, bouts, freed and
+       `closed` endings, paired. Those numbers are in the header above and the probe no longer
+       produced them, so when #285 found the double-step there was nothing to re-run. Restored, and
+       note what this now measures: the road WITH `wagonWeek`'s pricing already in it. */
+    const houses = [];
     for(let i=0;i<H;i++){
       const d = A.newGameState("Wg","clean",`WAGON-${i}`);
       const opts = Object.assign({}, MOST, lever);
@@ -93,10 +109,13 @@ const out = await p.evaluate(([H, W, MOST])=>{
         escapes += Math.max(0, gone - wasGone); wasGone = gone;
         if(d.over && String(d.over.kind||d.over) === "rebellion") uprisings++;
       }
+      const Rc = A.houseRecord(d);
+      houses.push({ life:d.week, gold:Math.round(d.gold||0), bouts:(d.book&&d.book.n)||0,
+        freed:Rc.freed||0, buried:Rc.lost||0, end:d.over ? String(d.over.kind||d.over) : "alive" });
     }
     const mean = b => b.n ? { reg:+(b.reg/b.n).toFixed(1), mor:+(b.mor/b.n).toFixed(1),
       def:+(b.def/b.n).toFixed(1), unr:+(b.unr/b.n).toFixed(1), men:+(b.men/b.n).toFixed(2), n:b.n } : null;
-    return { tag, weeks, deaths, escapes, refusals, uprisings,
+    return { tag, weeks, deaths, escapes, refusals, uprisings, houses,
       home:mean(acc.home), away:mean(acc.away) };
   };
 
@@ -130,6 +149,43 @@ else {
     const d = (x) => (t.away[x] - s.home[x]).toFixed(1);
     console.log(`  a touring roster against a staying one: regard ${d("reg")} · morale ${d("mor")} `
       + `· defiance ${d("def")} · unrest ${d("unr")}\n`);
+  }
+}
+
+/* ---- THE HEADLINE #280 DECIDED ON, RE-TAKEN ----
+   Paired: the same seed index is the same house in both arms, so a win is a win against ITSELF. */
+{
+  const t = out.tours, s = out.stays;
+  if(t && s && t.houses && s.houses && t.houses.length === s.houses.length){
+    const med = a => { const q=[...a].sort((x,y)=>x-y); return q.length ? q[Math.floor(q.length/2)] : 0; };
+    const col = (arm,k) => arm.houses.map(h=>h[k]);
+    const closed = arm => arm.houses.filter(h=>h.end === "closed").length;
+    const pair = k => {
+      let w=0,l=0,e=0;
+      for(let i=0;i<t.houses.length;i++){
+        const a=t.houses[i][k], b=s.houses[i][k];
+        if(a>b) w++; else if(a<b) l++; else e++;
+      }
+      return `${w}W ${l}L ${e}T`;
+    };
+    const n = t.houses.length;
+    console.log(`  THE HEADLINE, RE-TAKEN — tour:true against road:false, ${n} paired houses`);
+    console.log(`    ${"".padEnd(12)} ${"tours".padStart(8)} ${"stays".padStart(8)}   paired (tour's record)`);
+    for(const [label,k] of [["median life","life"],["median gold","gold"],["median bouts","bouts"],
+                            ["men freed","freed"],["men buried","buried"]]){
+      const a = k==="freed"||k==="buried"
+        ? col(t,k).reduce((x,y)=>x+y,0) : med(col(t,k));
+      const b = k==="freed"||k==="buried"
+        ? col(s,k).reduce((x,y)=>x+y,0) : med(col(s,k));
+      console.log(`    ${label.padEnd(12)} ${String(a).padStart(8)} ${String(b).padStart(8)}   ${pair(k)}`);
+    }
+    console.log(`    ${"`closed`".padEnd(12)} ${String(closed(t)).padStart(8)} ${String(closed(s)).padStart(8)}`);
+    const ends = arm => { const m={}; for(const h of arm.houses) m[h.end]=(m[h.end]||0)+1;
+      return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}`).join(" · "); };
+    console.log(`    tours end: ${ends(t)}`);
+    console.log(`    stays end: ${ends(s)}`);
+    console.log(`\n    NOTE: this is the road WITH wagonWeek's pricing already applied (v3.276.0).`);
+    console.log(`    A gap that survives the pricing is a gap the pricing did not close.\n`);
   }
 }
 
