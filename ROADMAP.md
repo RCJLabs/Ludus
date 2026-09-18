@@ -12415,8 +12415,8 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
-## AFTER THE QUEUE — v3.272.0 to v3.281.0, ten releases, three game changes and one instrument
-that had been lying since it was written
+## AFTER THE QUEUE — v3.272.0 to v3.282.0, eleven releases, three game changes and two instruments
+that had been lying since they were written
 
 The third pass closed on #275 at v3.271.0, and with it the last item anybody had written down. What
 follows was not an audit pass. It had no queue: each item came out of the one before it, and the
@@ -12436,6 +12436,7 @@ overturned**, and the refusals are the reason to read this section.
 | v3.279.0 | **#283** | the one night-deck gate that asked for a roster, not a situation |
 | v3.280.0 | #284 | the `sand` overflow, found — three beast poses out through the frame |
 | v3.281.0 | **#285** | **the rope ends its own week — #282 stepped it twice and is withdrawn** |
+| v3.282.0 | **#286** | **what each face shows — the inventory that refutes two of my own proposals** |
 
 ## What was actually built
 
@@ -12630,6 +12631,55 @@ every particular.** Nothing about 51 weeks or 16-of-85 looks wrong. #99's 44%-di
 agreed with it. Eight releases of findings were written against it and every one of them read as a
 coherent story about a game with thin late content. The tell was never in the numbers; it was in
 `harness.mjs:1603`, which nobody had read because the probe worked.
+
+## #286 — AND THE EIGHTH, WHICH IS THE SAME ONE WITH A DIFFERENT INSTRUMENT
+
+**A grep is not an instrument for "does this screen exist".** The brainstorm that produced #285
+also proposed two screens: a weekly digest of what the week did, and a readable end-of-house
+record. Both had been shipped for a very long time.
+
+- **`Morning`** — *"THE WEEK THAT WAS"*, coin / fame / standing / unrest deltas, men lost, the
+  week's lines coloured good and bad. Wired to every week since long before this run.
+- **The agenda panel** — what the week is *asking for*, shipped **v3.2.0**, with `agenda(d)`
+  knowing which tab the answer is on since **v2.57.0**.
+- **The annals** — every man, his fate, class, origin, record, kills, scars, the years he served,
+  whether he got what he wanted, whether he lies under his own name, whether a fire was burned for
+  him. Reached from a button on a closing screen that already carries served, bouts, win rate,
+  buried, freed, walked out, killed, a named verdict, the best man and his end, the best and worst
+  style, the nemesis house, the worst year, purses and feats.
+- **A chronicle viewer** with filters, a search box, year grouping and paging over 400 kept lines.
+
+The proposals rested on `grep 'function Annals'` returning nothing. It returns nothing because the
+reader is inline JSX inside `App`, not a named component. **In a 36,000-line single-file app,
+searching for a component name answers a question about NAMING and gets read as an answer about
+EXISTENCE** — and like #285's probe it returns something confident and specific rather than an
+error.
+
+## The instrument: `probes/shows.mjs`
+
+`faces.mjs` already walked every face of every tab and counted what rendered. This walks the same
+ground and records **what is in each panel** — buttons, words, rows, meters, tags, drawings — so an
+interface question is answered by reading a table. On REACH-1 at week 26:
+
+**28 section occurrences · 24 distinct panels · 0 page errors.** Six of the 24 are read-only.
+The richest is `THE MONEYLENDERS` at 277 words and 9 buttons; the thinnest reached is
+`WHAT HE WANTS` at 16 words.
+
+And it names its own blind spot, which is the point. **Fifteen of the 33 authored `<Sect>` blocks
+never render on this house**, and six panels that *do* render are authored outside the `SECT` table
+altogether — so an inventory that walked only the table would have called those nonexistent, which
+is the original mistake wearing a better coat. The arithmetic closes both ways:
+**24 distinct = 18 from `SECT` + 6 authored elsewhere**, and **18 reached + 15 missed = 33**.
+
+**That reconciliation corrected a citation in `faces.mjs`**, whose header had said nine since it was
+written. Two instruments disagreeing is how #285 was caught, so this one was chased rather than
+shrugged at: `faces` counts occurrences, `shows` counts distinct, both report 28 and 24, and the
+number that was wrong was the prose.
+
+**The rule this leaves.** Before a proposal about the interface: run `shows.mjs` and read the
+table. Before a proposal about pacing: check what steps the week. Both failures were the same
+failure — **an instrument answering a narrower question than the one being asked, and nothing in
+its output saying so.**
 
 
 ## A THIRD AUDIT PASS — v3.259.0, written off the partial-player sweep
@@ -29129,7 +29179,7 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.281.0 — the rope ends its own week, and the instrument that measured the game's shape had been ending it twice*
+*Last updated: v3.282.0 — what each face shows, because a grep for a component name is not an instrument for whether a screen exists*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
