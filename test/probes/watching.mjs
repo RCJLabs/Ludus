@@ -25,43 +25,68 @@
    the browser adds three minutes a run without adding a fact. `sand` already proves the screen
    renders them.
 
-   ---- THE ANSWER: THE WRITING IS INVERTED ----
+   ---- THE ANSWER, AND THE FIRST VERSION OF IT WAS A CATEGORY ERROR ----
    200 bouts through the pits. A bout is 20 beats, 7 rounds, 271 words. The bars are not
    decoration — mean |momentum| is 1.8 of a possible 3 and the crowd swings 50 points across a
-   bout. 3,922 lines read from 2,567 distinct, or 1,794 once the fighters' names are stripped out
-   (1.43x inflation — `Brennus feints` and `Malchus feints` are one piece of writing and two men).
-   **81% of shapes are seen exactly once in 200 bouts.** The arena's writing is deep.
+   bout. 3,922 lines read from 2,567 distinct, or 1,794 once the fighters' names are stripped out.
 
-   IT IS DEEP IN THE WRONG PLACES.
+   THIS PROBE THEN PUBLISHED "405 ways to graze a man against 3 ways to die" AND THAT IS WRONG.
+   A distinct-shape count measures SURFACE FORMS, not writing. `crit` has 405 shapes and ZERO
+   `push("crit", ...)` call sites: the kind is a damage band — `dmg>=18?"crit":dmg>=10?"hit":
+   "graze"` — laid over one shared pool of TECHNIQUE and STYLE lines, templated again with a body
+   part drawn from TARGETS. `death` has FOUR authored branches and no templating at all, so it
+   reads as three shapes. The two numbers do not measure the same thing and cannot be compared.
 
-       kind         read   share  shapes  re-reads
-       crit          642   16.4%     405       1.6
-       gas           579   14.8%     186       3.1
-       graze         536   13.7%     304       1.8
-       crux          486   12.4%     133       3.7
-       intro         414   10.6%     343       1.2
-       hit           261    6.7%     231       1.1
-       salute        200    5.1%       1     200.0
-       fall          178    4.5%      44       4.0
-       appeal        178    4.5%      78       2.3
-       crowd         146    3.7%      17       8.6
-       spared        118    3.0%       3      39.3
-       death          60    1.5%       3      20.0
+   Stripping the fighters' names was the same correction made one step too early: it caught
+   `Brennus feints` vs `Malchus feints` and stopped, while `${mt[0]}` went on inflating `crit`.
 
-   **The game is most eloquent about a graze and most repetitive about a death.** A man dying on
-   the sand — the most significant thing that can happen in a gladiator game — draws on three
-   lines. Missio draws on three. Every bout in a career opens on the same single sentence.
-   Meanwhile a glancing blow has four hundred and five.
+   ---- WHAT THE CORRECTED TABLE SAYS, WHICH IS BETTER ----
 
-   AND THE PATTERN IS ALREADY ESTABLISHED, which is what makes this a small item rather than a
-   large one. `spared` HAS context-sensitive variants: a patron raising his hand from the editor's
-   box before the crowd has finished deciding, the top tiers on their feet and not asking. The
-   machinery for conditional dramatic writing is built and working. There are three lines behind
-   it.
+       kind        read   share  shapes  branch  re-read  how
+       crit         642   16.4%     405       0      1.6  templated (no branch of its own)
+       gas          579   14.8%     186       3      3.1  templated
+       graze        536   13.7%     304       1      1.8  templated
+       intro        414   10.6%     343       7      1.2  templated
+       hit          261    6.7%     231       0      1.1  templated (no branch of its own)
+       salute       200    5.1%       1       1    200.0  BRANCHED
+       crowd        146    3.7%      17       4      8.6  templated
+       spared       118    3.0%       3       2     39.3  BRANCHED
+       death         60    1.5%       3       4     20.0  BRANCHED
 
-   NOT A DRAWING PROBLEM. Six checks hold the arena's visuals and they pass. Whatever is wrong with
+   **EVERY BEAT IN A BOUT IS TEMPLATED EXCEPT THREE, AND THOSE THREE ARE THE THREE THAT REPEAT.**
+   The exchanges take a name, a body part, a technique and a style and wear many coats on few
+   sentences. The salute, the missio and the death each take a fixed sentence per branch and wear
+   it every time. The asymmetry is not one of EFFORT — `death` has more authored branches than
+   `graze` has — it is one of TECHNIQUE, and the technique is already in the file, everywhere else.
+
+   `death` also has four branches and reaches three, so part of it is reachability, the shape #288
+   found in the rebellion ladder.
+
+      NOT A DRAWING PROBLEM. Six checks hold the arena's visuals and they pass. Whatever is wrong with
    watching the four hundredth bout of a career, it is not the picture. */
 import { serve, open, clearAll, found } from "../harness.mjs";
+import { readFileSync } from "node:fs";
+
+/* ---- HOW MANY SENTENCES A HUMAN ACTUALLY WROTE, read from the source ----
+   A distinct-shape count measures SURFACE FORMS, not writing. `crit` came back with 405 shapes
+   and has ZERO `push("crit", ...)` call sites in the bout engine: the kind is a damage band
+   (`dmg>=18?"crit":dmg>=10?"hit":"graze"`) over one shared pool of TECHNIQUE and STYLE lines,
+   further templated with a body part drawn from TARGETS. `death` has four authored branches
+   and no templating, so it reads as "three shapes". Comparing the two numbers as if both meant
+   "how much was written" is a category error, and this probe made it before it caught it. */
+const authored = (() => {
+  const src = readFileSync(new URL("../../src/ludus.jsx", import.meta.url), "utf8").split("\n");
+  /* the single-bout engine: from its `const beats = []` to the next one */
+  const starts = [];
+  src.forEach((l,i)=>{ if(/^\s*const beats = \[\];\s*$/.test(l)) starts.push(i); });
+  const a = starts[0], b = starts[1] != null ? starts[1] : src.length;
+  const out = {};
+  for(let i=a;i<b;i++){
+    const m = src[i].match(/push\("([a-z]+)"/g) || [];
+    for(const hit of m){ const k = hit.slice(6, -1); out[k] = (out[k]||0) + 1; }
+  }
+  return { counts: out, from: a+1, to: b };
+})();
 
 const N = +(process.argv[2] || 200);
 
@@ -191,14 +216,23 @@ for(const l of out.shTop) console.log(`      ${String(l.c).padStart(4)}x  "${l.t
 
 const ks = Object.entries(out.kinds).sort((a,b)=>b[1]-a[1]);
 const tot = ks.reduce((n,[,v])=>n+v,0);
-console.log(`\n  THE BEATS, BY KIND, AND THE POOL EACH DRAWS ON`);
-console.log(`  (a kind read often from a small pool is the writing a career wears out)\n`);
-console.log(`    ${"kind".padEnd(10)} ${"read".padStart(6)} ${"share".padStart(7)} `
-  + `${"shapes".padStart(7)} ${"re-reads".padStart(9)}`);
+console.log(`\n  THE BEATS, BY KIND — SURFACE FORMS AGAINST AUTHORED BRANCHES`);
+console.log(`  (authored = push("kind",...) call sites in the bout engine, src lines `
+  + `${authored.from}-${authored.to})`);
+console.log(`  A kind with many shapes and few branches is TEMPLATED — one sentence wearing`);
+console.log(`  many coats. A kind where the two are close is BRANCHED, and its shape count is`);
+console.log(`  a fair count of the writing. They are not comparable to each other.\n`);
+console.log(`    ${"kind".padEnd(9)} ${"read".padStart(6)} ${"share".padStart(7)} `
+  + `${"shapes".padStart(7)} ${"branch".padStart(7)} ${"re-read".padStart(8)}  how`);
 for(const [k,v] of ks){
   const P = out.pools[k] || { pool:0 };
+  const br = authored.counts[k] || 0;
   const rr = P.pool ? (v/P.pool).toFixed(1) : "-";
-  console.log(`    ${String(k).padEnd(10)} ${String(v).padStart(6)} `
-    + `${(v/tot*100).toFixed(1).padStart(6)}% ${String(P.pool).padStart(7)} ${String(rr).padStart(9)}`);
+  const how = !br ? "templated (no branch of its own)"
+    : P.pool / br >= 4 ? "templated"
+    : "branched";
+  console.log(`    ${String(k).padEnd(9)} ${String(v).padStart(6)} `
+    + `${(v/tot*100).toFixed(1).padStart(6)}% ${String(P.pool).padStart(7)} `
+    + `${String(br).padStart(7)} ${String(rr).padStart(8)}  ${how}`);
 }
 console.log("");
