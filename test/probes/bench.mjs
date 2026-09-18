@@ -1,3 +1,12 @@
+/* ---- STEPPING CORRECTED IN v3.281.0 — NUMBERS IN THIS HEADER PREDATE IT ----
+   This probe called `A.endWeek(d)` after `R.lanista(...)`. The rope ends its own week
+   (`fin(A.endWeek,[d])`, harness.mjs:1603) and the harness's `play()` loops it alone, so every
+   iteration played a week and then ran a second, EMPTY one — the player acting every other week,
+   the weekly bill landing twice per action. See #285 and `probes/depth.mjs`.
+
+   The extra call is gone. ANY FIGURE RECORDED BELOW WAS TAKEN BEFORE THAT AND IS NOT TRUSTWORTHY
+   until re-run — on `depth.mjs` the same fault moved median house life from 51w to 317w. The
+   conclusions may well survive; the numbers have not been re-taken. */
 /* WHAT A HOUSE'S OWN CHAMPION WOULD BE WORTH — #270's verify-first.
 
      node test/probes/bench.mjs 16 420 [policy]     # houses, weeks, ref|most
@@ -81,7 +90,6 @@ const out = await p.evaluate(([H, W, OPTS, SET])=>{
         }
       }
       try { R.lanista(d, OPTS); } catch(e){}
-      try { A.endWeek(d); } catch(e){ break; }
     }
     everMen += (d.gladiators||[]).length;
     houses.push({ rudis:hr, retire:ht, men:(d.gladiators||[]).length, over:d.over?d.over.kind:null });
@@ -117,7 +125,6 @@ const out = await p.evaluate(([H, W, OPTS, SET])=>{
         fired.poolN += pool.length; fired.poolWorth += worth;
       }
       try { R.lanista(d, OPTS); } catch(e){}
-      try { A.endWeek(d); } catch(e){ break; }
       if(d.doctore && d.doctore.fromHouse) sawFromHouse = true;
     }
     for(const f of (d.freed||[]).concat(d.retired||[])) if(f.became) fired.became[f.became] = (fired.became[f.became]||0)+1;

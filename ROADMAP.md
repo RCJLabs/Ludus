@@ -4486,6 +4486,43 @@ when it would not. Nine seconds instead of seven.
 (four arms); `checks/works.mjs` arm 4 normalised and its sample raised.
 
 ### v3.278.0 — #282: the median house meets a fifth of what is written, and no way of playing changes that
+### **REOPENED IN v3.281.0 — THE INSTRUMENT STEPPED THE WEEK TWICE AND EVERY NUMBER BELOW IS WRONG**
+
+`probes/depth.mjs` called `R.lanista(d, MOST)` and then `A.endWeek(d)`. **The rope ends its own
+week** — `lanista` finishes with `fin(A.endWeek,[d])` (`harness.mjs:1603`) and the harness's own
+`play()` loops it alone, as do `abroad`, `answer` and `asked`. So every iteration played a week and
+then ran a second, **empty** one: the player acted every other week and the weekly bill landed
+twice per action. Confirmed three ways — the rope read, `d.week` at exactly **2x the iteration
+count on 24 of 24 houses**, and `git log -S`, which dates the rope's own `endWeek` to **v3.96.0**,
+a hundred and eighty-two releases before this probe was written.
+
+Corrected, 50 houses, 420-week cap, reference arm:
+
+| | as published | corrected |
+|---|---|---|
+| median house life | 51w | **317w** |
+| meets, of 85 | 16 (19%) | **35 (41%)** |
+| died inside 30w | 22 of 80 | **4 of 50** |
+| past 250w | 5 of 80 | **27 of 50** |
+| still standing at the cap | 0 | **17 of 50** |
+
+**The decision this item took is withdrawn.** #282 closed "a fifth is the intended bargain" and
+refused two repairs on the strength of it. The median house meets **two fifths**, lives three
+hundred weeks, and better than half get past 250w — so the closure was reasoning about a game
+nobody plays, and the trade it declined was never the trade on the table.
+
+**What survives the correction**, because it never depended on the stepping: coverage climbs
+steeply with lifespan, so the late gates are not themselves the fault; and a short list of
+situations is reached by **no house of fifty** — `escape`, `owedLife`, `owedBack`, `primacy`,
+`defected`, `word`, `stolenSteel`, `uprising`, `ASKS.year` and the `steadied` night. That list is
+the real item, and it is much smaller than "four fifths of the game is unseen".
+
+**And the cited figures elsewhere in this file that came off this probe are wrong with it** — every
+"median house lives ~51w" and "meets 16 of 85" above and below. They are left in place as written
+rather than silently rewritten, because the record of what was believed matters; this block is the
+correction.
+
+**Everything from here to the end of the item is the original text, preserved and WRONG.**
 
 **Eight releases kept arriving at this from different directions and never once looked at it head
 on.** `ASKS.year` fires 0 times in 2,402 weeks (#277). `romeBid` reaches 0 of 120 houses (#277).
@@ -12378,7 +12415,8 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
-## AFTER THE QUEUE — v3.272.0 to v3.280.0, nine releases and three game changes
+## AFTER THE QUEUE — v3.272.0 to v3.281.0, ten releases, three game changes and one instrument
+that had been lying since it was written
 
 The third pass closed on #275 at v3.271.0, and with it the last item anybody had written down. What
 follows was not an audit pass. It had no queue: each item came out of the one before it, and the
@@ -12397,6 +12435,7 @@ overturned**, and the refusals are the reason to read this section.
 | v3.278.0 | #282 | the median house meets a fifth of what is written |
 | v3.279.0 | **#283** | the one night-deck gate that asked for a roster, not a situation |
 | v3.280.0 | #284 | the `sand` overflow, found — three beast poses out through the frame |
+| v3.281.0 | **#285** | **the rope ends its own week — #282 stepped it twice and is withdrawn** |
 
 ## What was actually built
 
@@ -12551,6 +12590,46 @@ it was waiting on priced out the other way. The `sand` overflow was found in #28
 check that #278 shipped alongside its own wrong answer — which is the most useful thing any of these
 releases did: **the release that could not solve the problem left behind an instrument that solved
 it six releases later.** When a hunt fails, sharpen what did the hunting before closing the file.
+
+## AND THEN #285, WHICH IS WORTH MORE THAN THE OTHER NINE PUT TOGETHER
+
+**The rope ends its own week, and `probes/depth.mjs` ended it again.** `lanista` finishes with
+`fin(A.endWeek,[d])` (`harness.mjs:1603`); the harness's own `play()` loops it alone, as do
+`abroad`, `answer` and `asked`. `depth.mjs` called `endWeek` after it, so every iteration played a
+week and then ran a second, empty one — the player acting every other week, the weekly bill landing
+twice per action. `d.week` came out at **exactly 2x the iteration count on 24 of 24 houses**, and
+`git log -S` dates the rope's own `endWeek` to **v3.96.0**, a hundred and eighty-two releases before
+`depth.mjs` was written.
+
+**#282's median house does not live 51 weeks. It lives 317, and it meets two fifths of what is
+written, not one.** Four of 50 die inside thirty weeks rather than 22 of 80, and 17 of 50 are still
+standing at the 420-week cap. The item is withdrawn and its decision with it: it closed "a fifth is
+the bargain" and declined two repairs against a game nobody plays.
+
+**The fault was not in one probe.** Sweeping all 390 instruments for the pattern found it in
+**two gate checks** — `camp.mjs` and `week.mjs` — and **thirteen probes**: `depth`, `legacy`,
+`bench`, `camp`, `earned`, `epitaph`, `following`, `orphans`, `promise`, `steward`, `wagons`,
+`walls`, and fifteen double-steps between them. All are corrected. The two checks still pass;
+`week.mjs` now plays 529 weeks where it used to play about half that, and its rate assertions hold.
+
+Several recent findings were taken through those probes — `promise` carried #276 and #277,
+`wagons` carried #280, `earned` carried #279. **Their headers now carry a banner saying the
+recorded figures predate the fix and have not been re-taken.** The conclusions may well survive;
+the numbers are not evidence until somebody re-runs them, and pretending otherwise is how this
+lasted as long as it did.
+
+**How it surfaced is the only part worth generalising.** A new probe measured the ladder at 1.2–3.1
+houses; I "corrected" it to match `depth.mjs` and got 6.5–30; both ran clean, and the only signal
+was that the two runs disagreed about a number neither was measuring — house lifespan. **A probe
+that agrees with an existing instrument is not thereby right. It may only have copied the
+instrument's bug**, and copying the house style is exactly how it happened: `depth.mjs` was the
+model, and the model was wrong.
+
+**The seventh error kind, then, and the worst of them: an instrument whose output is plausible in
+every particular.** Nothing about 51 weeks or 16-of-85 looks wrong. #99's 44%-die-inside-a-year
+agreed with it. Eight releases of findings were written against it and every one of them read as a
+coherent story about a game with thin late content. The tell was never in the numbers; it was in
+`harness.mjs:1603`, which nobody had read because the probe worked.
 
 
 ## A THIRD AUDIT PASS — v3.259.0, written off the partial-player sweep
@@ -29050,7 +29129,7 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.280.0 — the `sand` overflow, found at last by the instrument the release that could not find it left behind*
+*Last updated: v3.281.0 — the rope ends its own week, and the instrument that measured the game's shape had been ending it twice*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a

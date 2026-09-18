@@ -1,3 +1,12 @@
+/* ---- STEPPING CORRECTED IN v3.281.0 — NUMBERS IN THIS HEADER PREDATE IT ----
+   This probe called `A.endWeek(d)` after `R.lanista(...)`. The rope ends its own week
+   (`fin(A.endWeek,[d])`, harness.mjs:1603) and the harness's `play()` loops it alone, so every
+   iteration played a week and then ran a second, EMPTY one — the player acting every other week,
+   the weekly bill landing twice per action. See #285 and `probes/depth.mjs`.
+
+   The extra call is gone. ANY FIGURE RECORDED BELOW WAS TAKEN BEFORE THAT AND IS NOT TRUSTWORTHY
+   until re-run — on `depth.mjs` the same fault moved median house life from 51w to 317w. The
+   conclusions may well survive; the numbers have not been re-taken. */
 /* WHAT THE DIE WILL NOT SAY ON THE ROAD — #268's verify-first.
 
      node test/probes/camp.mjs 4 160 8      # houses, weeks, sample stride
@@ -109,7 +118,6 @@ const out = await p.evaluate(([H, W, STRIDE, DRIVE])=>{
         A.rngSet(st0);
       }
       try { R.lanista(d, DRIVE); } catch(e){}
-      try { A.endWeek(d); } catch(e){ break; }
     }
   }
 
@@ -132,7 +140,6 @@ const out = await p.evaluate(([H, W, STRIDE, DRIVE])=>{
           A.rngSet(st);
         }
         try { R.lanista(d, opts); } catch(e){}
-        try { A.endWeek(d); } catch(e){ break; }
       }
     }
     return { seen, weeks, away, asked };

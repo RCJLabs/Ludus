@@ -138,9 +138,10 @@ export async function run({ p }){
           nextKeys = new Set(rank.map(a=>A.agId ? A.agId(a) : A.agKey(a.label)));
           for(const a of rank) everSeen[A.agKey(a.label)] = (everSeen[A.agKey(a.label)]||0)+1;
           prevKeys = nextKeys;
+          /* the rope ends its own week — harness.mjs:1603, and `play()` loops it alone. A second
+             `endWeek` here ran an empty week between every played one. */
           R.lanista(d);
           d.pendingEvent = null;
-          try { A.endWeek(d); } catch(e){ break; }
         }
       }
       const meanShown = weeks ? shownSum/weeks : 0, meanAll = weeks ? allSum/weeks : 0;
@@ -224,8 +225,7 @@ export async function run({ p }){
             if(d.over) break;
             weeks++;
             for(const k of K){ if(A.sectLive(d,k)) live[k]++; if(A.sectFresh(d,k)) fresh[k]++; }
-            R.lanista(d); d.pendingEvent = null;
-            try { A.endWeek(d); } catch(e){ break; }
+            R.lanista(d); d.pendingEvent = null;   /* the rope ends its own week — see above */
           }
         }
         const pcL = K.map(k=>live[k]/weeks*100), pcF = K.map(k=>fresh[k]/weeks*100);

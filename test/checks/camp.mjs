@@ -101,8 +101,9 @@ export async function run({ p, errors }){
           }
           A.rngSet(st0);
         }
+        /* the rope ends its own week — harness.mjs:1603, and `play()` loops it alone. A second
+           `endWeek` here ran an empty week between every played one. */
         try { R.lanista(d, {}); } catch(e){}
-        try { A.endWeek(d); } catch(e){ break; }
       }
     }
 

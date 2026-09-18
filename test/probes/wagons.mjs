@@ -1,3 +1,12 @@
+/* ---- STEPPING CORRECTED IN v3.281.0 — NUMBERS IN THIS HEADER PREDATE IT ----
+   This probe called `A.endWeek(d)` after `R.lanista(...)`. The rope ends its own week
+   (`fin(A.endWeek,[d])`, harness.mjs:1603) and the harness's `play()` loops it alone, so every
+   iteration played a week and then ran a second, EMPTY one — the player acting every other week,
+   the weekly bill landing twice per action. See #285 and `probes/depth.mjs`.
+
+   The extra call is gone. ANY FIGURE RECORDED BELOW WAS TAKEN BEFORE THAT AND IS NOT TRUSTWORTHY
+   until re-run — on `depth.mjs` the same fault moved median house life from 51w to 317w. The
+   conclusions may well survive; the numbers have not been re-taken. */
 /* WHAT THE ROAD COSTS THE MEN, WHICH IS CURRENTLY NOTHING — #268's ceiling question, priced.
 
      node test/probes/wagons.mjs 40 420
@@ -78,7 +87,6 @@ const out = await p.evaluate(([H, W, MOST])=>{
         }
         refusals += men.filter(g=>g.refusing).length ? 1 : 0;
         try { R.lanista(d, opts); } catch(e){}
-        try { A.endWeek(d); } catch(e){ break; }
         const dead = (d.gladiators||[]).filter(g=>g.status==="dead").length;
         const gone = (d.gladiators||[]).filter(g=>g.status==="escaped").length;
         deaths += Math.max(0, dead - wasDead); wasDead = dead;

@@ -1,3 +1,12 @@
+/* ---- STEPPING CORRECTED IN v3.281.0 — NUMBERS IN THIS HEADER PREDATE IT ----
+   This probe called `A.endWeek(d)` after `R.lanista(...)`. The rope ends its own week
+   (`fin(A.endWeek,[d])`, harness.mjs:1603) and the harness's `play()` loops it alone, so every
+   iteration played a week and then ran a second, EMPTY one — the player acting every other week,
+   the weekly bill landing twice per action. See #285 and `probes/depth.mjs`.
+
+   The extra call is gone. ANY FIGURE RECORDED BELOW WAS TAKEN BEFORE THAT AND IS NOT TRUSTWORTHY
+   until re-run — on `depth.mjs` the same fault moved median house life from 51w to 317w. The
+   conclusions may well survive; the numbers have not been re-taken. */
 /* WHAT THE YARD ACTUALLY BUYS — #273's verify-first, which the item calls the whole item.
 
      node test/probes/walls.mjs 24 520 [ref|most]
@@ -65,7 +74,6 @@ const out = await p.evaluate(([H, W, OPTS])=>{
       pend = dk && dk.lineage ? { men:dk.lineage.men||0, worth:dk.lineage.worth||0,
         endedAs:dk.lineage.endedAs } : null;
       try { R.lanista(d, OPTS); } catch(e){}
-      try { A.endWeek(d); } catch(e){ break; }
       /* SAMPLED AFTER `endWeek`, NOT BEFORE. `d.askYard` is set and cleared inside the same pass —
          its own comment says so — so a probe reading it at the top of the week sees nothing, which
          is what the first cut of this did: five offers counted and zero terms recorded. `endWeek`
