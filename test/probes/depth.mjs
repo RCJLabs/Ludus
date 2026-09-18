@@ -24,17 +24,39 @@
    because if coverage is flat in lifespan then the gates are the fault, and if it climbs steeply
    then lifespan is, and those want opposite repairs.
 
-   ---- THE ANSWER, SO THIS IS NOT RE-OPENED BY SOMEBODY READING THE NUMBERS COLD ----
-   The median house meets 16 of 85. #282 weighed that and CLOSED IT AS THE INTENDED BARGAIN: a
-   replay game shows a slice per run, and eighty houses reached 54 of the 64 events between them.
-   Pulling the late gates down to where houses live would make the game's own thresholds lie about
-   what they are for, and making the player's verbs widen the run would turn attention into a
-   content unlock in a game where working the cells is the largest lever because it keeps men
-   alive. Both were refused.
+   ---- THIS PROBE WAS WRONG FOR ITS WHOLE LIFE. READ THIS BEFORE ANY NUMBER BELOW ----
+   It stepped the week TWICE. `lanista` finishes with `fin(A.endWeek,[d])` (harness.mjs:1603) and
+   the harness's own `play()` loops it ALONE, as do `abroad`, `answer` and `asked`; this probe
+   called `endWeek` after it as well. Every iteration therefore played one week and then ran a
+   second, EMPTY one — the player acted every other week and the weekly bill landed twice per
+   action. `d.week` came out at exactly 2x the iteration count on 24 of 24 houses, and `git log -S`
+   dates the rope's own `endWeek` to v3.96.0, a hundred and eighty-two releases before this file.
 
-   THIS IS THEREFORE A STANDING INSTRUMENT, NOT AN OPEN ITEM. Run it when content is added: it says
-   whether the addition reached anybody, and the bands say which houses it reached. A table that
-   grows while the median house stays at sixteen situations has been written for the six per cent.
+   So #282 was published off a game nobody plays. Corrected, 50 houses, 420w cap:
+
+     reference arm        as published      corrected
+     median life            51w               317w
+     meets                  16/85             35/85      (19% -> 41%)
+     dead inside 30w        22 of 80          4 of 50
+     past 250w              5 of 80           27 of 50
+     still standing at cap  0                 17 of 50
+
+   The engaged arm lands at 302w and 25/85, and it is still the only arm that meets `WORDS` 4 of 4,
+   still paying for it by standing away from Capua on 74% of its weeks.
+
+   ---- WHAT THAT DOES TO #282's DECISION ----
+   #282 closed "the median house meets a fifth of what is written" as THE INTENDED BARGAIN, and
+   refused two repairs on the strength of it. The median house meets two fifths, lives three
+   hundred weeks, and better than half of them get past 250w. The closure was reasoning about a
+   different game. It is REOPENED, and the bands below are the ones to argue from.
+
+   What is still true and did not depend on the stepping: coverage climbs steeply with lifespan,
+   so the gates are not the fault; and a handful of situations are reached by NO house of fifty —
+   `escape`, `owedLife`, `owedBack`, `primacy`, `defected`, `word`, `stolenSteel`, `uprising`,
+   `ASKS.year` and the `steadied` night. Those are a real list and they are short.
+
+   THIS REMAINS A STANDING INSTRUMENT. Run it when content is added: it says whether the addition
+   reached anybody, and the bands say which houses it reached.
 
    TWO ARMS, for the reason every measurement in this sweep has needed them. The reference rope is
    a POLICY: it walks only above unrest 22 (#281), frees on sight (#279), tours only when invited
@@ -115,8 +137,15 @@ const out = await p.evaluate(([H, W, MOST])=>{
            to fire away, and an engaged player tours. */
         if(d.city || d.travel) away++;
         const had = !!d.pendingEvent;
+        /* ---- ONE CALL IS ONE WEEK. THIS LINE USED TO BE TWO ----
+           `lanista` finishes with `fin(A.endWeek,[d])` (harness.mjs:1603) and the harness's own
+           `play()` loops it ALONE, as do `abroad`, `answer` and `asked`. This probe called
+           `endWeek` after it as well, which ran a SECOND, EMPTY week: the player acted every other
+           week and the weekly bill landed twice per action. The rope has ended its own week since
+           v3.96.0; this probe was written at v3.278.0 and added another.
+
+           Everything #282 published came off that. See the header. */
         try { R.lanista(d, MOST); } catch(e){}
-        try { A.endWeek(d); } catch(e){ break; }
         const ev = d.pendingEvent;
         if(!had && ev && ev.id){
           seen.events.add(ev.id); union.events.add(ev.id);

@@ -1,3 +1,12 @@
+/* ---- STEPPING CORRECTED IN v3.281.0 — NUMBERS IN THIS HEADER PREDATE IT ----
+   This probe called `A.endWeek(d)` after `R.lanista(...)`. The rope ends its own week
+   (`fin(A.endWeek,[d])`, harness.mjs:1603) and the harness's `play()` loops it alone, so every
+   iteration played a week and then ran a second, EMPTY one — the player acting every other week,
+   the weekly bill landing twice per action. See #285 and `probes/depth.mjs`.
+
+   The extra call is gone. ANY FIGURE RECORDED BELOW WAS TAKEN BEFORE THAT AND IS NOT TRUSTWORTHY
+   until re-run — on `depth.mjs` the same fault moved median house life from 51w to 317w. The
+   conclusions may well survive; the numbers have not been re-taken. */
 /* THE MAN WHO HAS EARNED HIS FREEDOM, AND THE LINE THAT ONLY SPEAKS TO A RICH HOUSE — #279.
 
      node test/probes/earned.mjs 40 420
@@ -99,7 +108,6 @@ const out = await p.evaluate(([H, W, MOST])=>{
         }
       }
       try { R.lanista(d, OPTS); } catch(e){}
-      try { A.endWeek(d); } catch(e){ break; }
     }
     /* what became of each of them */
     for(const [gid, r] of Object.entries(mine)){

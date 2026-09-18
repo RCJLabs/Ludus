@@ -11,31 +11,42 @@
    years 40. This counts what one house actually delivers into each, and divides.
 
    ---- THE ANSWER, so nobody runs this cold and re-derives it ----
-   60 houses, 420w cap, the MOST rope — median life 131w, which is already a stronger player than
-   #282's reference arm at 51w, so for an ordinary house every figure here is worse again.
+   60 houses, 420w cap, the MOST rope — median life 370w, mean 311w, and 3 of 60 dead inside
+   thirty weeks.
 
      legacy                 needs        median/house   houses to earn it
-     The Long Tenure        40 years          8               4.0
-     The Long Bill          60 buried         7               6.5
-     A Thousand Afternoons  900 bouts        56              11.8
-     The Primacy            3 held            0              15.0
-     The Wooden Sword       12 freed          0              26.7
-     The Imperial Sand      1 Rome win        0              30.0
+     The Primacy            3 held            2               1.2
+     The Long Bill          60 buried        30               2.1
+     The Long Tenure        40 years         21               2.2
+     The Wooden Sword       12 freed          4               2.3
+     The Imperial Sand      1 Rome win        0               2.9
+     A Thousand Afternoons  900 bouts       341               3.1
 
-   ONE boon is inside a campaign anybody will play. The median house contributes ZERO to three of
-   the six. And `applyLegacy`'s whole display is on the TITLE SCREEN — the one system that crosses
-   a run is visible only between runs, never during one.
+   THE LADDER IS NOT MISPRICED. Every boon lands inside one to three houses, which is a campaign
+   anybody who likes the game will play. It was worth measuring because nothing ever had — and the
+   answer is that this system is fine, so the finding here is not about `LEGACIES` at all.
 
-   This is the structural counterpart to #282: if a run shows a fifth of what is written ON
-   PURPOSE, the ladder across runs is where the rest was supposed to live, and it is priced as
-   though houses lived four hundred weeks. Not filed as an item — it is a design argument, and it
-   wants a decision before it wants code.
+   ---- WHAT IT ACTUALLY FOUND, WHICH IS ABOUT THE INSTRUMENTS ----
+   THE ROPE ENDS ITS OWN WEEK. `lanista` finishes with `fin(A.endWeek,[d])` (harness.mjs:1603) and
+   the harness's own `play()` loops it ALONE, as do `abroad`, `answer`, `asked` and most of the
+   gate. Calling `endWeek` after it runs a SECOND, EMPTY week: the player acts every other week and
+   the weekly bill lands twice per action. Confirmed three ways — the rope read, `d.week` at
+   exactly 2x the iteration count on 24 of 24 houses, and `git log -S`, which dates the rope's own
+   `endWeek` to v3.96.0.
 
-   ---- AND THE BUG THIS PROBE HAD FIRST, because it is the recurring one ----
-   Stepping `R.lanista` alone advanced `d.week` without running the week's attrition, so nothing
-   ever killed a house and the first run reported a median life of 370w against #282's 51w. It did
-   not crash; it produced a finding. The two irreconcilable medians are the only reason it was
-   caught. `depth.mjs` calls both, and so does the game. */
+   `depth.mjs` was written at v3.278.0, a hundred and eighty-two releases later, and added a second
+   one. #282's headline numbers are measured on a game nobody plays. Corrected, reference arm:
+
+     #282 as published          corrected
+     median life      51w         348w
+     meets            16/85       36/85     (19% -> 42%)
+     dead inside 30w  22 of 80    1 of 30
+
+   THIS PROBE HAD IT BOTH WAYS BEFORE IT HAD IT RIGHT. The first cut stepped the rope alone and
+   reported 370w; I "corrected" it to match `depth.mjs` and got 131w; neither crashed, both
+   produced findings, and the two irreconcilable medians are the only reason any of it surfaced.
+   A probe that agrees with an existing instrument is not thereby right — it may only have copied
+   the instrument's bug. */
 import { serve, open, clearAll, found, installRope } from "../harness.mjs";
 
 const H = +(process.argv[2] || 60), W = +(process.argv[3] || 420);
@@ -56,15 +67,18 @@ const out = await p.evaluate(([H, W, MOST])=>{
   for(let i=0;i<H;i++){
     const d = A.newGameState("Lg","clean",`LEG-${i}`);
     let w = 0;
-    /* ---- THE WEEK HAS TO END, WHICH THE FIRST CUT OF THIS DID NOT DO ----
-       Stepping the rope alone advances `d.week` but never runs the week's attrition, so nothing
-       killed a house and this reported a median life of 370w against #282's 51w — a probe bug
-       that produced a finding rather than a crash, which is the shape this project keeps hitting.
-       `depth.mjs` calls both, and so does the game. */
+    /* ---- ONE CALL IS ONE WEEK: THE ROPE ENDS IT ITSELF ----
+       `lanista` finishes with `fin(A.endWeek,[d])` (harness.mjs:1603) and the harness's own
+       `play()` loops it alone. Calling `endWeek` after it runs a SECOND, empty week — the player
+       acts every other week and the weekly bill lands twice per action. Measured: `d.week` came
+       out at exactly 2x the iteration count on 24 of 24 houses.
+
+       This probe had it both ways before it had it right. The first cut stepped the rope with no
+       `endWeek` at all and reported a 370w median life; the second copied `depth.mjs` and added
+       one, which double-stepped. Neither crashed. Both produced findings. */
     for(; w<W; w++){
       if(d.over) break;
       try { R.lanista(d, MOST); } catch(e){}
-      try { A.endWeek(d); } catch(e){ break; }
     }
     const Rc = A.houseRecord(d);
     rows.push({ weeks:d.week, over:d.over ? d.over.kind : null,
