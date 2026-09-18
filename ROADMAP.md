@@ -12415,8 +12415,8 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
-## AFTER THE QUEUE — v3.272.0 to v3.285.0, fourteen releases, three game changes and four instruments
-that had been lying since they were written
+## AFTER THE QUEUE — v3.272.0 to v3.286.0, fifteen releases, three game changes, four instruments
+that had been lying since they were written — and finally a gate over the instruments
 
 The third pass closed on #275 at v3.271.0, and with it the last item anybody had written down. What
 follows was not an audit pass. It had no queue: each item came out of the one before it, and the
@@ -12440,6 +12440,7 @@ overturned**, and the refusals are the reason to read this section.
 | v3.283.0 | **#287** | **the debt paid: three probes re-taken, three releases confirmed, one rewritten** |
 | v3.284.0 | **#288** | **the rebellion is rare, not dead — and 42% of the deck was never a deck** |
 | v3.285.0 | **#289** | **everything in a fight is templated but the death — and my own count was a category error** |
+| v3.286.0 | **#290** | **`checks/tools.mjs` — 204 checks on the game, and now one on the instruments** |
 
 ## What was actually built
 
@@ -12859,6 +12860,36 @@ three on this path, which is #288's reachability shape showing up a second time.
 **Both published artifacts were corrected rather than deleted** — the ten-option brainstorm carries
 a withdrawal banner naming what broke it, and the arena page carries the correction above. The
 record of what was believed is worth more than a tidy gallery.
+
+## #290 — TWO HUNDRED AND FOUR CHECKS ON THE GAME, AND NONE ON THE INSTRUMENTS
+
+Five consecutive releases were about instruments being wrong, and **the gate held none of them**.
+`checks/tools.mjs` reads `test/` instead of the game: **394 instruments in 3 seconds**, no browser,
+no game state.
+
+| arm | the fault it holds | now |
+|---|---|---|
+| the double-step | `R.lanista` and `endWeek` in one loop — #285, fifteen instances, eight releases of wrong findings | 0 of 394 |
+| every instrument parses | probes are **never run by the gate**, so one broken by an edit rots unseen until somebody reaches for it | 394 of 394 |
+| the handle guard | a `miss` list naming a key the handle does not export | 139 lists, 1,216 keys, 0 ghosts |
+
+**It found a real fault on its first run.** `probes/orphans.mjs` guarded on `romeWeek`, which the
+handle does not export and which the probe never used — so every run printed *"handle is missing:
+romeWeek"*, a false alarm that reads as a finding about the game. Fixed in the same release.
+
+**And its first message was an over-claim, in a check written to catch over-claims.** It said the
+probe "would refuse to run"; `orphans` runs fine and prints the alarm as a note. Which fault it is
+depends on whether the probe actually uses the name, and the arm now checks that and says which.
+
+**Proved by negative control**, the way #284 was: a throwaway probe carrying all three faults was
+created, run and deleted. Arm 1 caught the double-step, arm 3 the ghost guard, arm 2 the syntax
+error. A passing check proves nothing until it has been shown it can fail.
+
+**What a gate cannot hold.** #288 and #289 were category errors — a denominator counting cards that
+are not in the deck, a surface-form count read as a count of writing. Those want a reader, not a
+regex, and the honest thing is to say so in the check's own header rather than imply the class is
+closed. What it does hold is the two that ran longest undetected, and they ran longest **because a
+probe that works is a probe nobody reads.**
 
 
 ## A THIRD AUDIT PASS — v3.259.0, written off the partial-player sweep
@@ -29358,7 +29389,7 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.285.0 — everything in a fight is templated but the salute, the missio and the death, which are the three that repeat*
+*Last updated: v3.286.0 — two hundred and four checks on the game, and finally one on the things that measure it*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a

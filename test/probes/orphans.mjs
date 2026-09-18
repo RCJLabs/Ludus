@@ -53,7 +53,10 @@ await found(p); await clearAll(p, 20); await installRope(p);
 
 const out = await p.evaluate(([H, W, MOST])=>{
   const A = window.__LVDVS, R = window.__ROPE;
-  const miss = ["newGameState","endWeek","activeG","ROME_TURNS","RT_KEYS","romeWeek","PETITIONS",
+  /* `romeWeek` was in this list and is not on the handle and was never used here — so every run
+     printed "handle is missing: romeWeek", a false alarm that reads as a finding about the game.
+     Found by `checks/tools.mjs` on its first run. */
+  const miss = ["newGameState","endWeek","activeG","ROME_TURNS","RT_KEYS","PETITIONS",
     "PET_KEYS","runPetition","petitionReady","editorRec"].filter(k=>A[k]==null);
 
   /* ---- ARM A: how often is each of the fifteen actually written ---- */
