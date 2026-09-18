@@ -12415,7 +12415,7 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
-## AFTER THE QUEUE — v3.272.0 to v3.284.0, thirteen releases, three game changes and three instruments
+## AFTER THE QUEUE — v3.272.0 to v3.285.0, fourteen releases, three game changes and four instruments
 that had been lying since they were written
 
 The third pass closed on #275 at v3.271.0, and with it the last item anybody had written down. What
@@ -12439,6 +12439,7 @@ overturned**, and the refusals are the reason to read this section.
 | v3.282.0 | **#286** | **what each face shows — the inventory that refutes two of my own proposals** |
 | v3.283.0 | **#287** | **the debt paid: three probes re-taken, three releases confirmed, one rewritten** |
 | v3.284.0 | **#288** | **the rebellion is rare, not dead — and 42% of the deck was never a deck** |
+| v3.285.0 | **#289** | **everything in a fight is templated but the death — and my own count was a category error** |
 
 ## What was actually built
 
@@ -12806,6 +12807,58 @@ found. Fixing both lands at **42%**, against the **41%** that fixing only the st
 situations rather than 35 of 85 mixed ones. **A number that survives a correction is not thereby
 confirmed by it.** Two of these three releases were caught by an impossible figure rather than a
 wrong one, and a plausible figure is exactly what neither of them would have produced.
+
+## #289 — EVERYTHING IN A FIGHT IS TEMPLATED BUT THE DEATH
+
+`probes/watching.mjs` asks what nothing had asked: what a bout is like to sit through. The arena's
+DRAWING is the best-tested surface in the game — `umbra`, `vocab`, `backdrop`, `palette`,
+`legible`, `scene`, six checks, all green — so a proposal to make the sand prettier would be adding
+to the one part of the interface nobody neglected.
+
+A bout is **20 beats, 7 rounds, 271 words**. Two plausible worries are both wrong: mean absolute
+momentum is **1.8 of a possible 3** and the crowd swings **50 points**, so the bars are not
+decoration.
+
+## And then the probe published a category error, which is the release
+
+Its first answer was *"405 ways to graze a man against 3 ways to die."* **That is wrong, and the
+whole finding rested on it.** A distinct-shape count measures SURFACE FORMS, not writing:
+
+| kind | read | surface forms | authored branches | re-reads | |
+|---|---|---|---|---|---|
+| `crit` | 642 | 405 | **0** | 1.6 | templated |
+| `intro` | 414 | 343 | 7 | 1.2 | templated |
+| `graze` | 536 | 304 | **1** | 1.8 | templated |
+| `crowd` | 146 | 17 | 4 | 8.6 | templated |
+| `salute` | 200 | **1** | 1 | **200.0** | **branched** |
+| `spared` | 118 | **3** | 2 | **39.3** | **branched** |
+| `death` | 60 | **3** | 4 | **20.0** | **branched** |
+
+`crit` has four hundred and five surface forms and **zero `push("crit", …)` call sites**: the kind
+is a damage band — `dmg>=18?"crit":dmg>=10?"hit":"graze"` — laid over one shared pool of TECHNIQUE
+and STYLE lines, templated again with a body part drawn from `TARGETS`. `death` has **four authored
+branches** and no templating at all, which is why it reads as three shapes.
+
+**EVERY BEAT IN A BOUT IS TEMPLATED EXCEPT THREE, AND THOSE THREE ARE THE THREE THAT REPEAT.** The
+asymmetry is not one of effort — `death` has four authored branches and `graze` has one, so
+somebody wrote *more* sentences for the death. What the death never got was the technique the rest
+of the fight uses everywhere, and that technique is in the same file a few lines above, working.
+
+## The tell was one step further down a road I was already on
+
+The probe had ALREADY stripped the fighters' names for exactly this reason — `Brennus feints` and
+`Malchus feints` are one sentence and two men, a 1.43x inflation — and then stopped, while
+`${mt[0]}` went on inflating `crit` by a factor of four hundred. **The correction was the same
+correction, applied once more.** Having made a de-duplication and stopped at the first layer is a
+particular way to be fooled, because the first layer proves you were being careful.
+
+The instrument reports surface forms against authored branches side by side now, read straight out
+of the source, so the two can never be confused again. `death` also has four branches and reaches
+three on this path, which is #288's reachability shape showing up a second time.
+
+**Both published artifacts were corrected rather than deleted** — the ten-option brainstorm carries
+a withdrawal banner naming what broke it, and the arena page carries the correction above. The
+record of what was believed is worth more than a tidy gallery.
 
 
 ## A THIRD AUDIT PASS — v3.259.0, written off the partial-player sweep
@@ -29305,7 +29358,7 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.284.0 — the rebellion is rare rather than dead, and forty-two per cent of the deck was never in the deck*
+*Last updated: v3.285.0 — everything in a fight is templated but the salute, the missio and the death, which are the three that repeat*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
