@@ -82,8 +82,22 @@ const out = await p.evaluate(([H, W, MOST])=>{
 
   /* the channels a player MEETS — each is a table of written situations, and each has a place in
      the week where it announces itself */
+  /* ---- AND NOT EVERY KEY OF `EVENTS` IS A CARD — #288 ----
+     Twenty-eight of the sixty-seven have `make(){ return null; }`: `match`, `booking`, `feud`,
+     `edict`, `inspector`, `defected`, `word`, `owedBack` and twenty more. They are RAISED by other
+     code — an arc, a rival's move, a player's verb — and are never drawn by the weekly die. This
+     probe counted them in its denominator for its whole life, so "a house meets N of 64 events"
+     was scored against a deck 42% of which was never in the deck. A house that is never poached
+     does not "miss" `defected`; there was no card to draw. */
+  const drawable = k => {
+    const e = A.EVENTS[k], src = e && e.make ? String(e.make) : "";
+    return !(/^\s*(?:make)?\s*\([^)]*\)\s*\{\s*return null;?\s*\}/.test(src) || /=>\s*null\s*$/.test(src));
+  };
+  const EV_ALL = Object.keys(A.EVENTS);
+  const EV_DRAWN = EV_ALL.filter(drawable);
+
   const TABLES = {
-    events:  Object.keys(A.EVENTS),
+    events:  EV_DRAWN,
     night:   A.NIGHT_KEYS.slice(),
     asks:    A.ASK_KEYS.slice(),
     words:   A.WORD_KEYS.slice(),
@@ -165,7 +179,9 @@ const out = await p.evaluate(([H, W, MOST])=>{
       missed: Object.fromEntries(Object.keys(TABLES).map(t=>[t, TABLES[t].filter(k=>!union[t].has(k))])) };
   };
 
-  return { sizes: Object.fromEntries(Object.entries(TABLES).map(([t,k])=>[t, k.length])),
+  return { evAll: EV_ALL.length, evDrawn: EV_DRAWN.length,
+    undrawable: EV_ALL.filter(k=>!drawable(k)),
+    sizes: Object.fromEntries(Object.entries(TABLES).map(([t,k])=>[t, k.length])),
            reactive: arm(false, "REF"), engaged: arm(true, "ENG") };
 }, [H, W, MOST]);
 
@@ -179,6 +195,10 @@ else {
 
   console.log(`\n#282 — HOW MUCH OF THE WRITTEN GAME A HOUSE EVER MEETS`);
   console.log(`the tables counted: ` + T.map(t=>`${t} ${out.sizes[t]}`).join(" · "));
+  console.log(`EVENTS: ${out.evDrawn} of ${out.evAll} are drawable by the weekly die; `
+    + `${out.undrawable.length} have \`make(){ return null; }\` and are raised by other code —\n`
+    + `  ${out.undrawable.join(" · ")}\n`
+    + `  Those are NOT in the denominator. Counting them was #288\u2019s finding.`);
 
   for(const key of ["reactive","engaged"]){
     const a = out[key];
