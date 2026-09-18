@@ -23,10 +23,13 @@
    and the broken ones were the three it never opened.
 
    WHAT THIS GATE DOES NOT PROVE, which matters as much as what it does. It only sees sections that
-   RENDER, and nine of the 33 authored <Sect> blocks do not render on REACH-1 at week 26: five sit
-   behind call-site conditions this house never meets (gold >= 4000, monuReady, owedList, an open
-   election, an unhonoured death), two live in the gladiator modal, which is not a face. Extracting
-   one of those is green by luck rather than by proof, and luck reads exactly like proof.
+   RENDER. **FIFTEEN** of the 33 authored <Sect> blocks do not render on REACH-1 at week 26 — this
+   line read "nine" until v3.282.0, when `probes/shows.mjs` enumerated them and the arithmetic
+   closed on both sides: 28 occurrences here is 24 distinct panels, of which 18 come from `SECT`
+   and 6 are authored elsewhere, and 18 + 15 = 33. Five of the fifteen sit behind call-site
+   conditions this house never meets (gold >= 4000, monuReady, owedList, an open election, an
+   unhonoured death); `shows.mjs` prints the whole list every run. Extracting one of those is green
+   by luck rather than by proof, and luck reads exactly like proof.
 
    TO PROVE ONE ANYWAY: replace its call-site condition with `true &&`, build:test, run this, then
    revert. Forcing the five named above took the count 34 -> 39, +5 exactly, with 0 page errors —
