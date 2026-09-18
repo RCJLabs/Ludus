@@ -1,12 +1,10 @@
-/* ---- STEPPING CORRECTED IN v3.281.0 — NUMBERS IN THIS HEADER PREDATE IT ----
-   This probe called `A.endWeek(d)` after `R.lanista(...)`. The rope ends its own week
-   (`fin(A.endWeek,[d])`, harness.mjs:1603) and the harness's `play()` loops it alone, so every
-   iteration played a week and then ran a second, EMPTY one — the player acting every other week,
-   the weekly bill landing twice per action. See #285 and `probes/depth.mjs`.
-
-   The extra call is gone. ANY FIGURE RECORDED BELOW WAS TAKEN BEFORE THAT AND IS NOT TRUSTWORTHY
-   until re-run — on `depth.mjs` the same fault moved median house life from 51w to 317w. The
-   conclusions may well survive; the numbers have not been re-taken. */
+/* ---- RE-TAKEN AT v3.283.0, AFTER #285's STEPPING FIX. #276 STANDS. ----
+   This probe double-stepped the week until #285. Re-run correctly, 16 houses x 420w:
+   `beside` is still the THIRD most common thing a man says (58 of 334 words, 17.4%, after
+   `wants` 39.2% and `grudge` 27.8%), and the house honoured the word on **5 of 58 named pairs —
+   8.6%**, against the 8.5% #276 shipped on. Same rank, same conclusion: the coincidence rate.
+   The census half never depended on stepping at all — it is a static read of the source and ships
+   as arm 1 of `checks/promise.mjs`, green at 540 assigned fields and 29 dead. */
 /* WHAT THE HOUSE DOES WITH A PROMISE IT HAS MADE TO A MAN — the dead-flag sweep's first question.
 
      node test/probes/promise.mjs 16 420

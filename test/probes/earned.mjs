@@ -1,12 +1,10 @@
-/* ---- STEPPING CORRECTED IN v3.281.0 — NUMBERS IN THIS HEADER PREDATE IT ----
-   This probe called `A.endWeek(d)` after `R.lanista(...)`. The rope ends its own week
-   (`fin(A.endWeek,[d])`, harness.mjs:1603) and the harness's `play()` loops it alone, so every
-   iteration played a week and then ran a second, EMPTY one — the player acting every other week,
-   the weekly bill landing twice per action. See #285 and `probes/depth.mjs`.
-
-   The extra call is gone. ANY FIGURE RECORDED BELOW WAS TAKEN BEFORE THAT AND IS NOT TRUSTWORTHY
-   until re-run — on `depth.mjs` the same fault moved median house life from 51w to 317w. The
-   conclusions may well survive; the numbers have not been re-taken. */
+/* ---- RE-TAKEN AT v3.283.0, AFTER #285's STEPPING FIX. BOTH OF #279's REFUSALS STAND. ----
+   This probe double-stepped the week until #285. Re-run correctly, 40 houses x 420w, the arm that
+   decides (`free:false`): 282 men crossed the bar, the agenda SAID so on 97.9% of those weeks and
+   was suppressed on 2.1% — and **0 of 282 were never told at all**. The suppression is real and it
+   is harmless, which is exactly what #279 concluded when it refused to touch it. `ASKS.year` is
+   still the door nobody opens: in the pool on 1.7% of eligible weeks. A `remember` call on
+   `grantRudis`'s failure branch would still be written for nobody. */
 /* THE MAN WHO HAS EARNED HIS FREEDOM, AND THE LINE THAT ONLY SPEAKS TO A RICH HOUSE — #279.
 
      node test/probes/earned.mjs 40 420
