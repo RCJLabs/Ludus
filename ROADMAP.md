@@ -12415,7 +12415,7 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
-## AFTER THE QUEUE — v3.272.0 to v3.283.0, twelve releases, three game changes and two instruments
+## AFTER THE QUEUE — v3.272.0 to v3.284.0, thirteen releases, three game changes and three instruments
 that had been lying since they were written
 
 The third pass closed on #275 at v3.271.0, and with it the last item anybody had written down. What
@@ -12438,6 +12438,7 @@ overturned**, and the refusals are the reason to read this section.
 | v3.281.0 | **#285** | **the rope ends its own week — #282 stepped it twice and is withdrawn** |
 | v3.282.0 | **#286** | **what each face shows — the inventory that refutes two of my own proposals** |
 | v3.283.0 | **#287** | **the debt paid: three probes re-taken, three releases confirmed, one rewritten** |
+| v3.284.0 | **#288** | **the rebellion is rare, not dead — and 42% of the deck was never a deck** |
 
 ## What was actually built
 
@@ -12736,6 +12737,75 @@ is not a measurement; it is a memory** — and it ages exactly like the citation
 
 **Seven probes still carry the banner** — `bench`, `camp`, `epitaph`, `following`, `orphans`,
 `steward`, `walls`. None of them carries a shipped decision, which is why they waited.
+
+## #288 — THE LIST THAT WAS NOT A LIST
+
+#285 left ten situations no house of fifty ever reached. Read against the source they are not ten
+scattered cards, and the item is three separate things.
+
+### Most of it is one system, and it is rare rather than dead
+
+`updateRebellion` is a three-stage machine with its own decay and four events hanging off it —
+stage 1 at unrest 50, stage 2 at 65, stage 3 at 78, falling back under 40 / 55 / 68. `escape` sits
+beside it at 40 and the `steadied` night wants 25. Five of the ten are one question: **how hot do
+the cells get?**
+
+`wagons` reports weekly-mean unrest at 1.7–2.3 and #281 measured a home mean of 3.0 — and **a mean
+would have proved the opposite of the truth.** Unrest is a spike system. `probes/revolt.mjs`, 40
+houses × 420 weeks:
+
+| | weeks | houses |
+|---|---|---|
+| p50 / p90 / p99 | **0 · 6.9 · 24.9** | max ever **89.0** |
+| ≥ 25 `steadied` | 108 (1.00%) | 15 of 40 |
+| ≥ 40 `escape` | 29 (0.27%) | 5 of 40 |
+| ≥ 50 stage 1 | 19 (0.18%) | 2 of 40 |
+| ≥ 65 `stolenSteel` | 9 (0.08%) | 1 of 40 |
+| ≥ 78 `uprising` | 4 (0.04%) | **1 of 40** |
+
+**A rebellion started in 2 of 40 houses and one went all the way to stage 3.** The arc fires. The
+hypothesis the probe was written to confirm — *gated at twenty-five times what the game produces* —
+is refuted by its own instrument.
+
+And crossing a rung is not the same as meeting the card: `depth` reports `escape` reached by none of
+40 while `revolt` has the gate open in 5 of 40. Both are true. The state must open AND the card must
+win the week's draw. **The rebellion content is rare twice over**, which is a sharper item than
+"the threshold is too high".
+
+### The second arm did not do what it was built to do
+
+The "harsh house" switches off `rites` and `favours` expecting a hotter yard. It came out **cooler**
+— max 52 against 89. Turning rope levers off makes the rope do *less*, which is not the same as
+playing badly: an arm whose policy does not contain the variable, which is error kind 1 in a new
+coat. It is kept in the probe and labelled, because a second arm that fails is worth more on the
+page than one quietly dropped.
+
+### And 42% of the deck was never a deck
+
+**Twenty-eight of the sixty-seven `EVENTS` have `make(){ return null; }`** — `match`, `booking`,
+`feud`, `edict`, `inspector`, `defected`, `word`, `owedBack` and twenty more, raised by arcs, rival
+moves and player verbs, never drawn by the weekly die. Five were verified against source by hand,
+because *twenty-eight when three were predicted* is a number that has to be interrogated.
+
+`depth.mjs` counted all sixty-seven in its denominator for its whole life. A house that is never
+poached does not **miss** `defected`; there was no card to draw.
+
+| | reference arm |
+|---|---|
+| the die's deck | median house meets **24 of 57 (42%)** |
+| raised by other code | **25 of the 28** reached across the run |
+| never, by either route | `owedBack`, `defected`, `word` |
+
+### Two errors that nearly cancelled, which is the thing to stare at
+
+The denominator was too large **and** the numerator counted undrawable events that fired. Fixing
+only the first printed **`events 56/36`** — impossible, and that is the only reason the second was
+found. Fixing both lands at **42%**, against the **41%** that fixing only the stepping produced.
+
+**The headline barely moved and its meaning changed completely** — 24 of 57 real drawable
+situations rather than 35 of 85 mixed ones. **A number that survives a correction is not thereby
+confirmed by it.** Two of these three releases were caught by an impossible figure rather than a
+wrong one, and a plausible figure is exactly what neither of them would have produced.
 
 
 ## A THIRD AUDIT PASS — v3.259.0, written off the partial-player sweep
@@ -29235,7 +29305,7 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.283.0 — the debt paid: #276, #277 and #279 stand, #280's direction holds and every number it quoted was wrong*
+*Last updated: v3.284.0 — the rebellion is rare rather than dead, and forty-two per cent of the deck was never in the deck*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a

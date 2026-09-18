@@ -29,7 +29,39 @@
    at all and are raised by other code (`word` is #196's, raised by the player from a man's card,
    and the engaged arm meets all four WORDS through it). Counting those as "never reached" reads as
    a content gap and is an artifact of counting `Object.keys(EVENTS)` as if every key were a card.
-   This probe reports them apart. */
+   This probe reports them apart.
+
+   ---- THE ANSWER, AND IT REFUTES THE HYPOTHESIS THAT PROMPTED IT ----
+   40 houses x 420 weeks, the reference player:
+
+       unrest   p50 0 · p90 6.9 · p99 24.9 · MAX EVER 89.0
+       hottest week per house: median 22.6
+
+       >= 25  `steadied`            108 weeks (1.00%) · 15 of 40 houses
+       >= 40  `escape`               29 weeks (0.27%) ·  5 of 40 houses
+       >= 50  rebellion stage 1      19 weeks (0.18%) ·  2 of 40 houses
+       >= 65  stage 2 stolenSteel     9 weeks (0.08%) ·  1 of 40 houses
+       >= 78  stage 3 uprising        4 weeks (0.04%) ·  1 of 40 houses
+
+   THE LADDER IS REACHABLE. A rebellion started in 2 of 40 houses and one of them went all the way
+   to stage 3, so `stolenSteel` and `uprising` DO fire. They are rare, not dead. The hypothesis
+   this probe was written to confirm — "gated at twenty-five times what the game produces" — is
+   WRONG, and it was wrong for precisely the reason the header above insisted on: unrest is a SPIKE
+   system. The mean is 2 and the maximum is 89. A mean would have proved the opposite of the truth.
+
+   ---- AND THE SECOND ARM DID NOT DO WHAT IT WAS BUILT TO DO ----
+   The "harsh house" switches off `rites` and `favours` expecting a hotter yard. It came out
+   COOLER — max 52 against the reference's 89. Those levers do not vary the thing they were chosen
+   to vary; turning rope options off makes the rope do LESS, which is not the same as playing
+   badly. It is #279's fault in a new coat: an arm whose policy does not contain the variable.
+   Kept in, clearly labelled, because a second arm that fails is worth more on the page than one
+   quietly dropped — but it is not evidence about a harsh house and must not be read as any.
+
+   ---- AND THE THING IT FOUND BY ACCIDENT, WHICH MATTERS MORE ----
+   TWENTY-EIGHT of the sixty-seven EVENTS have `make(){ return null; }` — not three, as predicted.
+   Five were verified against source by hand. `depth.mjs` had counted all of them in its
+   denominator for its whole life, so "a house meets N of 64 events" was scored against a deck 42%
+   of which was never in the deck. Corrected there in the same release. */
 import { serve, open, clearAll, found, installRope } from "../harness.mjs";
 
 const H = +(process.argv[2] || 40), W = +(process.argv[3] || 420);

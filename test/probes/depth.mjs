@@ -41,6 +41,28 @@
      past 250w              5 of 80           27 of 50
      still standing at cap  0                 17 of 50
 
+   ---- AND THE DENOMINATOR WAS WRONG TOO — #288, 40 houses, 420w ----
+   Twenty-eight of the sixty-seven EVENTS are `make(){ return null; }`, raised by arcs, rival moves
+   and player verbs and never drawn by the die. They were in the denominator for this probe's whole
+   life. They are out of it now, and what reaches a house through them is its own row:
+
+     the die's deck          the median house meets 24 of 57 (42%)
+     raised by other code    25 of the 28 reached across the run
+                             never: owedBack, defected, word
+
+   TWO ERRORS THAT NEARLY CANCELLED, which is worth staring at. The denominator was too large AND
+   the numerator counted undrawable events that fired. Fixing only the first printed "events 56/36"
+   — impossible, and that is how the second was caught. Fixing both lands at 42%, against the 41%
+   that fixing only the stepping produced. **The headline barely moved; what it MEANS changed
+   completely** — 24 of 57 real drawable situations rather than 35 of 85 mixed ones. A number that
+   survives a correction is not thereby confirmed by it.
+
+   THE GENUINELY NEVER-REACHED LIST, reference arm, correctly measured: `escape`, `owedLife`,
+   `primacy`, `stolenSteel`, `uprising`, the `steadied` night, the `year` ask, and — through other
+   code — `owedBack`, `defected`, `word`. `probes/revolt.mjs` then showed `stolenSteel` and
+   `uprising` firing in 1 house of 40 on a different seed set, so even those are rare rather than
+   dead. `word` is the player's own verb, which this arm never uses: the engaged arm meets all four.
+
    The engaged arm lands at 302w and 25/85, and it is still the only arm that meets `WORDS` 4 of 4,
    still paying for it by standing away from Capua on 74% of its weeks.
 
@@ -82,8 +104,22 @@ const out = await p.evaluate(([H, W, MOST])=>{
 
   /* the channels a player MEETS — each is a table of written situations, and each has a place in
      the week where it announces itself */
+  /* ---- AND NOT EVERY KEY OF `EVENTS` IS A CARD — #288 ----
+     Twenty-eight of the sixty-seven have `make(){ return null; }`: `match`, `booking`, `feud`,
+     `edict`, `inspector`, `defected`, `word`, `owedBack` and twenty more. They are RAISED by other
+     code — an arc, a rival's move, a player's verb — and are never drawn by the weekly die. This
+     probe counted them in its denominator for its whole life, so "a house meets N of 64 events"
+     was scored against a deck 42% of which was never in the deck. A house that is never poached
+     does not "miss" `defected`; there was no card to draw. */
+  const drawable = k => {
+    const e = A.EVENTS[k], src = e && e.make ? String(e.make) : "";
+    return !(/^\s*(?:make)?\s*\([^)]*\)\s*\{\s*return null;?\s*\}/.test(src) || /=>\s*null\s*$/.test(src));
+  };
+  const EV_ALL = Object.keys(A.EVENTS);
+  const EV_DRAWN = EV_ALL.filter(drawable);
+
   const TABLES = {
-    events:  Object.keys(A.EVENTS),
+    events:  EV_DRAWN,
     night:   A.NIGHT_KEYS.slice(),
     asks:    A.ASK_KEYS.slice(),
     words:   A.WORD_KEYS.slice(),
@@ -93,9 +129,11 @@ const out = await p.evaluate(([H, W, MOST])=>{
   const arm = (engaged, tag) => {
     const houses = [];
     const union = {}; for(const t of Object.keys(TABLES)) union[t] = new Set();
+    union.other = new Set();
     for(let i=0;i<H;i++){
       const d = A.newGameState("Dp","clean",`DEPTH-${tag}-${i}`);
       const seen = {}; for(const t of Object.keys(TABLES)) seen[t] = new Set();
+      seen.other = new Set();
       let away = 0;
       const noteAmb = () => { for(const g of (d.gladiators||[]))
         if(g.ambition && g.ambition.kind){ seen.ambition.add(g.ambition.kind); union.ambition.add(g.ambition.kind); } };
@@ -148,7 +186,14 @@ const out = await p.evaluate(([H, W, MOST])=>{
         try { R.lanista(d, MOST); } catch(e){}
         const ev = d.pendingEvent;
         if(!had && ev && ev.id){
-          seen.events.add(ev.id); union.events.add(ev.id);
+          /* ---- THE TWO CHANNELS, COUNTED APART — #288 ----
+             An event that fires is not necessarily an event the DIE dealt. Twenty-eight of the
+             sixty-seven are raised by arcs, rival moves and player verbs. Counting both in one
+             bucket against a drawable denominator printed "events 56/36", which is how this was
+             caught. The die's deck and what reaches you by other means are different questions and
+             get different rows. */
+          if(EV_DRAWN.includes(ev.id)){ seen.events.add(ev.id); union.events.add(ev.id); }
+          else { seen.other.add(ev.id); union.other.add(ev.id); }
           const k = ev.data && ev.data.k, sit = ev.data && ev.data.sit;
           if(ev.id === "ask"        && k){ seen.asks.add(k);  union.asks.add(k); }
           if(ev.id === "word"       && k){ seen.words.add(k); union.words.add(k); }
@@ -158,14 +203,19 @@ const out = await p.evaluate(([H, W, MOST])=>{
       noteAmb();
       houses.push({ life:w, away,
         over:(d.over && (d.over.kind||d.over)) || "alive",
-        seen: Object.fromEntries(Object.keys(TABLES).map(t=>[t, seen[t].size])) });
+        seen: Object.fromEntries(Object.keys(TABLES).map(t=>[t, seen[t].size])),
+        other: seen.other.size });
     }
     return { tag, houses,
       union: Object.fromEntries(Object.keys(TABLES).map(t=>[t, union[t].size])),
+      unionOther: union.other.size,
+      missedOther: EV_ALL.filter(k=>!EV_DRAWN.includes(k) && !union.other.has(k)),
       missed: Object.fromEntries(Object.keys(TABLES).map(t=>[t, TABLES[t].filter(k=>!union[t].has(k))])) };
   };
 
-  return { sizes: Object.fromEntries(Object.entries(TABLES).map(([t,k])=>[t, k.length])),
+  return { evAll: EV_ALL.length, evDrawn: EV_DRAWN.length,
+    undrawable: EV_ALL.filter(k=>!drawable(k)),
+    sizes: Object.fromEntries(Object.entries(TABLES).map(([t,k])=>[t, k.length])),
            reactive: arm(false, "REF"), engaged: arm(true, "ENG") };
 }, [H, W, MOST]);
 
@@ -179,6 +229,10 @@ else {
 
   console.log(`\n#282 — HOW MUCH OF THE WRITTEN GAME A HOUSE EVER MEETS`);
   console.log(`the tables counted: ` + T.map(t=>`${t} ${out.sizes[t]}`).join(" · "));
+  console.log(`EVENTS: ${out.evDrawn} of ${out.evAll} are drawable by the weekly die; `
+    + `${out.undrawable.length} have \`make(){ return null; }\` and are raised by other code —\n`
+    + `  ${out.undrawable.join(" · ")}\n`
+    + `  Those are NOT in the denominator. Counting them was #288\u2019s finding.`);
 
   for(const key of ["reactive","engaged"]){
     const a = out[key];
@@ -188,6 +242,9 @@ else {
       + `· ${lives.filter(x=>x>=W).length} still standing at ${W}w`);
     console.log(`    the WHOLE RUN between them reached: `
       + T.map(t=>`${t} ${a.union[t]}/${out.sizes[t]}`).join(" · "));
+    console.log(`    and of the ${out.evAll - out.evDrawn} raised by other code rather than drawn, `
+      + `${a.unionOther} were reached across the run`
+      + (a.missedOther.length ? ` · never: ${a.missedOther.join(", ")}` : " · all of them"));
     console.log(`    but one house, by how long it lived:`);
     console.log(`      ${"band".padEnd(17)} ${"n".padStart(3)}  ` + T.map(t=>t.padStart(9)).join(" "));
     for(const [lo, hi, label] of BANDS){
