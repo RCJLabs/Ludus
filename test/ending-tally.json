@@ -2143,5 +2143,25 @@
   "risingMin": 9,
   "jumped": 0,
   "pass": true
+ },
+ {
+  "v": "3.290.0",
+  "houses": 24,
+  "weeks": 4398,
+  "ends": {
+   "debt": 12,
+   "ruin": 4,
+   "rebellion": 4,
+   "emptied": 1,
+   "banned": 1,
+   "survived": 2
+  },
+  "debtWarned": 7,
+  "debtRed": 8,
+  "debts": 12,
+  "risingLead": 28,
+  "risingMin": 9,
+  "jumped": 0,
+  "pass": true
  }
 ]

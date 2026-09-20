@@ -36120,6 +36120,15 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        fire in 200 week-one bouts, which says nothing about whether the rest can.
        `MISSIOS` is your own man spared; `MERCIES` is the beaten stranger. */
     DEATHS, deathLine, SALUTES, saluteLine, MISSIOS, missioLine, MERCIES, mercyLine,
+    /* ---- AND THREE MORE THAT GATE WRITING AND NOTHING COULD REACH — #295 ----
+       `checks/voice.mjs` holds the rule that a table pairing a predicate with a written line must
+       be reachable from a test, and it had been reading only predicates whose first argument is
+       the house (`when:(d…)`). These three gate on a subject instead — an end-of-game tally, a
+       munus field, a chronicle entry — and so were invisible to it since #186. `VERDICTS` is the
+       worst of the three to have been unreachable: it is what the player reads when the house
+       ends, and `verdictOf` could be called without any way to enumerate the seven it chooses
+       between. */
+    VERDICTS, verdictOf, FIELD_TELLS, FTELL_KEYS, CHRON_FILTERS, CHRON_KEYS,
     /* the week, and what it writes down */
     endWeek, bookBout, bookOf, newBook, chron, chronAll, bookSays,
     /* the week's one question, and the draw that chooses it */
