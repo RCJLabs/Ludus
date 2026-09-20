@@ -12415,7 +12415,7 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
-## AFTER THE QUEUE — v3.272.0 to v3.288.0, seventeen releases, four game changes, four instruments
+## AFTER THE QUEUE — v3.272.0 to v3.289.0, eighteen releases, five game changes, five instruments
 that had been lying since they were written — and finally a gate over the instruments
 
 The third pass closed on #275 at v3.271.0, and with it the last item anybody had written down. What
@@ -12443,6 +12443,7 @@ overturned**, and the refusals are the reason to read this section.
 | v3.286.0 | **#290** | **`checks/tools.mjs` — 204 checks on the game, and now one on the instruments** |
 | v3.287.0 | **#291** | **the seven re-taken: all six items hold — and a retraction I owed** |
 | v3.288.0 | **#292** | **the death, templated — 20.0 re-reads to 8.6, and no draw moved** |
+| v3.289.0 | **#293** | **the salute, templated — 200.0 re-reads to 1.1, and 27 of 27 branches proved reachable** |
 
 ## What was actually built
 
@@ -13038,6 +13039,108 @@ discipline point, not a regex, and the check's header says so. Three refinements
 it crying wolf — `credit` prints its arm as `out.who`, `perk` as `${MODEWORD}`, and a `.toFixed(1)`
 early in a template was hiding an arm named later in the same call. Each refinement was driven by a
 verified false positive, because a check that is nearly right teaches you to ignore it.
+
+---
+
+### #293 — THE SALUTE, TEMPLATED
+
+The same cut as #292, on the beat the same probe says is three times worse, plus the instrument
+that answers the question #292 could only assert.
+
+`watching.mjs` ranked three un-templated beats by how hard a player re-reads them. The death was
+the *smallest* of the three and got done first because it was the one I happened to be looking at.
+The salute is the one the measurement actually points at:
+
+| | `death` before #292 | `salute` before this |
+|---|---|---|
+| how often it fires | a few percent of bouts | **every bout** |
+| share of every line read in the arena | 1.5% | **5.1%** |
+| surface forms over 200 bouts | 3 | **1** |
+| re-reads | 20.0 | **200.0** |
+
+One sentence — *"They turn to the editor's box, raise their arms, and salute. Then the horn."* —
+carried one line in twenty of everything written in the arena, unchanged, for years.
+
+**Sixteen conditional branches, NO NEW DRAW.** Same discipline as the death: every line is chosen
+by a condition on state already in hand — the stakes, who is in the editor's box and what they
+think of you, what the two fighters are to each other (same blood, same trade, or neither), whose
+name the tiers already know, and how full the house is before anything has happened.
+
+| | before | after |
+|---|---|---|
+| `salute` authored branches | 1 | **16** |
+| `salute` surface forms | 1 | **181** |
+| `salute` re-reads | **200.0** | **1.1** |
+| `crit` / `graze` / `gas` / `hit` / `crux` forms | 405 / 304 / 186 / 231 / 133 | **identical** |
+| total lines read | 3922 | **3922** |
+
+**The five exchange pools came back byte-identical, which is the proof nothing re-phased.** A bout
+went from 274 words to 294. `simulateFight` stayed at **466 exactly** — the table went to module
+scope beside `DEATHS`, which is where #292 learned to put it.
+
+**The 181 is not a count of writing and is not quoted as one.** Sixteen sentences were written; the
+branches substitute a class, an origin, a patron's name and a pronoun, so the probe counts 181
+surface forms. That is exactly the category error `watching.mjs` shipped once and corrected, and
+both the source comment and the probe header now say so at the point where the number appears. The
+honest pair is **1 → 16 branches** and **200.0 → 1.1 re-reads**.
+
+### The thresholds were calibrated, not guessed — and the calibration is the finding
+
+Before writing a condition I measured what is true **at salute time** over the same 200 bouts:
+crowd p50 **13** and never above 50, wins never above **1**, scars never above **3**, age never
+above **32**, never a patron in the box, never a sine missione, and **67% of them a man's first
+bout**.
+
+**The probe fights week-one houses.** Thresholds picked off that population alone would have been
+thresholds for the first fortnight of a game `depth.mjs` puts past 380 bouts. So the veteran
+branches are written deliberately for a population this probe cannot reach — which immediately
+raises the question #292 answered by assertion.
+
+### `probes/reachable.mjs` — the ninth error kind, and the first one caught before it shipped
+
+#292 reported **"seven of eleven branches fired"** and argued the other four were gated on a career
+rather than dead. That argument was *correct* and it was *unverified*: a count of what happened in
+one sample cannot distinguish **rare** from **unreachable**, and #288 is the whole cautionary tale —
+a rebellion ladder assumed dead because no house in the sample climbed it, which turned out to be
+climbable and rare, where a mean would have proved the opposite of the truth.
+
+So `SALUTES`, `DEATHS` and their two pickers are exported on the test handle, and the new probe
+sweeps **40,000 constructed states** — cloned from a *real* gladiator, so every field the game gives
+a man is present — across values chosen to straddle every threshold in either table. For each
+entry it asks two different questions:
+
+| verdict | meaning |
+|---|---|
+| **SELECTED** | the picker chose it. Reachable, proven. |
+| **SHADOWED** | its `when` is true sometimes and an earlier entry always wins. Real writing nobody will read. |
+| **NEVER SATISFIED** | no sample made it true — unreachable, **or the sweep is too narrow**, and the probe says it cannot tell which. |
+
+**27 of 27 entries SELECTED. 0 shadowed. 0 never satisfied.** #292's four unfired death branches are
+now *proved* reachable rather than argued to be, retroactively.
+
+A third arm renders every satisfiable entry and checks the text: `when` runs inside a `try` and
+fails quietly, but **`say` does not** — a branch reaching for `c.ctx.patron.name` with no patron in
+the context throws into the middle of a bout, and one reading a merely absent field renders the word
+"undefined" into the arena. Zero throws, zero dirty renders.
+
+**That verdict list is the point, not the three zeros.** The eight error kinds this section has
+collected are all *an instrument answering a narrower question than the one asked, with nothing in
+its output saying so*. "Seven of eleven fired" is that shape exactly. The ninth entry is its cure:
+**a count of what happened is not a statement about what can happen, and a probe that cannot tell
+rare from dead must print which one it cannot tell.**
+
+### And the instrument caught the instrument, twice
+
+`watching.mjs` needed teaching about the second table (`TABLES` is a named map, not a regex over
+plurals — a guess turning `CRUX` into `crux` would be a wrong number with nothing saying so). The
+edit closed a comment block one line early; the probe refused to parse and said which line.
+**`checks/tools.mjs` arm 2 would have caught the same thing in the gate** — that arm exists because
+probes are never run by anything and rot unseen, and this is the first time it had something to
+catch.
+
+The probe's own header keeps the original three-un-templated-beats table **as it was measured**
+rather than overwriting it, with the current state beneath it. It is the finding; the current state
+is a footnote to it. `spared` (3 forms, 39.3 re-reads) is the one of the three still standing.
 
 
 ## A THIRD AUDIT PASS — v3.259.0, written off the partial-player sweep
@@ -29537,7 +29640,7 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.288.0 — the death is templated: twenty re-readings down to eight and a half, and not one draw moved*
+*Last updated: v3.289.0 — the salute is templated: two hundred re-readings down to one, and 27 of 27 branches proved reachable rather than assumed*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a

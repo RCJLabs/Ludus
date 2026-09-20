@@ -12121,6 +12121,89 @@ const DEATHS = [
 const deathLine = (A, c) => { const e = DEATHS.find(x=>{ try { return x.when(A, c); } catch(err){ return false; } });
   return (e || DEATHS[DEATHS.length-1]).say(A, c); };
 
+/* ---- THE SALUTE, TEMPLATED — #293 ----
+   The same cut as the death one release earlier, on the beat the same probe says is worse.
+
+       kind      read  shapes  branch  re-read
+       death       60       7      14      8.6   after #292
+       salute     200       1       1    200.0   this
+
+   The death fires on a few percent of bouts. THE SALUTE FIRES ON EVERY ONE — 5.1% of every line
+   a player reads in the arena, and for years it was one sentence, two hundred times in two
+   hundred bouts. It is the single most re-read piece of writing in the game.
+
+   NO NEW DRAW, for #283's reason: any change in draw count re-phases every seeded fixture in the
+   project. Every branch below is a CONDITION on state already in hand when the beat fires — the
+   stakes, who is in the editor's box, what the two of them are to each other, what the house
+   already knows about them, and how full the tiers are before anything has happened.
+
+   ---- WHAT THE CONDITIONS WERE CALIBRATED AGAINST, AND WHAT THAT DOES NOT COVER ----
+   Measured at salute time over the same 200 pit bouts the probe fights: crowd p50 13 and never
+   above 50, wins never above 1, scars never above 3, age never above 32, no patron, no sine
+   missione, and 67% of them a man's first bout. THE PROBE FIGHTS WEEK-ONE HOUSES. Thresholds
+   picked off that population alone would have been thresholds for the first fortnight of a game
+   that `depth.mjs` puts past 380 bouts.
+
+   So the veteran branches are deliberately written for a population this probe cannot reach, and
+   THAT IS THE THING #292 LEFT OPEN: its report was "seven of eleven branches fired", which says
+   nothing about whether the other four CAN. #288 is the same shape — a ladder nobody had checked
+   was climbable. `SALUTES` and `DEATHS` are exported on the test handle for that reason, and
+   `probes/reachable.mjs` drives every entry of both with synthetic state and proves each one is
+   selectable by something. A branch no input can reach is not writing; it is a comment.
+
+   MOST SPECIFIC FIRST, and an earlier entry SHADOWS a later one on purpose: a man meeting his own
+   countryman in front of his own patron should get the patron, because that is the larger fact in
+   the room. The last entry is the line that shipped for years and is the floor.
+
+   ---- MEASURED, SAME 200 BOUTS BEFORE AND AFTER ----
+       salute    shapes 1 -> 181 · authored branches 1 -> 16 · re-read 200.0 -> 1.1
+       reachable 16 of 16 entries selectable, 0 shadowed, 0 that render "undefined" or throw
+       control   crit 642/405, graze 536/304, gas 579/186, hit 261/231, crux 486/133 — all five
+                 byte-identical to the run before the change, and 3922 lines read either way.
+                 NOTHING RE-PHASED, which is the only thing that could have made this expensive.
+
+   THE 181 IS NOT A COUNT OF WRITING AND MUST NOT BE QUOTED AS ONE. Sixteen sentences were
+   written; the branches substitute a class, an origin, a patron's name and a pronoun, and the
+   probe counts surface forms. That is precisely the category error `watching.mjs` shipped once
+   and corrected, and repeating it here in the file it measures would be worse than making it the
+   first time. The pair that means something is 1 -> 16 branches and 200.0 -> 1.1 re-reads. */
+const SALUTES = [
+  { when:(A,c)=>c.stakes === "sine",
+    say:(A,c)=>`They turn to the editor's box, and the box has nothing to give them — sine missione, agreed before either of them was awake. They salute it anyway. Then the horn.` },
+  { when:(A,c)=>!!(c.ctx.patron && c.ctx.patron.favor >= 70),
+    say:(A,c)=>`They turn to the editor's box and salute, and ${A.name} holds it a moment longer than the other, because ${c.ctx.patron.name} is sitting in it and everyone in the tiers can see whose ${c.prA.man} this is. Then the horn.` },
+  { when:(A,c)=>!!(c.ctx.patron),
+    say:(A,c)=>`They turn to the editor's box and salute. ${c.ctx.patron.name} returns nothing — a patron in the box watches the salute the way a man watches a cart being loaded. Then the horn.` },
+  { when:(A,c)=>A.origin === c.B.origin && A.cls === c.B.cls,
+    say:(A,c)=>`They turn to the editor's box and salute: two ${A.cls.toLowerCase()}s of ${A.origin} blood, armed the same, raised the same, and one of them is going to be carried off. Then the horn.` },
+  { when:(A,c)=>A.origin === c.B.origin,
+    say:(A,c)=>`They turn to the editor's box and salute, and neither looks at the other, which is what men of the same blood do when Rome has put them opposite each other. Then the horn.` },
+  { when:(A,c)=>A.cls === c.B.cls,
+    say:(A,c)=>`They turn to the editor's box and salute, ${c.prA.his} arms going up in the same line as the man across from ${c.prA.him} — the same trade, the same guard, nothing between them but the afternoon. Then the horn.` },
+  { when:(A,c)=>!!A.nick,
+    say:(A,c)=>`They turn to the editor's box and salute, and a part of the tiers is already shouting the name they gave ${A.name} — ${A.nick} — before ${c.prA.he} has lowered ${c.prA.his} arms. Then the horn.` },
+  { when:(A,c)=>(A.wins||0) >= 25,
+    say:(A,c)=>`They turn to the editor's box and salute. The box has watched ${A.name} do this ${A.wins} times and still leans forward for it. Then the horn.` },
+  { when:(A,c)=>c.mobHis,
+    say:(A,c)=>`They turn to the editor's box and salute, and the box is looking at the other one. ${A.name} lowers ${c.prA.his} arms into a noise that was not for ${c.prA.him}. Then the horn.` },
+  { when:(A,c)=>c.mobClear,
+    say:(A,c)=>`They turn to the editor's box and salute, and the shout comes back for ${A.name} alone — ${c.oppName} might as well have saluted an empty street. Then the horn.` },
+  { when:(A,c)=>c.crowd >= 55,
+    say:(A,c)=>`They turn to the editor's box and salute, and the arms go up into a sound already at full weight — this place was loud before either of them walked out. Then the horn.` },
+  { when:(A,c)=>c.crowd <= 6,
+    say:(A,c)=>`They turn to the editor's box and salute. The tiers are half empty and what comes back is the sound of a few hundred people who have somewhere to be. Then the horn.` },
+  { when:(A,c)=>!(A.wins||0) && !(A.losses||0),
+    say:(A,c)=>`They turn to the editor's box and salute. ${A.name} has never done this before and does it a half-beat behind the other ${c.prA.man}, which the front rows notice and nobody else does. Then the horn.` },
+  { when:(A,c)=>(A.scars||[]).length >= 4,
+    say:(A,c)=>`They turn to the editor's box and salute, and the light goes along the marks on ${A.name}'s arms as ${c.prA.he} raises them — four afternoons that did not finish ${c.prA.him}, held up for inspection. Then the horn.` },
+  { when:(A,c)=>(A.age||0) >= 34,
+    say:(A,c)=>`They turn to the editor's box and salute. ${A.name} is ${A.age}, which is a great age for this trade, and the raised arms are a thing ${c.prA.he} has done more often than most men in the tiers have done anything. Then the horn.` },
+  { when:()=>true,
+    say:(A,c)=>`They turn to the editor's box, raise their arms, and salute. Then the horn.` },
+];
+const saluteLine = (A, c) => { const e = SALUTES.find(x=>{ try { return x.when(A, c); } catch(err){ return false; } });
+  return (e || SALUTES[SALUTES.length-1]).say(A, c); };
+
 function simulateFight(A, B, tA, stakes, ctx, opts){
   const O = opts || {};
   const R0 = O.from || null;
@@ -12253,7 +12336,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
 
   if(!R0){
     push("intro", `${A.name} steps onto the sand against ${oppName} of the House of ${B.house} — a ${B.cls.toLowerCase()} of ${B.origin} blood.`);
-    push("salute", `They turn to the editor's box, raise their arms, and salute. Then the horn.`);
+    push("salute", saluteLine(A, { B, oppName, crowd, stakes, ctx, prA, mobHis, mobClear }));
     if(COUNTERS[A.cls]===B.cls) push("intro", `The pairing favours your fighter: ${A.cls} against ${B.cls}.`);
     else if(COUNTERS[B.cls]===A.cls) push("intro", `An ill pairing — the ${B.cls.toLowerCase()} was made to break the ${A.cls.toLowerCase()}.`);
     if(stakes==="sine") push("intro", `The lanistae have agreed: sine missione. No mercy will be asked, and none given.`);
@@ -35949,6 +36032,11 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     simulateFight, simulatePair, simulateMelee, simulateVenatio,
     simulateSpar, doSpar, SPAR_CRUX, cruxMenuFor, cruxSolo, cruxWords, SPAR_ROUNDS, SPAR_YIELD, SPAR_CAP, SPAR_SWING, SPAR_SPEAK, SPAR_PRESS,   /* the fifth engine — #232 */
     doFight, doPairFight, doMelee, doVenatio,
+    /* the two templated beats of a bout, and the pickers over them — exported so
+       `probes/reachable.mjs` can drive every entry with synthetic state and prove
+       each branch is selectable. #292 could only report which ones HAPPENED to
+       fire in 200 week-one bouts, which says nothing about whether the rest can. */
+    DEATHS, deathLine, SALUTES, saluteLine,
     /* the week, and what it writes down */
     endWeek, bookBout, bookOf, newBook, chron, chronAll, bookSays,
     /* the week's one question, and the draw that chooses it */
