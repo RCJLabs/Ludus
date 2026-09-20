@@ -118,7 +118,7 @@ const cls = r => {
 const groups = { "EARLY-ONLY":[], "PERENNIAL":[], "LATE-ONLY":[] };
 for(const r of out.labs){ const c = cls(r); if(groups[c]) groups[c].push(r); }
 
-console.log(`=== WHAT A GREAT HOUSE IS ASKED FOR ===`);
+console.log(`=== WHAT A GREAT HOUSE IS ASKED FOR === · arm "${ARM}" (on | off, where off means road:false)`);
 console.log(`  ${out.H} houses x up to ${out.W} weeks · ${out.reached} reached year 12+ · ${out.died} ended somewhere`);
 console.log(`  weeks by era: ${N.map(n=>`${n} ${out.weeks[n]}`).join(" · ")}`);
 console.log(`  ${out.labs.length} distinct labels once ${out.nNames} names are normalised out\n`);

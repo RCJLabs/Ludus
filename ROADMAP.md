@@ -12415,7 +12415,7 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
-## AFTER THE QUEUE — v3.272.0 to v3.286.0, fifteen releases, three game changes, four instruments
+## AFTER THE QUEUE — v3.272.0 to v3.287.0, sixteen releases, three game changes, four instruments
 that had been lying since they were written — and finally a gate over the instruments
 
 The third pass closed on #275 at v3.271.0, and with it the last item anybody had written down. What
@@ -12441,6 +12441,7 @@ overturned**, and the refusals are the reason to read this section.
 | v3.284.0 | **#288** | **the rebellion is rare, not dead — and 42% of the deck was never a deck** |
 | v3.285.0 | **#289** | **everything in a fight is templated but the death — and my own count was a category error** |
 | v3.286.0 | **#290** | **`checks/tools.mjs` — 204 checks on the game, and now one on the instruments** |
+| v3.287.0 | **#291** | **the seven re-taken: all six items hold — and a retraction I owed** |
 
 ## What was actually built
 
@@ -12890,6 +12891,81 @@ are not in the deck, a surface-form count read as a count of writing. Those want
 regex, and the honest thing is to say so in the check's own header rather than imply the class is
 closed. What it does hold is the two that ran longest undetected, and they ran longest **because a
 probe that works is a probe nobody reads.**
+
+## #291 — THE SEVEN RE-TAKEN, AND A RETRACTION I OWED
+
+### The retraction first, because it was load-bearing
+
+#287 said, in this file and in a commit message, that the seven probes still carrying #285's banner
+**"carry no shipped decision, which is why they waited."** That is false. Every one of the six items
+behind them changed game code:
+
+| item | release | `src/ludus.jsx` |
+|---|---|---|
+| #268 | v3.264.0 | **190 lines** |
+| #269 | v3.265.0 | 90 |
+| #270 | v3.266.0 | 61 |
+| #272 | v3.268.0 | 36 |
+| #273 | v3.269.0 | 41 |
+| #274 | v3.270.0 | 74 |
+
+Roughly **492 lines of shipped game code** rested on measurements taken through a double-stepping
+instrument, while the debt was being described as low-stakes. The claim was an assumption never
+checked — and **the first attempt to check it produced a false zero**: a `git log --grep` matching
+on an em-dash returned HEAD's sha for all six, so every release read "src/ludus.jsx touched = 0".
+Six plausible zeros in a row, on releases whose own titles describe game changes.
+
+### And all six hold
+
+| item | re-taken |
+|---|---|
+| #268 `camp` | **11 of 36** events home-only — as published |
+| #269 `epitaph` | endings occur: debt, rebellion, banned, ruin, emptied, closed |
+| #270 `bench` | a man waiting in **84.6%** of weeks against a published 68.4% |
+| #272 `steward` | **20** recurring lines on a man still in the building, **0** on a dead one |
+| #273 `walls` | `fromYard` still has one hit in the file, which is the write |
+| #274 `following` | a man's town-mix sits at the null model, as the item concluded |
+| #277 `orphans` | 212 men raised to avenge in 36 of 40 houses; `g.avenging` a back-pointer |
+
+### I ran three of them on the wrong arm, and nearly published a shipped fix as broken
+
+`bench`, `steward` and `walls` take a `[ref|most]` argument. I passed none, so they ran the bare
+reference rope — where **`free` defaults FALSE**. `bench` came back with *"a freed or retired man
+was waiting in 0.0% of weeks"* against a published 68.4%, and **0 of 16 houses ever had their own
+man in the doctore's chair**. That reads exactly like v3.266.0's 61-line fix having stopped working.
+
+It was the wrong arm, and the arm was **printed on the probe's own first line** — `under \`ref\``.
+I read the output through `tail` and cut the header off. That is the third time this run that
+reading an instrument through `tail` hid the thing that mattered.
+
+### And then the zero was interrogated instead of published
+
+Under `most`, `doctore` still appeared in **0 of 40** recorded outcomes while four ungated outcomes
+fired — and `doctore` and `lanista` are precisely the two outcomes carrying a `need`. That is a
+suggestive shape and the temptation was to file it.
+
+Measured exactly instead, driving `freedWeek` 16,000 times against a stocked pool:
+
+```
+doctore  187 of 1800 outcomes (10.4%)     lanista  122 (6.8%)
+a man with 8 wins fits: doctore, crowd, gift, bad, back
+a man with 10:          doctore, lanista, crowd, gift, bad, back      nothing throws
+```
+
+**#270's fix works.** The 0 of 40 was sampling — at 10.4% on forty draws, p is about 1.5%, and the
+run that produced it was a real house rather than a stocked pool. A zero interrogated before
+publication, which is this file's own rule, and it cost one measurement.
+
+### Arm 4, and what it honestly does not cover
+
+`checks/tools.mjs` gains a fourth arm: **a probe that takes an arm from argv must print it.** Two
+were mute — `late` and `survey` — and both now name it. Proved by negative control.
+
+It would **not** have caught the error above: `bench` printed its arm and I truncated it. That is a
+discipline point, not a regex, and the check's header says so. Three refinements were needed to stop
+it crying wolf — `credit` prints its arm as `out.who`, `perk` as `${MODEWORD}`, and a `.toFixed(1)`
+early in a template was hiding an arm named later in the same call. Each refinement was driven by a
+verified false positive, because a check that is nearly right teaches you to ignore it.
 
 
 ## A THIRD AUDIT PASS — v3.259.0, written off the partial-player sweep
@@ -29389,7 +29465,7 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.286.0 — two hundred and four checks on the game, and finally one on the things that measure it*
+*Last updated: v3.287.0 — the seven re-taken, all six items hold, and a retraction that was load-bearing*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a

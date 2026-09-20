@@ -1,12 +1,9 @@
-/* ---- STEPPING CORRECTED IN v3.281.0 — NUMBERS IN THIS HEADER PREDATE IT ----
-   This probe called `A.endWeek(d)` after `R.lanista(...)`. The rope ends its own week
-   (`fin(A.endWeek,[d])`, harness.mjs:1603) and the harness's `play()` loops it alone, so every
-   iteration played a week and then ran a second, EMPTY one — the player acting every other week,
-   the weekly bill landing twice per action. See #285 and `probes/depth.mjs`.
+/* ---- RE-TAKEN AT v3.287.0 AFTER #285's STEPPING FIX ----
+   #274 HOLDS. Re-taken: a man's town-mix sits at the null model, which is what the item
+   concluded.
 
-   The extra call is gone. ANY FIGURE RECORDED BELOW WAS TAKEN BEFORE THAT AND IS NOT TRUSTWORTHY
-   until re-run — on `depth.mjs` the same fault moved median house life from 51w to 317w. The
-   conclusions may well survive; the numbers have not been re-taken. */
+   NOTE THE ARM. This probe's published figures are measured under the policy its usage line
+   names; running it without that argument measures a different player entirely. */
 /* WHETHER A MAN COULD HAVE A TOWN OF HIS OWN — #274's verify-first.
 
      node test/probes/following.mjs 16 420
