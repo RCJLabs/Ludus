@@ -106,6 +106,13 @@ export async function run(){
   const dir = path.join(ROOT, "test", "checks");
   const files = fs.readdirSync(dir).filter(f=>f.endsWith(".mjs")).sort();
   const bad = [], lines = [];
+  /* EVERY FAULT BELOW IS RAISED PER FILE, so no files means no faults and a green pass — the
+     `content` hole (#296) in a directory listing rather than a regex. A wrong path, a renamed
+     folder or a filter that stops matching all read the same: silence. #295's rule is that a
+     count of nothing must not be reported as nothing wrong. */
+  if(files.length < 100)
+    bad.push(`only ${files.length} checks found in ${dir} — the suite has two hundred-odd, so this `
+      + `is the listing reading the wrong place, not the suite shrinking`);
   const rows = [];
 
   for(const f of files){

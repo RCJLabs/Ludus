@@ -12415,7 +12415,7 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
-## AFTER THE QUEUE — v3.272.0 to v3.291.0, twenty releases, six game changes, six instruments
+## AFTER THE QUEUE — v3.272.0 to v3.292.0, twenty-one releases, six game changes, six instruments
 that had been lying since they were written — and finally a gate over the instruments
 
 The third pass closed on #275 at v3.271.0, and with it the last item anybody had written down. What
@@ -12446,6 +12446,7 @@ overturned**, and the refusals are the reason to read this section.
 | v3.289.0 | **#293** | **the salute, templated — 200.0 re-reads to 1.1, and 27 of 27 branches proved reachable** |
 | v3.290.0 | **#294** | **the missio, templated — 39.3 re-reads to 4.5, and the three-beat finding is closed** |
 | v3.291.0 | **#295** | **`voice` was holding two thirds of the game's registers — three the player reads were reachable by nothing** |
+| v3.292.0 | **#296** | **three checks passed on an empty scan, and one of them was the gate over the instruments** |
 
 ## What was actually built
 
@@ -13310,6 +13311,87 @@ handle test is where it matters: **a table merely named in a comment inside the 
 have read as exported**, and that does not fire today only because the names written there happen to
 be in backticks and the boundary classes do not include one. Luck, not design, so it is closed.
 Reported as *changes nothing today* rather than as a bug fixed.
+
+---
+
+### #296 — A SCAN THAT FINDS NOTHING MUST NOT READ AS NOTHING WRONG
+
+#295 raised the obvious next question: `voice` was wrong about its own scope for nine releases, and
+the other 204 checks have titles too. **Scoped first, and the scope is the reason this release is
+three lines rather than two hundred.**
+
+### What the scope measured, and the two findings that shrank it
+
+| | |
+|---|---|
+| checks in the gate | **205**, every one with a `describe` |
+| make a universal claim (*every / all / no / never*) | 78 (38%) |
+| build their population by scanning the source | 32 |
+| …and make a universal claim — **`voice`'s shape** | **14** |
+| never recorded red across 134 full-suite runs | 131 (64%) |
+
+**The fault does not obviously repeat.** Applying #295's method to two of the fourteen found both
+clean: `content` sees 33 of 33 panels against an independent count, and `layers`' overlay band is
+50–70 with the three stray bare z-indexes at 19–20, entirely below it.
+
+**And `voice` had been red once**, which rules out every cheap proxy. A floor guard would not have
+caught it (it found 20 tables). Comparing `describe` to output would not (they agreed, both narrow).
+"Never red" would not (it had been red). Only an independently derived second population catches
+that fault, and that is a *canary* — a declared mutation per check — which is a release or two and,
+on 2 of 2 clean spot-checks, may find nothing. **Not taken.** The scope is the deliverable there.
+
+### What WAS worth doing, and the count that was wrong twice
+
+A different and smaller fault turned up on the way. **`content.mjs` raised every failure per orphan,
+and an orphan could only be found among the panels its regex matched.** Empty match → empty orphans
+→ empty fails → `pass: true`. It printed *"0 panels in the registry · 0 orphaned"* and went green.
+
+The first count of how many checks shared this put it at **21 of 32**, from grepping `.length < N`.
+**That was wrong.** The suite uses at least five idioms for the same idea — `voice`'s
+`tables.length < 5`, `layers` summing three counters against 20, `turn` and `wants` with
+`if(!keys.length)`, `scope`, `copies` and `bulk` bailing with an early `return { pass:false }`.
+Counting one idiom and reporting it as the population **is the fault this release is about,
+committed while measuring it.** The verified figure was **3**, and it had been published in the
+scope before the correction — corrected there rather than quietly restated.
+
+### The three, and the one that stings
+
+| check | why an empty scan passed |
+|---|---|
+| `content` | every failure per orphan, orphans only from matched panels |
+| `fixtures` | every failure per gap found *inside* a file; `existsSync` skips a missing directory silently |
+| **`tools`** | **all four arms report "N of F.length" — an empty list passes every one** |
+
+`tools.mjs` is the gate over the instruments, added in #290 because *"a probe that works is a probe
+nobody reads"*. **It had the hole it polices**, and would have held nothing while reporting it in
+the language of holding everything. It was found while writing the arm that catches it, which is the
+honest place to record it and is now arm 0 of that file.
+
+### Arm 5, and the false positive it produced on its own motivating case
+
+`checks/tools.mjs` gains a fifth arm: **a check that builds its population by scanning — the source,
+or a directory of instruments — must somewhere assert that population is not trivially small.**
+Thirty-four checks scan; all thirty-four now guard.
+
+Its first run **flagged `content`, the check that prompted it.** The guard had been written
+`const N = …; if(N < 30)`, and the arm could not see a comparison behind a one-letter const.
+Widening the regex to `\w+ < \d+` would have matched every numeric comparison in the suite, so
+`content`'s guard was rewritten as `panels.size < 30` instead — legible to a reader and to the arm.
+`faces.mjs`'s rule decided it: a regex that is nearly right is worse than none, because it teaches
+you to ignore it. The arm's message therefore names **both** things a flag can mean — add a guard,
+or add the idiom to `GUARDS` — and the five recognised idioms are spelled out in the source so a
+reader can see what is recognised rather than trusting the list is complete.
+
+### Negative controls
+
+**Both proved.** Breaking `content`'s panel regex so it matches nothing turns it red with *"only 0
+panels parsed out of SECT"* — the same state that passed green before. Removing `fixtures`' guard
+turns arm 5 red and names the file.
+
+**The floors are floors, not exact counts.** `content` guards at 30 against 33 panels, `probe` and
+`fixtures` at 100 against hundreds. A cap set to today's count turns every legitimate addition red
+and teaches the next reader to edit the number without looking, which is worse than no guard. These
+say *"the scan is broken"*, never *"the registry changed"*.
 
 
 ## A THIRD AUDIT PASS — v3.259.0, written off the partial-player sweep
@@ -29809,7 +29891,7 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.291.0 — the check that holds the game's registers was holding two thirds of them, and the ending of the game was reachable by nothing*
+*Last updated: v3.292.0 — three checks passed on an empty scan, and the gate over the instruments was one of them*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
