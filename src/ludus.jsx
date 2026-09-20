@@ -12204,6 +12204,92 @@ const SALUTES = [
 const saluteLine = (A, c) => { const e = SALUTES.find(x=>{ try { return x.when(A, c); } catch(err){ return false; } });
   return (e || SALUTES[SALUTES.length-1]).say(A, c); };
 
+/* ---- THE MISSIO, TEMPLATED — #294, and the last of the three ----
+   `watching.mjs` named three un-templated beats in a bout and they are now all cut:
+
+       kind      read  shapes  branch  re-read   release
+       death       60       7      14      8.6   #292, v3.288.0
+       salute     200     181      16      1.1   #293, v3.289.0
+       spared     118       3       2     39.3   this
+
+   THE MISSIO IS THE ONE THE GAME IS ABOUT. `saluteWorth`, `missioScore`, `missioAccount`,
+   `askSigns`, `spareRaw` and the whole appeal box exist to decide it, and #230 went to the trouble
+   of making the box show the SAME number the roll uses rather than a retyped copy of it. Every
+   one of those roads arrives at a verdict that had three sentences behind it, two of which a house
+   without a patron or a following never sees. A player who fought four hundred bouts read
+   `MISSIO. The editor's hand opens.` almost every time a man of theirs lived.
+
+   TWO TABLES, BECAUSE THEY ARE TWO DIFFERENT MOMENTS and merging them would be a worse lie than
+   the repetition. `MISSIOS` is your own man on the sand with two fingers up. `MERCIES` is the
+   beaten stranger your man has just stopped hitting, and the question there is not whether you
+   are relieved — it is what the afternoon decides to do with somebody else's property.
+
+   NO NEW DRAW, for #283's reason, and the appeal's own `R() < odds` is untouched above. Every
+   branch reads state already in hand: who is in the box, what the city thinks of your house, the
+   odds the box had been showing, the round, the crowd, and what the two of them are to each other.
+
+   THE FIRST TWO ENTRIES OF `MISSIOS` ARE THE SHIPPED PATRON AND STREET LINES, VERBATIM, and they
+   stay first because they are the two the game most wants you to notice: they are the only beats
+   in the arena that tell you a thing you bought OUTSIDE it just saved a man's life. The last entry
+   of each table is the line that shipped for years and is the floor.
+
+   REACHABILITY IS PROVED, NOT ARGUED — `probes/reachable.mjs`, the instrument #293 built after
+   #292 reported "seven of eleven fired" and could not say whether the other four ever could. */
+const MISSIOS = [
+  { when:(A,c)=>!!(c.pat && c.pat.favor >= 70),
+    say:(A,c)=>`${c.pat.name} raises a hand from the editor's box before the crowd has finished deciding. MISSIO — ${c.prA.he} is spared, and every lanista in Capua saw who spoke for you.` },
+  { when:(A,c)=>c.street >= ACCLAIM_MISSIO * 0.7,
+    say:(A,c)=>`The top tiers are on their feet and will not sit down, and they are not asking. MISSIO — ${c.prA.he} is spared, because the city that plays at being your house did not intend to watch him die.` },
+  { when:(A,c)=>c.odds <= 0.2,
+    say:(A,c)=>`The box had been reading one way for five minutes and reads the other. MISSIO — nobody in the tiers expected it and ${c.prA.he} least of all, and ${c.prA.he} is carried off still braced for the blow.` },
+  { when:(A,c)=>c.odds >= 0.82,
+    say:(A,c)=>`The hand opens almost before the fingers go up. MISSIO — it was never really in question, and ${A.name} is helped off by men who had already decided ${c.prA.he} was walking.` },
+  { when:(A,c)=>c.round >= 10,
+    say:(A,c)=>`Ten rounds, and the editor will not spend what is left of ${A.name}. MISSIO — ${c.prA.he} goes off to the sound of a crowd that got everything it came for.` },
+  { when:(A,c)=>c.round <= 2,
+    say:(A,c)=>`It is over so fast the tiers have barely settled. MISSIO — there is nothing in ${c.round === 1 ? "one round" : "two rounds"} worth a man's life, and the editor's hand opens on a shrug.` },
+  { when:(A,c)=>c.crowd >= 78,
+    say:(A,c)=>`The noise decides it. MISSIO — the editor's hand opens into a wall of sound and ${A.name} is carried off by people who cannot hear themselves.` },
+  { when:(A,c)=>c.crowd <= 25,
+    say:(A,c)=>`MISSIO. The hand opens, and it is the quietest thing that has happened all afternoon. ${A.name} is carried out past tiers already talking about something else.` },
+  { when:(A,c)=>(A.wins||0) >= 20,
+    say:(A,c)=>`MISSIO — and the tiers were never going to let this one go. ${A.name} has won ${A.wins} times in front of them and they intend to be there for the next one.` },
+  { when:(A,c)=>(A.scars||[]).length >= 4,
+    say:(A,c)=>`MISSIO. The editor's hand opens, and ${A.name} is carried bleeding from the sand for the fifth time — the body keeps the tally whether ${c.prA.he} does or not.` },
+  { when:(A,c)=>(A.age||0) >= 34,
+    say:(A,c)=>`MISSIO. ${A.name} is spared at ${A.age}, an age at which the tiers start to feel something like fondness, which is not the same as mercy and does the same job.` },
+  { when:(A,c)=>!(A.wins||0) && !(A.losses||0),
+    say:(A,c)=>`MISSIO. The hand opens on a ${c.prA.man} the crowd met twenty minutes ago. ${A.name} lives through a first afternoon, which is the only one most of them have to survive twice.` },
+  { when:()=>true,
+    say:(A,c)=>`MISSIO. The editor's hand opens. ${c.prA.He} is spared — carried bleeding from the sand.` },
+];
+const missioLine = (A, c) => { const e = MISSIOS.find(x=>{ try { return x.when(A, c); } catch(err){ return false; } });
+  return (e || MISSIOS[MISSIOS.length-1]).say(A, c); };
+
+/* the other man's reprieve. The subject here is B — your man is the one standing up. */
+const MERCIES = [
+  { when:(B,c)=>c.crowd >= 78,
+    say:(B,c)=>`The crowd wants him kept and says so. Missio — ${B.name} is spared over the top of a noise your victor has to stand still inside.` },
+  { when:(B,c)=>c.crowd <= 25,
+    say:(B,c)=>`Missio — the beaten fighter is spared, because not enough of this crowd cared to ask for anything else. Your victor salutes tiers that are half empty.` },
+  { when:(B,c)=>c.round >= 10,
+    say:(B,c)=>`Ten rounds of it, and neither of them is going to be killed for the trouble. Missio — ${B.name} is helped up, and the two of them go off the sand at about the same speed.` },
+  { when:(B,c)=>c.round <= 2,
+    say:(B,c)=>`Missio, and quickly — there is no appetite for killing a man who has been on the sand for ${c.round === 1 ? "one round" : "two rounds"}. ${B.name} is walked off and the afternoon moves on.` },
+  { when:(B,c)=>(B.wins||0) >= 20,
+    say:(B,c)=>`Missio — ${B.name} has won ${B.wins} times somewhere, and the tiers know a name when they hear one. Your victor gets the salute; the other house keeps its man.` },
+  { when:(B,c)=>c.A.origin === B.origin,
+    say:(B,c)=>`Missio. ${B.name} is spared, and your ${c.prA.man} does not look especially glad about it — they were born within a week's walk of each other and only one of them is standing.` },
+  { when:(B,c)=>c.A.cls === B.cls,
+    say:(B,c)=>`Missio — the beaten fighter is spared. Your victor knows exactly what the other ${c.prB.man} was trying to do, because it is the same thing ${c.prA.he} would have tried.` },
+  { when:(B,c)=>(B.age||0) >= 34,
+    say:(B,c)=>`Missio. They do not kill ${B.name} at ${B.age}; the tiers save that for men who still have afternoons in them. Your victor is saluted over the top of it.` },
+  { when:()=>true,
+    say:(B,c)=>`Missio — the beaten fighter is spared, and the crowd salutes your victor.` },
+];
+const mercyLine = (B, c) => { const e = MERCIES.find(x=>{ try { return x.when(B, c); } catch(err){ return false; } });
+  return (e || MERCIES[MERCIES.length-1]).say(B, c); };
+
 function simulateFight(A, B, tA, stakes, ctx, opts){
   const O = opts || {};
   const R0 = O.from || null;
@@ -12652,11 +12738,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
         /* who it was that spoke. The box, if a patron is in it — otherwise the top
            tiers, when the house is theirs enough for them to shout for it. */
         const street = clamp(ctx.street||0, 0, ACCLAIM_MISSIO);
-        push("spared", pat && pat.favor>=70
-          ? `${pat.name} raises a hand from the editor's box before the crowd has finished deciding. MISSIO — ${prA.he} is spared, and every lanista in Capua saw who spoke for you.`
-          : street >= ACCLAIM_MISSIO*0.7
-          ? `The top tiers are on their feet and will not sit down, and they are not asking. MISSIO — ${prA.he} is spared, because the city that plays at being your house did not intend to watch him die.`
-          : `MISSIO. The editor's hand opens. ${prA.He} is spared — carried bleeding from the sand.`, {actor:"A"});
+        push("spared", missioLine(A, { pat, street, odds, round, crowd, prA }), {actor:"A"});
         for(const x of signs(true)) push(x[0], x[1], x[2]); }
       else { aDies=true;
         push("death", deathLine(A, { round, crowd, odds, prA }), {actor:"A"});
@@ -12664,7 +12746,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     } else {
       push("appeal", `${B.name} raises two fingers in appeal...`, {actor:"B"});
       if(crowd>62 && R()<0.55){ bDies=true; push("death", `The crowd howls for blood, and the editor grants it. ${A.name} sends ${prB.him} across the river.`, {actor:"B"}); }
-      else { spared = true; push("spared", `Missio — the beaten fighter is spared, and the crowd salutes your victor.`, {actor:"B"}); }
+      else { spared = true; push("spared", mercyLine(B, { A, crowd, round, prA, prB }), {actor:"B"}); }
     }
   }
 
@@ -36032,11 +36114,12 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     simulateFight, simulatePair, simulateMelee, simulateVenatio,
     simulateSpar, doSpar, SPAR_CRUX, cruxMenuFor, cruxSolo, cruxWords, SPAR_ROUNDS, SPAR_YIELD, SPAR_CAP, SPAR_SWING, SPAR_SPEAK, SPAR_PRESS,   /* the fifth engine — #232 */
     doFight, doPairFight, doMelee, doVenatio,
-    /* the two templated beats of a bout, and the pickers over them — exported so
+    /* the templated beats of a bout, and the pickers over them — exported so
        `probes/reachable.mjs` can drive every entry with synthetic state and prove
        each branch is selectable. #292 could only report which ones HAPPENED to
-       fire in 200 week-one bouts, which says nothing about whether the rest can. */
-    DEATHS, deathLine, SALUTES, saluteLine,
+       fire in 200 week-one bouts, which says nothing about whether the rest can.
+       `MISSIOS` is your own man spared; `MERCIES` is the beaten stranger. */
+    DEATHS, deathLine, SALUTES, saluteLine, MISSIOS, missioLine, MERCIES, mercyLine,
     /* the week, and what it writes down */
     endWeek, bookBout, bookOf, newBook, chron, chronAll, bookSays,
     /* the week's one question, and the draw that chooses it */

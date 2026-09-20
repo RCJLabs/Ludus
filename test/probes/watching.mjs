@@ -62,17 +62,22 @@
    `death` also has four branches and reaches three, so part of it is reachability, the shape #288
    found in the rebellion ladder.
 
-   ---- TWO OF THE THREE HAVE SINCE BEEN CUT, AND THE TABLE ABOVE IS LEFT AS IT WAS ----
+   ---- ALL THREE HAVE SINCE BEEN CUT, AND THE TABLE ABOVE IS LEFT AS IT WAS ----
    It is the finding, not the current state, and overwriting it would delete the only record of
    what the game was when the question was asked. Where they stand now, same 200 bouts:
 
        kind       read  shapes  branch  re-read   was              release
        death        60       7      14      8.6   3 · 4 · 20.0     #292, v3.288.0
        salute      200     181      16      1.1   1 · 1 · 200.0    #293, v3.289.0
-       spared      118       3       2     39.3   unchanged        —
+       spared      118      26      22      4.5   3 · 2 · 39.3     #294, v3.290.0
 
-   The salute is the larger of the two by a distance: it fires on EVERY bout where the death fires
-   on a few percent, and one sentence was carrying 5.1% of every line a player reads.
+   The salute was the largest of the three by a distance: it fires on EVERY bout where the death
+   fires on a few percent, and one sentence was carrying 5.1% of every line a player reads. The
+   missio is the one the GAME is about — `saluteWorth`, `missioScore`, `askSigns` and the whole
+   appeal box exist to decide it — and it took two tables, because your own man with two fingers
+   up and the beaten stranger your man has stopped hitting are two different moments.
+
+   THE WORST RE-READ LEFT IN A BOUT IS 8.6 (`crowd`, `death`), against exchanges at 1.6-4.0.
 
    NOTE WHAT THE `shapes` COLUMN DOES THERE AND DO NOT MISREAD IT. Sixteen authored branches came
    back as 181 surface forms, because the branches substitute a class, an origin, a patron's name
@@ -80,14 +85,11 @@
    probe's own header was written to warn about, and it is not a claim that 181 sentences were
    written. Sixteen were. The honest pair of numbers is `branch` and `re-read`.
 
-   `spared` is the one left. It is not measured differently from the other two and wants the same
-   cut; it is simply next.
-
    AND THE REACHABILITY QUESTION IS NOW ANSWERED ELSEWHERE. "`death` has four branches and reaches
    three" (above) is a statement about THIS SAMPLE, which fights week-one houses, and it cannot
    tell rare from dead. `probes/reachable.mjs` sweeps both tables over constructed state and proves
-   each entry selectable: 27 of 27, none shadowed. Read the two together — this one for what a
-   player meets, that one for what exists to be met.
+   each entry selectable: 49 of 49 across four tables, none shadowed. Read the two together — this
+   one for what a player meets, that one for what exists to be met.
 
       NOT A DRAWING PROBLEM. Six checks hold the arena's visuals and they pass. Whatever is wrong with
    watching the four hundredth bout of a career, it is not the picture. */
@@ -130,8 +132,16 @@ const authored = (() => {
      v3.289.0 templated the salute into `SALUTES`, sixteen entries on the same `when`/`say` shape.
      The rule stays a named map rather than a regex over plurals — a guess that turned `CRUX` into
      `crux` or `TELLS` into `tell` would be a wrong number with nothing saying so, which is the
-     single fault this project has shipped most often. */
-  const TABLES = { DEATHS: "death", SALUTES: "salute" };
+     single fault this project has shipped most often.
+
+     AND THE THIRD BEAT TOOK TWO TABLES, WHICH THE MAP HANDLES AND THE ARITHMETIC HAD TO BE
+     CHECKED FOR: `spared` fires from two different call sites that are two different moments —
+     your own man with two fingers up (`MISSIOS`) and the beaten stranger your man has stopped
+     hitting (`MERCIES`) — so two names map to one kind. The subtraction below is per TABLE, not
+     per kind, and that is the correct reading: each table replaced one call site, so 2 sites +
+     (13-1) + (9-1) = 22, which is 13 + 9. Worth writing down, because an off-by-one here would
+     be a wrong number with nothing saying so. */
+  const TABLES = { DEATHS: "death", SALUTES: "salute", MISSIOS: "spared", MERCIES: "spared" };
   for(const [tbl, kind] of Object.entries(TABLES)){
     const t = src.findIndex(l => l.startsWith(`const ${tbl} = [`));
     if(t < 0) continue;
