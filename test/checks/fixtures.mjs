@@ -42,6 +42,14 @@ export async function run(){
     for(const f of fs.readdirSync(d)) if(f.endsWith(".mjs")) files.push(path.join(d, f));
   }
   files.sort();
+  /* the `content` hole (#296) again: the only failure below is raised per gap found INSIDE a
+     file, so an empty `files` finds no gaps and passes. `existsSync` skips a missing directory
+     silently, which is the likeliest way this list empties — a renamed folder reads exactly like
+     a clean suite. */
+  if(files.length < 100)
+    fails.push(`only ${files.length} instruments found under test/ — there are hundreds, so this `
+      + `is the listing reading the wrong place, not the suite shrinking. Every failure below is `
+      + `raised per file, so an empty list passes`);
 
   let forges = 0, clean = 0;
   for(const f of files){

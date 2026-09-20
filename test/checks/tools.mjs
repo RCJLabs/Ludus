@@ -52,6 +52,16 @@ export async function run() {
   const bad = [];
   const F = files();
 
+  /* ---- ARM 0: AND THIS CHECK HAD THE HOLE IT POLICES — #296 ----
+     Every arm below reports "N of F.length". With an empty `F` all four report "0 of 0" and this
+     check passes: the gate over the instruments would hold nothing and say so in the language of
+     holding everything. Found while writing arm 5, in the file arm 5 lives in, which is the
+     honest place to record it. */
+  if(F.length < 100)
+    bad.push(`only ${F.length} instruments found across ${DIRS.join(" + ")} — there are hundreds, `
+      + `so this is the listing reading the wrong place. Every arm below is "N of N" over this `
+      + `list, so an empty one passes all four`);
+
   /* ---- ARM 1: THE DOUBLE-STEP ---- */
   {
     const hits = [];
@@ -189,6 +199,51 @@ export async function run() {
       }
     }
     lines.push(`probes that take an arm and name it: ${armed - mute} of ${armed}`);
+  }
+
+  /* ---- ARM 5: A SCAN THAT FINDS NOTHING MUST NOT READ AS NOTHING WRONG — #296 ----
+     `checks/content.mjs` raised every one of its failures per ORPHAN, and an orphan could only be
+     found among the panels its regex matched. So an empty match gave an empty orphan list, an
+     empty fail list and `pass: true` — it printed "0 panels in the registry · 0 orphaned" and went
+     green. It was correct on the day (33 of 33); the hole was that nothing would have said so if
+     the shape had moved, which is #295 one size down.
+
+     THE RULE: a check that builds its population by SCANNING — the source file, or a directory of
+     instruments — must somewhere assert that population is not trivially small.
+
+     ---- AND THE FIRST COUNT OF THIS WAS WRONG, WHICH IS WHY THE LIST IS SPELLED OUT ----
+     Grepping for `.length < N` put the missing guards at 21 of 32. The real figure is 3 of 32:
+     the suite uses at least five idioms for the same idea and that grep saw one of them.
+     Reporting a single idiom's count as the population is the exact fault this arm exists to
+     catch, committed while writing it. Every idiom actually in use is named below, so a reader
+     can see what is recognised rather than trusting that the list is complete.
+
+     WHEN THIS ARM IS WRONG IT WILL BE A FALSE POSITIVE, and `faces.mjs`'s rule is that a regex
+     which is nearly right is worse than none because it teaches you to ignore it. So the message
+     says both things it can mean: add a guard, OR add the idiom here. */
+  {
+    const GUARDS = [
+      [/(\.length|\.size)\s*<\s*\d+/,                     "length < N"],
+      [/\b\w+\s*\+\s*\w+\s*\+\s*\w+\s*<\s*\d+/,   "a sum of counters < N"],
+      [/if\s*\(\s*!\s*\w+(\.\w+)*\.(length|size)\s*\)/, "if(!xs.length)"],
+      [/return \{ ?pass\s*:\s*false/,                    "an early return { pass:false }"],
+      [/if\s*\(\s*!\w+\s*\)\s*fails\.push/,            "if(!found) fails.push(…)"],
+    ];
+    const SCANS = /readFileSync\([^)]*ludus\.jsx|ROOT[^)]*ludus\.jsx|readdirSync\(/;
+    let scanning = 0, unguarded = [];
+    for (const f of F) {
+      if (!f.rel.startsWith("test/checks/")) continue;   /* probes are not gates and may say nothing */
+      const src = noComments(readFileSync(f.path, "utf8"));
+      if (!SCANS.test(src)) continue;
+      scanning++;
+      if (!GUARDS.some(([re]) => re.test(src))) unguarded.push(f.rel);
+    }
+    for (const u of unguarded)
+      bad.push(`${u} builds its population by scanning and never asserts that population is `
+        + `non-trivial — if the scan finds nothing it finds nothing WRONG, and passes. Add a floor `
+        + `guard, or if it already has one this arm does not recognise, add the idiom to GUARDS`);
+    lines.push(`scans that guard against finding nothing: ${scanning - unguarded.length} of ${scanning}`
+      + ` · ${GUARDS.length} idioms recognised`);
   }
 
   lines.push(`${F.length} instruments held: ${DIRS.join(" + ")}`);
