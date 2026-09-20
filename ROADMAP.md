@@ -12415,7 +12415,7 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
-## AFTER THE QUEUE — v3.272.0 to v3.290.0, nineteen releases, six game changes, five instruments
+## AFTER THE QUEUE — v3.272.0 to v3.291.0, twenty releases, six game changes, six instruments
 that had been lying since they were written — and finally a gate over the instruments
 
 The third pass closed on #275 at v3.271.0, and with it the last item anybody had written down. What
@@ -12445,6 +12445,7 @@ overturned**, and the refusals are the reason to read this section.
 | v3.288.0 | **#292** | **the death, templated — 20.0 re-reads to 8.6, and no draw moved** |
 | v3.289.0 | **#293** | **the salute, templated — 200.0 re-reads to 1.1, and 27 of 27 branches proved reachable** |
 | v3.290.0 | **#294** | **the missio, templated — 39.3 re-reads to 4.5, and the three-beat finding is closed** |
+| v3.291.0 | **#295** | **`voice` was holding two thirds of the game's registers — three the player reads were reachable by nothing** |
 
 ## What was actually built
 
@@ -13224,6 +13225,91 @@ The un-templated beats are gone; the worst re-read left in a bout is `crowd` and
 against exchanges at 1.6–4.0. What this does **not** say is that anyone was bored — that step is
 taste, it was taken deliberately three releases running, and every one of the three source comments
 says so rather than dressing it as arithmetic.
+
+---
+
+### #295 — `voice` WAS HOLDING TWO THIRDS OF THE REGISTERS, AND SAID IT WAS HOLDING ALL OF THEM
+
+Noticed in the v3.290.0 gate log, not by looking for it: `checks/voice.mjs` is titled *"every table
+that gates a written line on the state can be reached from a test"* and it reported **20 tables**
+after a release that had just added four more of exactly that kind.
+
+**Its own header had made the promise it broke.** Verbatim, from #186: *"a twelfth table added next
+year goes red here rather than sitting unread until somebody thinks to grep."* Four tables were
+added across v3.288.0–v3.290.0, the check stayed green through all three, and they were found by
+somebody thinking to grep.
+
+**The cause is one regex.** The scan read `when:`/`need:` whose **first argument is `d`** — the
+house — because that is the shape `asks` perturbs and `asks` is what #186 was repairing. A predicate
+over anything else was not a narrower case of the rule; it was **invisible** to it. The title said
+*on the state*, the measurement said *on the house*, and nothing in the output distinguished them.
+That is the fault this section has catalogued nine times, sitting inside a check written to hold the
+same kind of gap — and this time in a **gate check**, not a probe, which is the half that is
+supposed to be load-bearing.
+
+### Ten subject-bound tables, and three the player reads that nothing could reach
+
+Widening the shape found ten tables gating written lines on a subject rather than the house — a man
+(`DEATHS`, `SALUTES`, `MISSIOS`, `TELLS`), his opponent (`MERCIES`), a crux (`CRUX`), a rival
+(`RIVAL_BEATS`), a munus field (`FIELD_TELLS`), a chronicle entry (`CHRON_FILTERS`), a closing tally
+(`VERDICTS`). **Three of the ten were not on the test handle at all** — the exact fault #186 built
+this check to catch, unread for nine releases:
+
+| table | entries | what it is |
+|---|---|---|
+| **`VERDICTS`** | 7 | **what the player reads when the house ends** |
+| `FIELD_TELLS` | 6 | what a munus field looks like before you pick a plan |
+| `CHRON_FILTERS` | 4 | the four names over the chronicle |
+
+`VERDICTS` is the one that matters. `verdictOf` was already exported, so a test could ask *which*
+verdict a closing house gets — and had no way to enumerate the seven it chooses between, or show
+they were all reachable. The ending of the game was held by nothing.
+
+All three are exported now, and the check holds both classes: **30 of 30 tables, 20 house-level +
+10 subject-bound, 253 entries.**
+
+### The two classes are not the same question, and the check now says so
+
+A **house-level** register can be driven by perturbing a house-level quantity, which is what `asks`
+does and why silence there is a finding about the game. A **subject-bound** one cannot — you have to
+construct the subject — so **reachability is necessary and not sufficient**, and `probes/reachable.mjs`
+(#293) is what sweeps constructed subjects and proves each entry selectable. This check says the
+door exists; that probe walks through it. Both lines are in the output so neither gets read as the
+other.
+
+### Four false positives, a name collision, and a message that lied
+
+Written down because each was caught by checking rather than by taste:
+
+- **The predicate must be a function.** The first widened scan counted `need:12` in `LEGACIES` and
+  `need:6` in `PACTS` — thresholds, not gates — and misattributed two more to `spiteWeight` and
+  `pactBlocks`, which are functions rather than tables. **Four false positives out of fourteen**, in
+  the first run of a scan written to catch over-claims.
+- **`SUBJECT_BOUND` already meant something else** in this file: house-level tables needing a
+  *second* argument (`AFTERS`, `FEUD_CAUSES`). Renamed to `ALSO_NEEDS`. Two ideas under one word in
+  one file is how a reader ends up sure of the wrong one.
+- **The runtime arm explained itself wrongly.** The negative control made it announce three tables
+  as *"named in the handle block but not actually on it at runtime"* when they were named nowhere.
+  It now separates named-but-absent from never-named, so it cannot fire with a false reason.
+
+### What the negative control proved, and what it could not
+
+**Proved:** pulling the three exports back out turns the check red and names all three with the
+correct reason. A green arm nobody has seen go red is not evidence.
+
+**Not proved:** the runtime arm's *other* path — named in the block, absent at runtime. It cannot be
+constructed, because the handle uses shorthand and a name with no binding is a build error rather
+than a missing export; the attempt removed the handle entirely. **That path was unexercised before
+this release too**, and nothing here changed except that its message can no longer be wrong. Said
+plainly rather than folded into the three greens.
+
+### And comments are blanked before either scan, which changes no verdict today
+
+The source scan is unaffected — no comment in `ludus.jsx` currently carries a predicate shape. The
+handle test is where it matters: **a table merely named in a comment inside the handle block would
+have read as exported**, and that does not fire today only because the names written there happen to
+be in backticks and the boundary classes do not include one. Luck, not design, so it is closed.
+Reported as *changes nothing today* rather than as a bug fixed.
 
 
 ## A THIRD AUDIT PASS — v3.259.0, written off the partial-player sweep
@@ -29723,7 +29809,7 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.290.0 — the missio is templated, and the three un-templated beats of a bout are now none*
+*Last updated: v3.291.0 — the check that holds the game's registers was holding two thirds of them, and the ending of the game was reachable by nothing*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
