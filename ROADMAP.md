@@ -12996,10 +12996,37 @@ missio (39.3) are untouched. And the measurement supports *"these beats are un-t
 re-read"* — it does not support *"a player was bored"*. That second step is taste, it was taken
 deliberately, and the comment in the source says so rather than dressing it as arithmetic.
 
-**And it exposed a limit in the instrument.** `watching.mjs` counts authored branches by counting
-`push("death", …)` CALL SITES, so eleven conditional variants inside one call still read as four
-branches — the beat is now templated and the table calls it "branched". The re-read figure is the
-one that moved and the one to trust; the classifier wants a better rule than call-site counting.
+### And the gate said the shape was wrong, which it was
+
+The first cut put all eleven variants inside `simulateFight`. `checks/bulk.mjs` went red:
+**466 lines allowed, 510 written.** Three readings were available and the comfortable one was
+raising the cap.
+
+The right one is that **this file's idiom is a named table with `when`/`say`** — `TELLS`,
+`FREEDMEN`, `WORDS`, `CRUX` — and the death is now a `DEATHS` table read by a one-line call.
+`simulateFight` is back to **466 exactly**, the behaviour is byte-identical (7 forms, 8.6 re-reads,
+exchange pools unchanged), and a table is **countable** in a way an inline chain is not. That last
+part was not a bonus; it was the second half of the argument.
+
+### Which fixed a limit the same release had just created
+
+`watching.mjs` counted authored branches by counting `push("death", …)` **call sites**. Templating
+the beat properly took the call sites to one, so **eleven pieces of writing read as one branch** —
+and the table called `death` "branched" in the same run that took it from four variants to
+fourteen. **A label that goes the wrong way when the thing improves is worse than no label.**
+
+Both are fixed. The reader counts `DEATHS` entries; the classifier now separates the two ways of
+getting variety, because they are not the same thing:
+
+| | | |
+|---|---|---|
+| **templated** | `shapes >> branches` | one sentence wearing many coats — `crit`, 405 forms from no branch |
+| **written out** | `shapes ≈ branches` | a sentence per condition — `death`, 14 branches |
+| **thin** | few of both | `salute` 1/1 at **200.0**, `spared` 3/2 at **39.3** |
+
+Both techniques are legitimate and this file uses both. What a reader feels is the **re-read**
+column, not which technique produced it — and the two beats still worth doing are now labelled
+plainly as the thin ones they are.
 
 ### Arm 4, and what it honestly does not cover
 

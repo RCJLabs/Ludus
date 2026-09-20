@@ -85,6 +85,28 @@ const authored = (() => {
     const m = src[i].match(/push\("([a-z]+)"/g) || [];
     for(const hit of m){ const k = hit.slice(6, -1); out[k] = (out[k]||0) + 1; }
   }
+
+  /* ---- AND A BEAT WHOSE VARIANTS LIVE IN A TABLE — #292 ----
+     Counting `push("death", …)` CALL SITES was the whole rule, and it stopped being enough the
+     moment a beat was templated properly: v3.288.0 moved eleven death variants into a `DEATHS`
+     table with `when`/`say`, the way `TELLS` and `FREEDMEN` are shaped, and the call site went to
+     ONE. Eleven pieces of writing read as one branch, and the table called the beat "branched"
+     immediately after it had been templated.
+
+     A table is countable in a way an inline chain is not — which is half the reason the extraction
+     was the right shape rather than raising `bulk`'s cap. The entries are counted here and added
+     to the kind the table is named for. The rule is still narrow: it knows `DEATHS -> death`, and
+     a second templated beat will want its own line. Naming that is better than a regex that
+     guesses at plurals. */
+  const TABLES = { DEATHS: "death" };
+  for(const [tbl, kind] of Object.entries(TABLES)){
+    const t = src.findIndex(l => l.startsWith(`const ${tbl} = [`));
+    if(t < 0) continue;
+    let n = 0;
+    for(let i = t + 1; i < src.length && !/^\];/.test(src[i]); i++)
+      if(/^\s*\{\s*when:/.test(src[i])) n++;
+    if(n) out[kind] = (out[kind] || 0) + n - 1;   /* the call site it replaced already counted once */
+  }
   return { counts: out, from: a+1, to: b };
 })();
 
@@ -228,9 +250,20 @@ for(const [k,v] of ks){
   const P = out.pools[k] || { pool:0 };
   const br = authored.counts[k] || 0;
   const rr = P.pool ? (v/P.pool).toFixed(1) : "-";
+  /* ---- TWO WAYS TO GET VARIETY, AND THEY ARE NOT THE SAME THING — #292 ----
+     `shapes >> branches` is TEMPLATED: one sentence wearing many coats, a name and a wound and a
+     technique substituted in. `shapes ~ branches` is WRITTEN OUT: a sentence per condition, no
+     substitution. Both are legitimate and the file uses both; what a reader feels is the RE-READ
+     column, not which technique produced it.
+
+     Calling the second one "branched" as if it were a fault is what this classifier did until
+     v3.288.0 — and it said it about `death` in the same run that took the death from four
+     variants to fourteen. A label that goes the wrong way when the thing improves is worse than
+     no label. */
   const how = !br ? "templated (no branch of its own)"
     : P.pool / br >= 4 ? "templated"
-    : "branched";
+    : br >= 8 ? "written out"
+    : "thin — few branches, few forms";
   console.log(`    ${String(k).padEnd(9)} ${String(v).padStart(6)} `
     + `${(v/tot*100).toFixed(1).padStart(6)}% ${String(P.pool).padStart(7)} `
     + `${String(br).padStart(7)} ${String(rr).padStart(8)}  ${how}`);
