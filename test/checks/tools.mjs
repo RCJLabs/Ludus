@@ -24,6 +24,8 @@
      2  every instrument parses, because probes never run in the gate and can rot unseen
      3  a probe's own `miss` guard names only things the handle really exports, so a probe cannot
         refuse to run for a reason that reads like a finding
+     4  a probe that takes an ARM from the command line prints which arm it ran, because a number
+        without its policy beside it cannot be compared to anything
 
    THIS CHECK TOUCHES NO BROWSER AND NO GAME STATE. It reads files. If it is ever slow, it is
    wrong. */
@@ -147,6 +149,46 @@ export async function run() {
       lines.push(`handle guards: ${guards} lists checked against ${keys.size} exported keys · `
         + `${ghosts} name${ghosts === 1 ? "" : "s"} the handle does not have`);
     }
+  }
+
+  /* ---- ARM 4: A PROBE MUST SAY WHICH ARM IT RAN ----
+     v3.287.0 re-took three probes and passed none of them their `[ref|most]` argument, so they ran
+     the bare reference rope where `free` defaults FALSE. `bench` came back with "a freed man was
+     waiting in 0.0% of weeks" against a published 68.4%, and that looked exactly like a shipped
+     fix that had stopped working. It was the wrong arm.
+
+     BE HONEST ABOUT WHAT THIS ARM WOULD AND WOULD NOT HAVE CAUGHT. `bench` DID print
+     `under \`ref\`` on its first line; the figure was read through `tail` and the header was cut
+     off. No regex fixes that — it is a discipline point and it belongs in the ROADMAP, not here.
+     What this arm does close is the narrower case where a probe CANNOT tell you: it takes an arm
+     from argv, branches on it, and never prints it. A number without its policy beside it cannot
+     be compared to the number it is supposed to be compared to. */
+  {
+    let armed = 0, mute = 0;
+    for (const f of F) {
+      const src = noComments(readFileSync(f.path, "utf8"));
+      const m = src.match(/const\s+([A-Z_][A-Z0-9_]*)\s*=\s*process\.argv\[\d+\]\s*\|\|\s*["'][a-z]+["']/);
+      if (!m) continue;
+      armed++;
+      const v = m[1];
+      /* IT MUST REACH AN OUTPUT LINE, AND THE NAME MAY CHANGE ON THE WAY.
+         `credit.mjs` reads `WHO` from argv, hands it into the page, and prints it back as
+         `out.who` — the arm IS named in the output, under a lowercased name. The first cut of this
+         arm flagged it, which is a false positive in a check meant to be trusted; `faces.mjs`'s own
+         header says a regex that is nearly right is worse than none, because it teaches you to
+         ignore the thing. `perk.mjs` was the second false positive: it prints `${MODEWORD}`, the
+         arm under a derived name. So the match is case-insensitive, leading-boundary only (MODE
+         matches MODEWORD), and spans a multi-line console.log rather than stopping at the first
+         `)` — a `.toFixed(1)` early in a template was hiding the arm named later in it. Three
+         refinements, each driven by a verified false positive rather than by taste. */
+      const printed = new RegExp(`console\\.log[\\s\\S]{0,400}?\\b${v}`, "i").test(src);
+      if (!printed) {
+        mute++;
+        bad.push(`${f.rel} takes \`${v}\` from the command line and never prints it — its output `
+          + `cannot say which arm produced the numbers, so they cannot be compared to anything`);
+      }
+    }
+    lines.push(`probes that take an arm and name it: ${armed - mute} of ${armed}`);
   }
 
   lines.push(`${F.length} instruments held: ${DIRS.join(" + ")}`);

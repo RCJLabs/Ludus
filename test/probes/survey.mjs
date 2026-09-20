@@ -299,5 +299,7 @@ const out = await p.evaluate(([H, W, SEED, OPTS, POLICY])=>{
   sum.chron.top = top; delete sum.chron.distinct;
   return sum;
 }, [H, W, SEED, opts, POLICY]);
-console.log(JSON.stringify(out, null, 1));
+/* the arm goes in the output, not just in argv — a number without its policy beside it cannot
+   be compared to the number it is meant to be compared to. See checks/tools.mjs arm 4. */
+console.log(JSON.stringify(Object.assign({ policy: POLICY }, out), null, 1));
 await browser.close(); server.close();
