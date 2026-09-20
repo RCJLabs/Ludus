@@ -12415,7 +12415,7 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
-## AFTER THE QUEUE — v3.272.0 to v3.289.0, eighteen releases, five game changes, five instruments
+## AFTER THE QUEUE — v3.272.0 to v3.290.0, nineteen releases, six game changes, five instruments
 that had been lying since they were written — and finally a gate over the instruments
 
 The third pass closed on #275 at v3.271.0, and with it the last item anybody had written down. What
@@ -12444,6 +12444,7 @@ overturned**, and the refusals are the reason to read this section.
 | v3.287.0 | **#291** | **the seven re-taken: all six items hold — and a retraction I owed** |
 | v3.288.0 | **#292** | **the death, templated — 20.0 re-reads to 8.6, and no draw moved** |
 | v3.289.0 | **#293** | **the salute, templated — 200.0 re-reads to 1.1, and 27 of 27 branches proved reachable** |
+| v3.290.0 | **#294** | **the missio, templated — 39.3 re-reads to 4.5, and the three-beat finding is closed** |
 
 ## What was actually built
 
@@ -13141,6 +13142,88 @@ catch.
 The probe's own header keeps the original three-un-templated-beats table **as it was measured**
 rather than overwriting it, with the current state beneath it. It is the finding; the current state
 is a footnote to it. `spared` (3 forms, 39.3 re-reads) is the one of the three still standing.
+
+---
+
+### #294 — THE MISSIO, TEMPLATED, AND THE FINDING IS CLOSED
+
+`watching.mjs` named three un-templated beats in a bout. All three are now cut, in the order the
+measurement ranked them once I stopped picking by what I happened to be looking at:
+
+| kind | read | shapes | branch | re-read | release |
+|---|---|---|---|---|---|
+| `death` | 60 | 3 → **7** | 4 → **14** | 20.0 → **8.6** | #292, v3.288.0 |
+| `salute` | 200 | 1 → **181** | 1 → **16** | 200.0 → **1.1** | #293, v3.289.0 |
+| `spared` | 118 | 3 → **26** | 2 → **22** | 39.3 → **4.5** | #294, this |
+
+**The missio is the one the game is actually about.** `saluteWorth`, `missioScore`,
+`missioAccount`, `askSigns`, `spareRaw` and the whole appeal box exist to decide it, and #230 went
+to the trouble of making the box show the *same* number the roll uses rather than a retyped copy.
+Every one of those roads arrived at a verdict with three sentences behind it, **two of which a house
+with no patron and no following never sees**. A player who fought four hundred bouts read
+*"MISSIO. The editor's hand opens."* almost every time a man of theirs lived.
+
+**Two tables, because they are two different moments**, and merging them would have been a worse
+lie than the repetition. `MISSIOS` is your own man on the sand with two fingers up. `MERCIES` is
+the beaten stranger your man has just stopped hitting, where the question is not whether you are
+relieved but what the afternoon decides to do with somebody else's property. Thirteen entries and
+nine.
+
+**The first two entries of `MISSIOS` are the shipped patron and street lines, verbatim**, and they
+stay first: they are the only beats in the arena that tell you a thing you bought *outside* it just
+saved a man's life.
+
+| | before | after |
+|---|---|---|
+| `spared` authored branches | 2 | **22** |
+| `spared` surface forms | 3 | **26** |
+| `spared` re-reads | **39.3** | **4.5** |
+| all fourteen other kinds | — | **byte-identical** |
+| total lines read | 3922 | **3922** |
+
+Every other kind came back identical, which is the proof nothing re-phased. A bout went from 294
+words to 304. **`simulateFight` came back at 462 against a cap of 466** — the extraction removed
+four more lines than it added, so this release *bought back* headroom rather than spending it.
+
+### Swept before it shipped, which is the whole point of having built the thing
+
+`probes/reachable.mjs` is one release old. #293 built it because #292 could only report *"seven of
+eleven branches fired"* and had no way to say whether the other four ever could. This is the first
+release where the tables were swept **before** they went in:
+
+```
+49 authored branches across 4 tables
+0 shadowed · 0 never satisfied by this sweep
+Every entry of all 4 tables was selected or shown satisfiable.
+```
+
+And extending it surfaced a fault in the probe rather than in the game. `MERCIES` reads `B.wins`
+and `B.age` — the *stranger's* record — where every table before it read your own man's. The sweep
+cloned the foe without a record of his own, so two `MERCIES` branches would have come back
+unreachable **for a reason that was mine, not the table's**, and the probe would have printed its
+three confident zeros while doing it. Each table now declares which fighter it is about. That is
+this project's most-shipped fault — an instrument answering a narrower question than the one asked
+— caught inside the instrument built to catch it.
+
+### And the same editing mistake, twice, which the gate would have caught both times
+
+Teaching `watching.mjs` about the new tables meant appending to a comment block, and both times the
+new prose landed *after* the `*/` rather than inside it. Both times the probe refused to parse and
+named the line; **`checks/tools.mjs` arm 2 holds the same fault in the gate**, which is why that arm
+exists — probes are never run by anything and rot unseen.
+
+The map is still a named map, not a regex over plurals, and it now carries **two names to one
+kind**: `MISSIOS` and `MERCIES` both count toward `spared`. The subtraction is per *table*, not per
+kind — each replaced one call site — so 2 sites + (13−1) + (9−1) = 22, which is 13 + 9. The
+arithmetic is written down in the probe because an off-by-one there would be a wrong number with
+nothing saying so.
+
+### What the finding says now that it is closed
+
+The un-templated beats are gone; the worst re-read left in a bout is `crowd` and `death` at **8.6**,
+against exchanges at 1.6–4.0. What this does **not** say is that anyone was bored — that step is
+taste, it was taken deliberately three releases running, and every one of the three source comments
+says so rather than dressing it as arithmetic.
 
 
 ## A THIRD AUDIT PASS — v3.259.0, written off the partial-player sweep
@@ -29640,7 +29723,7 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.289.0 — the salute is templated: two hundred re-readings down to one, and 27 of 27 branches proved reachable rather than assumed*
+*Last updated: v3.290.0 — the missio is templated, and the three un-templated beats of a bout are now none*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
