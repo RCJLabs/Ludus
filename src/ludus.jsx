@@ -12519,7 +12519,52 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
           ? `The top tiers are on their feet and will not sit down, and they are not asking. MISSIO — ${prA.he} is spared, because the city that plays at being your house did not intend to watch him die.`
           : `MISSIO. The editor's hand opens. ${prA.He} is spared — carried bleeding from the sand.`, {actor:"A"});
         for(const x of signs(true)) push(x[0], x[1], x[2]); }
-      else { aDies=true; push("death", `The thumb turns. The blow falls true. ${A.name} dies as gladiators die — on the sand, before the crowd.`, {actor:"A"});
+      else { aDies=true;
+        /* ---- THE DEATH, TEMPLATED — #292 ----
+           `probes/watching.mjs` measured every kind of beat in a bout against the pool behind it.
+           Twelve of the fifteen are TEMPLATED — a name, a wound, a technique and a style wear many
+           coats on few sentences, and `crit` reaches 405 surface forms from no branch of its own.
+           Three are not: the salute, the missio and the death. They were also the three a player
+           re-reads most — the death 20 times over 200 bouts, off one fixed sentence per branch.
+
+           The asymmetry was never one of effort. `death` has four authored branches in this engine
+           and `graze` has one; somebody wrote MORE sentences for the death. What it never got was
+           the technique the rest of the fight uses everywhere, a few lines above this one.
+
+           SO: NO NEW DRAW. Every line below is chosen by a CONDITION on state that is already in
+           hand when the beat fires — the round he reached, the crowd at that moment, the odds the
+           box had been showing, his record, his fame, his age, his scars. #283's lesson is that any
+           change in draw count re-phases every seeded fixture in the project; a conditional costs
+           nothing and re-phases nothing. The order is most-specific first, and the last line is the
+           one that shipped for years, kept as the floor.
+
+           What is NOT claimed: that a player notices. The measurement says these beats are
+           un-templated and heavily re-read. It does not say anybody was bored, and this comment is
+           not going to pretend it does. */
+        const yrs = Math.floor((A.wins||0) / 6);          /* a rough career, in seasons on the sand */
+        push("death",
+          (A.wins||0) >= 20
+            ? `The thumb turns on a man who has won twenty times on this sand, and the tiers know exactly what they are watching. ${A.name} goes down in front of people who came to see him.`
+          : odds >= 0.62
+            ? `The thumb turns, and the box had been reading the other way all through the appeal — ${prA.he} had the crowd, and the crowd was not who decided. ${A.name} dies on a call that went against the noise.`
+          : round >= 10
+            ? `Ten rounds, and the thumb turns anyway. ${A.name} made them work for every one of them, and it counts for nothing that can be spent.`
+          : round <= 3
+            ? `It is over almost before the appeal is finished. ${A.name} is dead in the ${round === 1 ? "first" : round === 2 ? "second" : "third"} round, and half the tiers are still sitting down.`
+          : crowd >= 78
+            ? `The thumb turns into a noise like weather. ${A.name} dies with the whole place on its feet, which is what he would have wanted and is no use to him.`
+          : crowd <= 30
+            ? `The thumb turns. Nobody shouts. ${A.name} dies in front of a crowd that had already started thinking about the next pair.`
+          : (A.wins||0) <= 1
+            ? `The thumb turns on a man nobody in this place could have named an hour ago. ${A.name} is dead, and the sand does not care that he was new.`
+          : (A.scars||[]).length >= 4
+            ? `The thumb turns. ${A.name} carried four marks of this trade out of the cells this morning and does not carry them back.`
+          : (A.age||0) >= 34
+            ? `The thumb turns on a man of ${A.age}, which is old for this. ${A.name} does not get the quiet years that were nearly close enough to count.`
+          : yrs >= 2
+            ? `The thumb turns. ${A.name} gave this house ${yrs} years of afternoons and the last of them ends here, in the usual way.`
+          : `The thumb turns. The blow falls true. ${A.name} dies as gladiators die — on the sand, before the crowd.`,
+          {actor:"A"});
         for(const x of signs(false)) push(x[0], x[1], x[2]); }
     } else {
       push("appeal", `${B.name} raises two fingers in appeal...`, {actor:"B"});

@@ -12415,7 +12415,7 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
-## AFTER THE QUEUE — v3.272.0 to v3.287.0, sixteen releases, three game changes, four instruments
+## AFTER THE QUEUE — v3.272.0 to v3.288.0, seventeen releases, four game changes, four instruments
 that had been lying since they were written — and finally a gate over the instruments
 
 The third pass closed on #275 at v3.271.0, and with it the last item anybody had written down. What
@@ -12442,6 +12442,7 @@ overturned**, and the refusals are the reason to read this section.
 | v3.285.0 | **#289** | **everything in a fight is templated but the death — and my own count was a category error** |
 | v3.286.0 | **#290** | **`checks/tools.mjs` — 204 checks on the game, and now one on the instruments** |
 | v3.287.0 | **#291** | **the seven re-taken: all six items hold — and a retraction I owed** |
+| v3.288.0 | **#292** | **the death, templated — 20.0 re-reads to 8.6, and no draw moved** |
 
 ## What was actually built
 
@@ -12955,6 +12956,50 @@ a man with 10:          doctore, lanista, crowd, gift, bad, back      nothing th
 **#270's fix works.** The 0 of 40 was sampling — at 10.4% on forty draws, p is about 1.5%, and the
 run that produced it was a real house rather than a stocked pool. A zero interrogated before
 publication, which is this file's own rule, and it cost one measurement.
+
+### #292 — THE DEATH, TEMPLATED
+
+The first game change in eight releases, and the smallest the measurement supports.
+
+#289 found that twelve of the fifteen beat kinds in a bout are TEMPLATED — a name, a wound, a
+technique and a style wearing many coats on few sentences, with `crit` reaching 405 surface forms
+from no branch of its own. Three are not: the salute, the missio and the death. Those three are
+also the three a player re-reads most. **The asymmetry was never one of effort** — `death` has four
+authored branches in this engine and `graze` has one, so somebody wrote *more* sentences for the
+death. What it never got was the technique the rest of the fight uses a few lines above it.
+
+**Eleven conditional variants, and NO NEW DRAW.** Every line is selected by a condition on state
+already in hand when the beat fires: the round he reached, the crowd at that moment, the odds the
+box had been showing through the appeal, his record, his fame, his age, his scars. #283's lesson is
+that any change in draw count re-phases every seeded fixture in the project; a conditional costs
+nothing and re-phases nothing.
+
+Measured before and after, same 200 bouts:
+
+| | before | after |
+|---|---|---|
+| `death` surface forms | 3 | **7** |
+| `death` re-reads | **20.0** | **8.6** |
+| `crit` / `graze` forms | 405 / 304 | **405 / 304** |
+
+**The exchange pools came back byte-identical, which is the proof that nothing re-phased.** A bout
+went from 271 words to 274.
+
+**Seven of eleven branches fired, and the arithmetic closes.** `watching.mjs` fights fresh houses —
+week-one men with no wins, no scars and no age on them — so the four veteran branches (`wins>=20`,
+two-plus years on the sand, `age>=34`, four scars) *cannot* fire there. Seven predicted, seven
+observed. Those four are gated on a career, which is #288's reachability shape and not dead writing.
+
+**What is still true and what is not.** The death is no longer the second-most-repeated beat in the
+game, but at 8.6 it is still above the 4.0 the exchanges sit at, and the salute (200.0) and the
+missio (39.3) are untouched. And the measurement supports *"these beats are un-templated and heavily
+re-read"* — it does not support *"a player was bored"*. That second step is taste, it was taken
+deliberately, and the comment in the source says so rather than dressing it as arithmetic.
+
+**And it exposed a limit in the instrument.** `watching.mjs` counts authored branches by counting
+`push("death", …)` CALL SITES, so eleven conditional variants inside one call still read as four
+branches — the beat is now templated and the table calls it "branched". The re-read figure is the
+one that moved and the one to trust; the classifier wants a better rule than call-site counting.
 
 ### Arm 4, and what it honestly does not cover
 
@@ -29465,7 +29510,7 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.287.0 — the seven re-taken, all six items hold, and a retraction that was load-bearing*
+*Last updated: v3.288.0 — the death is templated: twenty re-readings down to eight and a half, and not one draw moved*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
