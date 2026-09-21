@@ -17389,7 +17389,25 @@ const gambitOdds = (d,k) => { const G = GAMBITS[k]; if(!G) return 0;
    stands on 93.3% of weeks, a named house feud on 33%, a rival keeping a grudge of 65 on 6.4%, and
    a rival with money in front of one of your men on **2.6%**. Hanging a door on the 93% arc is the
    permanent nag #229 was opened against. The door goes on the ACT: a house that has moved on you,
-   and then a house keeping a real account. */
+   and then a house keeping a real account.
+
+   ---- AND THE TABLE ABOVE IS THE STATE BEFORE `answerRow`, WHICH IT DID NOT SAY — #304 ----
+   "surfaced **0%**" was true of a game that had no door yet, and the door is the function directly
+   below it. Read today the line says the opposite of what shipped. Re-measured on the same probe,
+   same 16 houses, and left beside the original rather than over it:
+
+       gambit   available 94.8% · surfaced 7.1% · taken 0 by the reference rope
+                and 139 taken on the arm whose `gambit` lever is ON, which is #220's own point
+                about the zeroes being the rope's and not the game's
+
+   The fresh run also prices every candidate trigger, and the two this door chose are still the
+   pointed ones: a poach standing on **2.6%** of weeks and a grudge of 65 on **8.2%**, against the
+   nemesis arc's **89.8%** that #229 refused.
+
+   A MEASUREMENT PUBLISHED IN A COMMENT AGES THE SAME WAY ONE PUBLISHED IN A PROBE HEADER DOES.
+   `depth.mjs` carried 67 events and 57 drawable against a live 64 and 36 for eight releases;
+   `faces.mjs` said nine of thirty-three when fifteen was the number. This is the third of the same
+   kind, and the rule that comes out of all three is to date the figure or say what changed it. */
 const GAM_ACCOUNT = 65;      /* the grudge at which a house is keeping a real account of you */
 const answerRow = d => {
   const pg = poachedMan(d);

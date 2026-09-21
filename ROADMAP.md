@@ -12415,7 +12415,7 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
-## AFTER THE QUEUE — v3.272.0 to v3.296.0, twenty-five releases, twelve game changes, seven instruments
+## AFTER THE QUEUE — v3.272.0 to v3.297.0, twenty-six releases, twelve game changes, seven instruments
 that had been lying since they were written — and finally a gate over the instruments
 
 The third pass closed on #275 at v3.271.0, and with it the last item anybody had written down. What
@@ -12451,6 +12451,7 @@ overturned**, and the refusals are the reason to read this section.
 | v3.294.0 | **#298–#301** | **four prices the game computed and never showed: the sky, the legacies, the crux, the road** |
 | v3.295.0 | **#302** | **the reading you get after a bout, run before it — same rules, one voice later** |
 | v3.296.0 | **#303** | **the armoury showed the piece's row; now it says what the row is worth to the man** |
+| v3.297.0 | **#304** | **two audit items withdrawn as already built, and a measurement in a comment that had gone stale** |
 
 ## What was actually built
 
@@ -13695,6 +13696,94 @@ silently as nothing.
 
 No draw moved: `kitMods` and `power` contain **no `R()` at all**, and `gearSays` is only ever called
 from the panel.
+
+---
+
+### #304 — TWO ITEMS WITHDRAWN, AND A COMMENT THAT HAD OUTLIVED ITS OWN FIX
+
+Items 6 and 7 off the audit, both **researched and not taken**, because both are already built. The
+withdrawals are recorded here rather than dropped, for the reason #282's was: an item quietly
+abandoned looks the same as an item nobody got to.
+
+### Item 6 — price the four rail decisions
+
+The item said *"the repo has a measured price list for every button the player presses and the UI
+shows none of it."* Two of the four are priced already:
+
+| decision | state |
+|---|---|
+| **plan** | The chips gold-border the *correct* plans (`hints = right.includes(k)`), and the block is gated behind having watched or drilled the man — otherwise a *"Have him watched · Nd"* button stands there instead. A deliberate information economy: the read is something you buy. |
+| **word** | Done in #300, off `sigLand`. |
+| **tactic** | Four chips, labels and prose. The quote *does* recompute on selection, so comparison is possible — serially. |
+| **entrance** | Its effects (`crowd:16`, `mom:1`, wind, dread) go into the **bout context**, not `winChance`, so they cannot be quoted from the function that makes the on-screen percentage. |
+
+And quoting `choice.mjs`'s figures was never the right implementation: they are empirical win-rate
+points from one fixture, and pasting them into a panel is a model retyped beside the engine — #150.
+
+**The thin remainder carries a documented hazard.** From v2.90.0, in this file:
+
+> the panel named STANDING OFF the best order in every cell measured… **A player reading his own
+> odds panel and picking the best number on it was picking the worst word.**
+
+Four quotes side by side amplify whatever the quote gets wrong, and #298 established `winChance` is
+blind to sky and venue — now printed in a line directly beside it. **The honest version of item 6 is
+"fold sky and venue into `winChance`"**, which is the balance change #298 deferred.
+
+### Item 7 — let the player scheme back
+
+The item claimed rivals have five offensive moves and the player's dialog offers one. **The player
+has four gambits that mirror the rival's schemes almost one for one:**
+
+| nemesis scheme | player gambit |
+|---|---|
+| `editor` — buy the editor's ear | **`bribe`** — "Buy the editor's ear" |
+| `poach` | **`poach`** — "Put money in front of his best man" |
+| `grain` — poison the grain | **`poison`** — "Get at his steel" |
+| `slander` | **`word`** — "Put a word about" |
+| `law` | — |
+
+Plus three `OVERTURES` (send a man to their card, lend your doctore, send coin), and buying off a
+feud. **And `answerRow` already points at them** — #220's prescription, implemented: the act first
+(a man being bought, warned unconditionally), then a house keeping a real account
+(`GAM_ACCOUNT = 65`), naming the best affordable gambit with its price and odds off the shared
+`gambitOdds`, and carrying a `meant` object so a check reads what the row means rather than parsing
+its prose.
+
+The claim came from reading one dialog — "Treat with a house" — and generalising from it.
+
+### The comment that had outlived its own fix
+
+Re-measuring for item 7 turned up the one real thing in it. `answerRow`'s header carries #220's
+table, which reads **`gambit … surfaced 0%`** — true of a game that had no door yet, with the door
+defined directly beneath it. Read today it says the opposite of what shipped.
+
+Re-run on the same probe and the same 16 houses, and left **beside** the original rather than over
+it: **available 94.8% · surfaced 7.1% · taken 0** by the reference rope, and **139 taken** on the arm
+whose `gambit` lever is on — which is #220's own point about the zeroes belonging to the rope. The
+two triggers the door chose are still the pointed ones: a poach on **2.6%** of weeks and a grudge of
+65 on **8.2%**, against the nemesis arc's **89.8%** that #229 refused.
+
+**This is the third stale published measurement of the same kind.** `depth.mjs` carried 67 events
+and 57 drawable against a live 64 and 36 for eight releases; `faces.mjs` said nine of thirty-three
+when fifteen was the number. A figure in a comment ages exactly like a figure in a probe header, and
+the rule out of all three is to date it or say what changed it.
+
+### What the audit's own record now is
+
+Seven items taken up; **four were overstated or wrong**:
+
+| item | what the audit said | what was true |
+|---|---|---|
+| 3 | print `odds:0.28` | 0.28 is the *attempt* rate; the real figure is ~54% |
+| 5 | the rack doesn't price gear | wrong screen, and the drawer already printed the item's row |
+| 6 | no rail decision is priced | two of four already are |
+| 7 | the player has one move against a rival | he has four, plus three overtures, plus a door pointing at them |
+
+Every one was caught before shipping, by reading the source or driving the screen. But the pattern
+is one-directional and worth naming: **the audit dropped six candidates for already existing and
+kept ten, and the verification that killed those six was not applied as hard to the ten.** Looking
+for "is there a gap" stops at the first evidence of one; looking for "does this exist" keeps going
+until the whole verb set is accounted for. The second question is the one that holds.
 
 
 ## A THIRD AUDIT PASS — v3.259.0, written off the partial-player sweep
@@ -30194,7 +30283,7 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.296.0 — the armoury says what a piece is worth to the man, not what its row says*
+*Last updated: v3.297.0 — two audit items withdrawn as already built, and four of seven now say the audit was the weak instrument*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
