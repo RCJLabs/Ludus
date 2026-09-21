@@ -30281,9 +30281,126 @@ tell was the same — a file that should exist missing, or `dist/test.html` at 2
 had been pushed. It is worth stating as a working rule: *push before every long measurement, and
 check the version whenever a number moves for no reason.*
 
+
+
+### #305 — the review of my own five features, and the three it found were all real
+**v3.298.0.** A code review over `b7e7256..HEAD` — the five features of #298–#303 — returned
+fourteen findings. Three were severe. I verified all three by hand before touching anything, and
+**all three were real**, all mine, all shipped inside the last five releases.
+
+| # | what it said | verdict |
+|---|---|---|
+| 1 | the crux button quotes a constant 54% to every man in the game | **real** |
+| 2 | the legacy panel names two boons that nothing in the code pays | **real** |
+| 3 | the legacy panel's progress figure can never move | **real** |
+| 6 | the gear drawer offers swaps a forged slot refuses | **real, and worse than stated** |
+| 10 | the title screen hand-rolls rows `legacyRows` was written to own | **real, and the wrong half of it** |
+| 12 | two redundant `!pre &&` guards in `readBout` | **declined, with reasons** |
+
+**1 — one expression cannot drift, but one expression handed the wrong object can.** #300's whole
+argument was that putting the landing chance in `sigLand` meant the button and the roll could not
+disagree. The button then called it with `fight.A` — the stripped face `runBout` builds for the
+modal, which carries a name, a class, a kit **and no `tec` and no `signature`**. So it took its
+`|| 50` default, `sigTech` returned null, and every man in the game was quoted **54 in 100**.
+
+Measured against what the engine actually rolls: **44 for a tec-20 man, 54 for a median one, 67 for
+a tec-88 one.** The button was 13 points low for a drilled man and 10 high for a poor one — worse
+for the player it mattered most to. `simulateFight` computes it now, where the real fighter is, and
+it travels on the crux to the modal. And the default is `?? 50`, not `|| 50`: the falsy-zero form is
+exactly what let a man with no `tec` at all read as a median man instead of producing a `NaN`
+somebody would have seen the first afternoon.
+
+**2 — a definition is not a call site, and this file has now paid for that twice in one release.**
+The panel said `freed` and `buried` were standing effects "read every week for ever", on the
+strength of `legacyPrice` and `legacyRegard` sitting two lines below it. `grep` returns their
+definitions **and nothing else**. Same shape as reading `SIGNATURES.odds` as the landing chance in
+#300 — a function was read and assumed to run.
+
+But the finding stopped at my panel, and **the lie is older and bigger than my panel.** The title
+screen has printed `LEGACIES[k].boon` since the legacies were written, and two of those six
+sentences were false for the same reason: *"The block fears you: bought men cost 6% less"* and
+*"New men arrive with 6 more regard for you."* Sixty men in the ground — the longest grind in the
+game — bought a sentence and nothing else.
+
+**So they are wired, not deleted.** A deliberate balance choice would have removed the function or
+the sentence; what was here was a function whose constant matches the sentence's constant to the
+digit and no call, which is a wiring that was forgotten. `legacyPrice` is charged at the three
+places a block price is **born** — `genGladiator`, `soldOnMan`, the captive lot — rather than at the
+charge, because #230's rule is that the box must show the number the transaction uses. `legacyRegard`
+is spent in `buyFromBlock`, beside `fameWarm`, which was already doing this exact job.
+
+And the `freed` sentence was narrowed to what is wired. There are fifteen `d.gladiators.push` sites
+and no single door into the roster, so the boon says **the block** rather than promising every
+arrival. *The wording is the wiring.*
+
+**3 — the panel showed the figure the house started with.** `d.legacy` is written once, by
+`applyLegacy` at the founding, and never again; the running tally is folded in by `mergeLegacy` only
+when the house **ends**. So "11/12 men freed" in week one was still 11/12 in week four hundred,
+after the twelfth man walked out. The whole point of #299 was showing a player how close the next
+one is, and the number it printed could not get closer. Measured after: **week 1 `buried 0/60` →
+week 161 `buried 22/60`.**
+
+**10 — the duplication was real and the reviewer named the wrong copy.** The title screen is not the
+offender; `LEGACY_WORTH` is. #299 wrote six fresh sentences about the six legacies beside the six
+`boon` strings that had always been there — two tables of claims about the same six facts, which is
+#150 exactly. And it drifted **inside one release**: `LEGACY_WORTH.freed` said "at the founding"
+while the `boon` two hundred lines up still said "new men arrive", and the two panels that print
+them disagreed about the same legacy on the same save. `LEGACY_WORTH` is deleted. There is one table.
+
+**6 — the drawer sold a swap the rules refuse, and took the coin for it.** `equipOne` returns false
+when a forged piece sits in the slot — *"it is his, and it is not going back on the rack"* is the
+chronicle's own line. The drawer had no idea: every row was a live button that did nothing when
+pressed. The buy rows were **worse than nothing**, because `armWith` is `buyGearItem` *then*
+`equipOne` — the armourer took the money, the steel went on the rack, the man was unchanged, and not
+one sentence said why.
+
+`buyGearItem`'s own note, forty lines above `equipOne`, names that exact fault and says it was
+fixed. It was fixed for the price guard and left standing here. A locked slot now shows what is on
+him under his own forged name and offers nothing, and `gearWorth` returns null for it in the domain
+code so every caller is covered at once.
+
+**12 — declined.** `push` already drops anything with no `PRE_SAY` entry, so the two guards look
+redundant. They are doing a different job: both rules **read `res`**, which in pre-flight is `{}`,
+and `undefined < 40` is false by coercion rather than by intent — the same silent-falsy shape this
+release just took out of `sigLand`. `push` gates absence; `!pre` gates reading a result that does
+not exist. Remove it and the next person to give `cold_room` a pre-flight line gets a rule that is
+in the table, passes the filter and never appears.
+
+#### `boon.mjs`, and the check that reads a claim rather than a function
+Nothing caught the dead boons because nothing was looking in that direction. Every check in the
+suite reads what the code **does**; this one reads what the code **says** and asks whether anything
+does it. Five arms, and arm 1 would have gone red the day `legacyPrice` was written:
+
+| arm | what it holds | measured |
+|---|---|---|
+| 1 | every helper a `boon` leans on has a call site, read out of the source with comments blanked | `legacyPrice` ×3 · `legacyRegard` ×2 |
+| 2 | one table of claims: `legacyRows` hands the panel the sentence the title screen prints | 6 of 6 |
+| 3 | the discount is real **and** is the number on the tag | median ratio 0.940 · 320d shown / 320d spent · 301d / 301d |
+| 4 | the new man's regard is real | 49 plain → 55 under the Wooden Sword |
+| 5 | a forged slot prices nothing, and his other slots still price | both hold |
+
+Arm 3 is the one that matters most: it buys the man and compares the coin that leaves the strongbox
+against the tag the block showed. A discount applied at the **charge** would have passed a naive
+test and broken #230.
+
+**And the whole release is byte-identical on a house with no legacy.** Ten seeded houses, sixty
+weeks each, digest over week, gold, fame, unrest, every man's record, regard, fatigue and price, and
+the whole block: **`43afc6ae` on v3.297.0 and `43afc6ae` after.** `legacyPrice` returns 1 for a
+blank ledger, `rnd(x*1)` is `rnd(x)`, and no `R()` was added anywhere.
+
+**What the review could not do, stated because it changes how much its silence is worth.** It ran
+as a single inline pass — no fan-out across dimensions, no separate adversarial verify — and said so
+itself. Of fourteen findings, three were severe and real, two more were real and **understated**,
+and one was wrong in a way that took twenty minutes to establish. A reviewer that finds five real
+defects in five shipped features is not a formality, and its own account of its limits was accurate.
+
+The count that matters: **five features shipped across #298–#303, and five of them carried a defect
+into main.** Every one was a claim to the player that nothing in the code paid out. That is one
+fault with five faces, and `boon.mjs` is the first instrument in this suite pointed at it.
+
 ---
 
-*Last updated: v3.297.0 — two audit items withdrawn as already built, and four of seven now say the audit was the weak instrument*
+*Last updated: v3.298.0 — a review of my own five shipped features found five real defects, and the boons the title screen had promised since the legacies were written are paid out at last*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
