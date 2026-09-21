@@ -12415,7 +12415,7 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
-## AFTER THE QUEUE — v3.272.0 to v3.293.0, twenty-two releases, six game changes, six instruments
+## AFTER THE QUEUE — v3.272.0 to v3.294.0, twenty-three releases, ten game changes, six instruments
 that had been lying since they were written — and finally a gate over the instruments
 
 The third pass closed on #275 at v3.271.0, and with it the last item anybody had written down. What
@@ -12448,6 +12448,7 @@ overturned**, and the refusals are the reason to read this section.
 | v3.291.0 | **#295** | **`voice` was holding two thirds of the game's registers — three the player reads were reachable by nothing** |
 | v3.292.0 | **#296** | **three checks passed on an empty scan, and one of them was the gate over the instruments** |
 | v3.293.0 | **#297** | **the screen inventory's reference player did nothing and died at week 43 — "fifteen unreached" is five** |
+| v3.294.0 | **#298–#301** | **four prices the game computed and never showed: the sky, the legacies, the crux, the road** |
 
 ## What was actually built
 
@@ -13468,6 +13469,108 @@ repair**, the fifth in six releases. The thread keeps finding faults in its own 
 tools are what it has been looking at. Opening the sheets is the next piece of work and would make
 the five a real number; whether that is worth another release is a question about appetite, not
 about evidence.
+
+---
+
+### #298–#301 — FOUR PRICES THE GAME COMPUTED AND NEVER SHOWED
+
+Four game changes in one release, from a fresh audit. **The audit's first instinct was wrong and
+its own instrument said so**, which is why these four and not four others.
+
+The hypothesis was *"the game hides information from the player"*. `asks.mjs` perturbs every
+quantity a great house carries, both ways, and diffs nineteen registers. The silent list came back
+**one entry long** — `brand tier`, which is a latch and correctly silent. **The game speaks about
+its state thoroughly.** What it does not do is put a **price** on anything, and that is a different
+claim with a different fix.
+
+**Six candidates were dropped for already existing**: a post-bout explanation (18 prioritised
+rules), *"Skip to the verdict"*, *"What decided it"*, a comparable roster, labelled scene hotspots.
+Proposing any of them would have been #286 again — two features about screens that had shipped for
+years.
+
+### #298 — the sky says how it feels, not what it does
+
+`WEATHER` is finished: six skies with footing, stamina, crowd and purse; `SEASON_SKY` weights the
+draw; `CLASS_WEATHER` bends it per class. Rain is footing **×1.07 to a Murmillo and ×0.93 to a
+Retiarius**. The booking modal printed `SKY(o.sky).say` — *"the sand is not sand any more"* — and
+nothing else.
+
+**And the quote beside it is blind to all of it.** `winChance` prices kit, prep, tactic and six
+stats and never looks at sky or venue — its own header tells the story of having been blind to
+showmanship and having that fixed. So a player reads a percentage that does not know it is raining.
+
+`skySays` reads `skyMods`, the same call the bout makes with the same three arguments, and reports
+**both men** because they stand in the same weather and it is not worth the same to them:
+
+```
+rain     footing −15% to him, −7% to the other · wind −5% · purse −10% · crowd −11
+hot      wind −10% to him, −24% to the other · crowd −3
+fair     (nothing — the sky does not care)
+```
+
+*Not taken:* folding sky and venue into `winChance` itself. That is arguably the correct fix — the
+function's comment says it prices *"the same fight the sand does, hidden edge and all"* — but it
+changes a number the bookmakers use, which is a balance change wanting its own measurement.
+
+### #299 — the legacy ladder was only ever visible between runs
+
+Six legacies, and `applyLegacy` shows they are not ornaments: **a senator already yours at favour
+45, every price 6% cheaper for ever, every man +6 regard, every patron +8 warmer, +40 fame at the
+founding, three years off the lanista.** They rendered in exactly one place — the **title screen**.
+
+So during a run you could not see which you held, how close the next was, or why your prices were
+cheaper than the ledger said. **Two of the six are standing effects and four were spent at the
+founding**, which is the part a player most needs and could least deduce; `LEGACY_WORTH` carries a
+`when` field so the panel does not have to know.
+
+Measured through `shows.mjs`: **Your Standing went from 186 words and 0 rows to 229 and 6.**
+
+### #300 — the crux asked you to gamble, and the obvious number was the wrong one
+
+The button said *"Go for the cast"*. The obvious figure to print is `SIGNATURES[cls].odds` — 0.28 —
+**and it is the wrong number.** That field is how often he *tries* the move unprompted. When the
+player **orders** it the attempt is certain and the landing takes **+0.12**, so the real figure at
+even power is about **54%**. Printing 28 would have told the player the move is half as likely as
+it is: precisely the fault `#230` was fixed, a box that lies about the roll behind it.
+
+So the landing chance now lives in **one function**, `sigLand`, and the bout and the button both
+read it. They cannot drift because there is nothing to keep in step.
+
+| | |
+|---|---|
+| unordered, tec 50 | 42% |
+| **ordered, tec 50** | **54%** |
+| ordered and drilled | 62% |
+| ordered, tec 90 | 67% |
+
+What the button cannot know is `edge`, the power gap on the round the order lands, drawn after the
+word is spoken. The UI passes 0 and says *"if they are even"* rather than quoting a precision it
+does not have.
+
+### #301 — the road quietly takes your patrons and nothing counted it
+
+Patron favour sheds `FAV_DRIP` a week and **×`FAV_AWAY` = 2.5** while the house is down the bay. The
+design note beside it is blunt: *"over a long stay is the whole ladder quietly letting go of you."*
+`#268` and `#280` both added lines naming what the road costs in morale and wear. Neither named
+this one.
+
+`roadSaysFavour` charges **only the difference** — patrons shed favour at home too, so only the
+excess is the road's doing — and reads the same two constants the decay spends.
+
+**And extracting those constants nearly shipped a balance change.** The first cut replaced
+`(d.city||d.travel)` with `awayFromCapua(d)`, which reads better and **is not the same predicate**:
+it also counts `d.rome`, so a trip to Rome would have started paying the away rate. Caught before
+the build. The constants are named once; the condition is the one that shipped.
+
+### The control, and the caps
+
+`simulateFight` was touched (the `sigLand` extraction), so the exchange pools are the proof:
+**all fifteen beat kinds byte-identical to v3.293.0, 3922 lines read, 2850 distinct. No draw
+moved.** `simulateFight` stayed at **462**.
+
+`App` 5853 → **5862** and `SECT` 1497 → **1517**, both with the division this allowance exists for:
+every figure and every word is built in the domain code (`skySays`, `legacyRows`, `LEGACY_WORTH`,
+`sigLand`, `roadSaysFavour`) and the panels print them.
 
 
 ## A THIRD AUDIT PASS — v3.259.0, written off the partial-player sweep
@@ -29967,7 +30070,7 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.293.0 — the screen inventory's reference player did nothing and died at week 43; "fifteen unreached" is five*
+*Last updated: v3.294.0 — four prices the game computed and never showed, and the obvious number for one of them was wrong*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
