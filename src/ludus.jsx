@@ -1386,6 +1386,35 @@ function applyLegacy(d, L){
 const legacyPrice = d => legacyEarned(d.legacy,"buried") ? 0.94 : 1;
 const legacyRegard = d => legacyEarned(d.legacy,"freed") ? 6 : 0;
 
+/* ---- AND THE HOUSE COULD NOT SEE ANY OF IT — #299 ----
+   Six legacies, and `applyLegacy` above shows they are not ornaments: a senator already in your
+   pocket, every price 6% cheaper for ever, every man +6 regard, every patron +8 warmer, forty
+   fame at the founding, three years off the lanista. They render in ONE place — the title screen,
+   under "What Capua remembers of you" — so during a run you cannot see which you hold, how close
+   the next one is, or why your prices are cheaper than the ledger says they should be.
+
+   TWO OF THE SIX ARE STANDING EFFECTS AND FOUR ARE GIFTS AT THE FOUNDING, and that is the part a
+   player most needs and could least deduce. `legacyPrice` and `legacyRegard` are read every week
+   for ever; the other four were spent the moment the keys changed hands. The `when` field says
+   which, so the panel does not have to know.
+
+   The wording is built here rather than in the panel, the same division `riteSays` and `pietySays`
+   set: the section prints rows, it does not decide what a legacy is worth. */
+const LEGACY_WORTH = {
+  freed:  { when:"standing", say:"every man here thinks +6 more of you, and still does" },
+  buried: { when:"standing", say:"every price in Capua is 6% cheaper, still" },
+  bouts:  { when:"founding", say:"the house opened on +40 fame" },
+  primus: { when:"founding", say:"every patron came in +8 warmer" },
+  rome:   { when:"founding", say:"a senator was yours before you began" },
+  years:  { when:"founding", say:"you took the keys three years younger" },
+};
+const legacyRows = d => LEG_KEYS.map(k => {
+  const L = (d && d.legacy) || {}, E = LEGACIES[k], W = LEGACY_WORTH[k];
+  return { k, name:E.name, unit:E.unit, need:E.need, have:Math.min(L[k]||0, E.need),
+    got:legacyEarned(L, k), say:W ? W.say : null, standing:!!(W && W.when === "standing") };
+});
+const legacyHeld = d => legacyRows(d).filter(r => r.got).length;
+
 /* ---- MASTERY, AND A SECOND STYLE ----
    Six stats forever is not a career. A man who has been at this long enough stops
    getting bigger and starts getting particular. */
@@ -4336,6 +4365,13 @@ function makePatron(d, rank){
   return { id:d.nextId++, name, rank, favor:ri(28,42), want:null, since:d.week, served:0, slighted:0 };
 }
 const patronsOf = d => d.patrons || (d.patrons = []);
+/* ---- THE TWO NUMBERS THE ROAD IS PRICED IN, NAMED ONCE — #301 ----
+   The weekly drip and what being out of Capua multiplies it by. They were literals inside
+   `recomputeFavor`'s decay line, which was fine while nothing else read them; `roadSaysFavour`
+   below now does, and a price written twice is #150 and what `copies.mjs` holds. One definition,
+   two readers. */
+const FAV_DRIP = 0.35;    /* favour a patron sheds each week without attention */
+const FAV_AWAY = 2.5;     /* and attention cannot be paid from Puteoli */
 /* The house's standing is what all of them together think of you. */
 function recomputeFavor(d){
   const ps = patronsOf(d);
@@ -4623,7 +4659,10 @@ function patronWeek(d){
        ended with MORE favour than it left with, because the drips (the league, a
        rank claimed) outran a decay tuned for a lanista who is merely busy, not
        gone. Out of sight is out of mind at two and a half times the rate. */
-    p.favor = clamp(p.favor - 0.35*lanPatronDecay(d)*((d.city||d.travel)?2.5:1), 0, 100);
+    /* `(d.city||d.travel)` and NOT `awayFromCapua(d)`: that helper also counts `d.rome`, and
+       swapping it in here would quietly start charging the away rate for a trip to Rome. The
+       constants are named now; the condition is the one that shipped. */
+    p.favor = clamp(p.favor - FAV_DRIP*lanPatronDecay(d)*((d.city||d.travel)?FAV_AWAY:1), 0, 100);
     if(p.favor>=85 && R()<0.10){
       const gift = rnd(120 + p.favor*3);
       d.gold += gift;
@@ -5831,6 +5870,46 @@ function skyMods(k, venue, cls){
     purse:   dampen(W.purse, sh),
   };
 }
+
+/* ---- WHAT THE SKY IS WORTH, IN THE TERMS THE BOUT ITSELF USES — #298 ----
+   The offer has carried `o.sky` since the card was made, and the booking modal printed
+   `SKY(o.sky).say` — "the sand is not sand any more" — and nothing else. That is how it FEELS.
+   What it DOES is `skyMods`, which the bout reads four ways: `ctx.footing` (venue x sky),
+   `ctx.sky` (the stamina drain), `W.crowd` into the opening crowd, and the purse.
+
+   AND THE QUOTE BESIDE IT IS BLIND TO ALL OF IT. `winChance` prices kit, prep, tactic and the six
+   stats and does not look at the sky or the venue at all — its own header tells the story of being
+   blind to showmanship and having that fixed, which is this same fault one stat over. So a player
+   reads a percentage that does not know it is raining.
+
+   BOTH MEN STAND IN THE SAME WEATHER AND IT IS NOT WORTH THE SAME TO THEM: rain is footing x1.07
+   to a Murmillo and x0.93 to a Retiarius. The difference is the decision, so this returns his and
+   the other man's together and says nothing when the sky does not care who they are.
+
+   NO NEW DRAW: every term here is read from `skyMods`, which the bout already calls with the same
+   three arguments. One expression, two readings — #230's rule, applied to the sky. */
+const skyPc = v => Math.round(Math.abs(v - 1) * 100);
+const skySays = (k, venue, myCls, foeCls) => {
+  if(!k) return null;
+  const m = skyMods(k, venue, myCls);
+  const f = foeCls ? skyMods(k, venue, foeCls) : null;
+  const bits = [];
+  const two = (mine, his, word, better) => {
+    const a = skyPc(mine), b = his == null ? null : skyPc(his);
+    if(a < 2 && (b == null || b < 2)) return;
+    const sign = v => (better(v) ? "+" : "−");
+    bits.push(b != null && Math.abs(mine - his) >= 0.02
+      ? `${word} ${sign(mine)}${a}% to him, ${sign(his)}${b}% to the other`
+      : `${word} ${sign(mine)}${a}%`);
+  };
+  two(m.footing, f && f.footing, "footing", v => v > 1);
+  two(m.stam,    f && f.stam,    "wind",    v => v < 1);   /* stam multiplies the DRAIN: lower is better */
+  if(skyPc(m.purse) >= 2) bits.push(`purse ${m.purse > 1 ? "+" : "−"}${skyPc(m.purse)}%`);
+  /* the same minus sign as the terms above it — the raw number carries a hyphen and the rest of
+     this line does not, which read as two different kinds of figure on one row. */
+  if(Math.abs(m.crowd) >= 2) bits.push(`crowd ${m.crowd > 0 ? "+" : "\u2212"}${Math.abs(m.crowd)}`);
+  return bits.length ? bits.join(" · ") : null;
+};
 
 const VENUES = {
   pit:     { name:"The pit behind the ludus", crowd:-22, footing:0.88, missio:-5, fame:0.72,
@@ -11627,6 +11706,24 @@ const sigFee = d => d.doctore ? SIG_FEE : VISIT_FEE;
 const canLearnSig = (d,g) => !!(!g.signature && !g.teaching && !g.learning
   && g.status==="active" && techsFor(g.cls).length && (g.wins||0) >= SIG_GATE.wins);
 /* a man goes for it when he is winning, or when he is desperate — and oftener if it is his own */
+/* ---- ONE EXPRESSION, TWO READINGS — #300, and #230's rule applied to the crux ----
+   The crux button said "Go for the cast" and named no number. The obvious number to reach for is
+   `SIGNATURES[cls].odds` — 0.28 — AND IT IS THE WRONG ONE. That field is how often he TRIES the
+   move unprompted (`triesSignature` below, bent by tactic, momentum, wind and technique). When the
+   player ORDERS it the attempt is certain and the landing gets +0.12, so the real figure for an
+   ordered cast at even power is about 54%, not 28%. Printing 0.28 would have told the player the
+   move is half as likely as it is, which is exactly the fault #230 was fixed: a box that lies
+   about the roll behind it.
+
+   So the landing chance lives HERE, in one function, and the bout and the button both read it.
+   They cannot drift, because there is nothing to keep in step.
+
+   WHAT THE BUTTON CANNOT KNOW is `edge` — the power gap on the round the order lands, which is
+   drawn after the word is spoken. The UI passes 0 for it and says so in words rather than quoting
+   a precision it does not have. NO NEW DRAW: the `R() <` stays exactly where it was. */
+const sigLand = (g, edge, forced, T) =>
+  clamp(0.42 + edge*0.5 + (((g && g.tec) || 50) - 50)/300 + (forced ? 0.12 : 0) + (T ? 0.08 : 0), 0.16, 0.92);
+
 function triesSignature(g, mom, stam, tac){
   const S = sigOf(g.cls); if(!S) return false;
   let p = S.odds;
@@ -12527,7 +12624,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
       const { isA, g, foe, S } = sigTurn;
       const T = sigTech(g);      /* his own drilled version of the move, if he has one */
       const edge = (isA ? pA-pB : pB-pA) / 60;
-      const landed = R() < clamp(0.42 + edge*0.5 + (g.tec-50)/300 + (isA&&forcedSig?0.12:0) + (T?0.08:0), 0.16, 0.92);
+      const landed = R() < sigLand(g, edge, isA && forcedSig, T);
       if(landed){
         const tgt = pick(TARGETS);
         let dmg = (5 + Math.abs(pA-pB)/9 + g.str/14) * S.win.dmg * (T?T.dmg:1) * tgt[2] * (1 + g.mods.atk*0.7) * (1 - foe.mods.def);
@@ -14735,6 +14832,32 @@ const roadWeeks = d => (awayFromCapua(d) && d.flags && d.flags.leftCapua != null
 const roadWear  = d => Math.max(0, roadWeeks(d) - ROAD_FRESH);
 const roadSaysWear = d => { const n = roadWear(d); return !n ? null
   : `${n} week${n===1?"":"s"} of it now, and no cells to walk them down to`; };
+
+/* ---- AND THE COST NOBODY COUNTS — #301 ----
+   The road's panels name what it takes out of the MEN: morale, defiance, the weeks of it with no
+   square to drill on. The larger bill is not on the men at all. `recomputeFavor` sheds `FAV_DRIP`
+   of every patron's standing each week and multiplies it by `FAV_AWAY` while the house is down the
+   bay, and the design note beside it is blunt about the size of that: "over a long stay is the
+   whole ladder quietly letting go of you."
+
+   QUIETLY IS THE PROBLEM. A player watching their men get tired is not being shown the thing that
+   is actually taking the house apart, and by the time a rung slips there is nothing on the screen
+   that connects it to the tour. This says the rate and what it has cost so far, in the same place
+   and the same voice as the wear line above.
+
+   IT IS THE EXTRA, NOT THE TOTAL. Patrons shed favour at home too; only the difference is the
+   road's doing, so only the difference is charged here. Both terms come off the named constants,
+   so this cannot drift from the line that spends them. */
+const roadSaysFavour = d => {
+  if(!(d.city || d.travel)) return null;
+  const n = (patronsOf(d) || []).length;
+  if(!n) return null;
+  const extraEach = FAV_DRIP * lanPatronDecay(d) * (FAV_AWAY - 1);
+  const w = roadWeeks(d) || 0;
+  const lost = Math.round(extraEach * n * w);
+  return `Your ${n === 1 ? "patron sheds" : `${n} patrons shed`} standing ${FAV_AWAY}x faster while you `
+    + `are away` + (lost >= 1 ? ` — about ${lost} points of favour the road has cost you so far` : "");
+};
 function wagonWeek(d){
   if(d.over || !awayFromCapua(d) || !roadWear(d)) return;
   activeG(d).forEach(g=>{
@@ -25919,10 +26042,16 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
                 : (k==="cloth" && fight.pair) ? "Throw in the cloth for both"
                 : (k==="finish") ? (sig ? `Go for ${sig.name}` : "Go for the finish")
                 : c.label;
+              /* #300 — the ordered signature, priced off `sigLand`, the same expression the round
+                 rolls against. `edge` is the power gap on the round the order lands and is drawn
+                 after the word is spoken, so 0 is passed for it and the words below say so rather
+                 than quoting a precision this moment does not have. */
+              const odds = (k === "finish" && sig && solo && fight.A)
+                ? Math.round(sigLand(fight.A, 0, true, sigTech(fight.A)) * 100) : null;
               return (
                 <button key={k} className={`btn ${(k==="cloth"||k==="pullall")?"btn-blood":""}`}
                   style={{width:"100%",marginBottom: solo?4:7, textAlign: solo?"left":"center"}} onClick={()=>onSpeak(k)}>
-                  <span>{label}</span>
+                  <span>{label}{odds != null ? ` \u00b7 about ${odds} in 100 if they are even` : ""}</span>
                   {solo && c.desc && <span className="dim" style={{display:"block",fontSize:"var(--fs-sm)",fontStyle:"italic",fontWeight:400,marginTop:1,whiteSpace:"normal"}}>{c.desc}</span>}
                 </button>
               );
@@ -27425,6 +27554,26 @@ const SECT = {
                      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>There is no higher rung. A slaver climbed all the way to Rome, and men will tell the story long after the sand forgets your name.</div>
                    </div>
                  )}
+                 {/* ---- WHAT CAPUA REMEMBERS, WHERE THE HOUSE CAN SEE IT — #299 ----
+                     The same six the title screen shows between runs, and the two that are still
+                     working. `legacyRows` builds every word of it; this prints rows. */}
+                 {(()=>{ const rows = legacyRows(S), held = rows.filter(r=>r.got);
+                   return (
+                   <div style={{borderTop:"1px solid var(--line)",marginTop:11,paddingTop:8}}>
+                     <div className="tag tag-gold">What Capua remembers of you</div>
+                     {!held.length && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"4px 0 2px"}}>
+                       Nothing yet. These are earned across houses, not within one.</div>}
+                     {rows.map(r=>(
+                       <div key={r.k} style={{borderTop:"1px dotted var(--line)",padding:"4px 0"}}>
+                         <div className="flex items-center justify-between gap-2">
+                           <span className="rowname" style={{fontSize:"var(--fs-sm)",color:r.got?"var(--ink-hi)":"var(--ink-faint)"}}>{r.name}</span>
+                           <span className="rowval dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{r.have}/{r.need} {r.unit}</span>
+                         </div>
+                         {r.got && r.say && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>
+                           {r.say}{r.standing ? "" : " \u2014 spent at the founding"}</div>}
+                       </div>
+                     ))}
+                   </div>); })()}
                </Sect>
              );
   },
@@ -32528,6 +32677,10 @@ export default function App(){
                     so belongs beside the button that ends it rather than in the trade above */}
                 {roadSaysWear(S) && <div style={{fontSize:"var(--fs-sm)",color:"var(--blood-hi)",marginTop:4}}>
                   The wagons are telling on them — {roadSaysWear(S)}.</div>}
+                {/* #301 — and the bill the wear line does not carry. Built in `roadSaysFavour`
+                    off the same constants the decay spends; this prints it. */}
+                {roadSaysFavour(S) && <div style={{fontSize:"var(--fs-sm)",color:"var(--blood-hi)",marginTop:4}}>
+                  {roadSaysFavour(S)}.</div>}
                 <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={goHome}>Break camp and go home</button>
               </div>
             );
@@ -35529,6 +35682,11 @@ export default function App(){
                 ); })()}
               {o.venue && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{VEN(o.venue).say}</div>}
               {o.sky && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:2,color:"var(--azure)"}}>{SKY(o.sky).say}{shelterOf(o.venue)>0.3?" There is a roof of a kind over most of it.":""}</div>}
+              {/* #298 — and what it is WORTH to the man you are about to send, which the line
+                  above does not say and the quote below does not know. `skySays` builds it off
+                  `skyMods`, the same call the bout makes. */}
+              {o.sky && me && o.opp && (()=>{ const w = skySays(o.sky, o.venue, me.cls, o.opp.cls);
+                return w ? <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2,color:"var(--azure)"}}>{w}</div> : null; })()}
               {/* #200 — a demand you cannot see before you fight is not a demand. Printed on the
                   offer, with what it is worth and what flouting it costs, because both are real. */}
               <AppetiteLine offer={o} />
@@ -36129,6 +36287,11 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        ends, and `verdictOf` could be called without any way to enumerate the seven it chooses
        between. */
     VERDICTS, verdictOf, FIELD_TELLS, FTELL_KEYS, CHRON_FILTERS, CHRON_KEYS,
+    /* #298-#301 — the four lines this release adds are all written in the domain code, so they
+       are reachable from a test the way `voice.mjs` asks. `sigLand` is the one the bout also
+       rolls against, which is the whole point of it being one function. */
+    skySays, skyMods, sigLand, sigTech, legacyRows, legacyHeld, LEGACY_WORTH,
+    roadSaysFavour, FAV_DRIP, FAV_AWAY,
     /* the week, and what it writes down */
     endWeek, bookBout, bookOf, newBook, chron, chronAll, bookSays,
     /* the week's one question, and the draw that chooses it */
