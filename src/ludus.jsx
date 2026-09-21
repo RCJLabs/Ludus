@@ -5911,6 +5911,63 @@ const skySays = (k, venue, myCls, foeCls) => {
   return bits.length ? bits.join(" · ") : null;
 };
 
+/* ---- WHAT A PIECE IS ACTUALLY WORTH TO THIS MAN — #303 ----
+   The drawer offered a name, a prose line, a price and "Suits: …" and let the player judge. The
+   numbers were right there in `GEAR` — `atk:.09, def:.02, spd:.01, sho:.02` — and PRINTING THEM
+   WOULD HAVE BEEN WRONG, in the same way `SIGNATURES.odds` was wrong for the crux. `kitMods` is
+   what the bout reads, and it does four things to the table value on the way:
+
+     · a piece off his style is worth HALF, and its attack takes a further −0.045
+     · wear scales it — `wearEff` is 0.5 + wear/200, so a worn-out piece is worth half again
+     · a named piece adds +0.05 attack and defence
+     · a shield beside a two-handed weapon costs −0.05 defence and −0.03 speed
+
+   So the honest figure is not the item's row. It is the DIFFERENCE this man's kit makes with the
+   piece on rather than off — which also means a swap is worth more the more worn the thing he is
+   wearing already is. Measured: a Serpent Sica onto a Murmillo costs 5.2% against a fresh Noric
+   Gladius and only 2.8% against one worn down to 5.
+
+   AND THAT ONLY HOLDS FOR A BOUGHT PIECE, which the first test of this got wrong. `wears` is
+   `!it.stock && it.price > 0`, so STOCK KIT NEVER WEARS — and the default kit is all stock. The
+   first run varied wear on a default weapon and got the same answer twice, which looked like the
+   feature not working and was the test asking a question the rules do not have.
+
+   AND THE UNIT IS THE GAME'S OWN, NOT ONE INVENTED HERE. `mods.atk` is consumed at 0.6 in `power`,
+   0.7 in a signature, 0.95 in an exchange; there is no single conversion, and picking one would be
+   a model retyped beside the engine, which is #150. So this calls `power` twice and takes the
+   ratio. Every term but the kit term is identical between the two calls and cancels exactly, so
+   the answer is the engine's own valuation of the kit and nothing else — no constant is copied
+   here to be forgotten when that one moves.
+
+   WHAT THE RATIO CANNOT SEE, AND SAYS SO: `power`'s kit term reads attack and defence only. Speed
+   feeds the wind and showmanship feeds the crowd, both somewhere else entirely, so a piece that
+   moves only those would read as 0% — and is reported apart rather than silently as nothing. */
+const kitAs = (g, kit, wear) => { const c = Object.assign({}, g, { kit, wear: wear || g.wear });
+  c.mods = kitMods(c.kit, c.cls, c); return c; };
+const gearWorth = (g, slot, id) => {
+  const it = GEAR[id]; if(!g || !slot || !it) return null;
+  const kit = g.kit || defaultKit(g.cls);
+  if(kit[slot] === id) return null;                       /* already on him */
+  const a = kitAs(g, kit);
+  /* fitting a piece resets that slot's wear, so the comparison is against a fresh one */
+  const b = kitAs(g, Object.assign({}, kit, { [slot]:id }),
+                  Object.assign({}, g.wear || {}, { [slot]:100 }));
+  const pa = power(a, "measured", null, 0, 1), pb = power(b, "measured", null, 0, 1);
+  if(!pa) return null;
+  return { pc: (pb/pa - 1) * 100,
+    spd: b.mods.spd - a.mods.spd, sho: b.mods.sho - a.mods.sho,
+    alien: !!(it.styles && it.styles.length && !it.styles.includes(g.cls)) };
+};
+const gearSays = (g, slot, id) => {
+  const w = gearWorth(g, slot, id); if(!w) return null;
+  const bits = [];
+  if(Math.abs(w.pc) >= 0.1) bits.push(`${w.pc > 0 ? "+" : "\u2212"}${Math.abs(w.pc).toFixed(1)}% to what he can do`);
+  if(Math.abs(w.spd) >= 0.005) bits.push(`${w.spd > 0 ? "+" : "\u2212"}${Math.abs(w.spd*100).toFixed(0)}% wind`);
+  if(Math.abs(w.sho) >= 0.005) bits.push(`${w.sho > 0 ? "+" : "\u2212"}${Math.abs(w.sho*100).toFixed(0)}% crowd`);
+  if(!bits.length) return null;
+  return bits.join(" \u00b7 ") + (w.alien ? " \u2014 and half of it thrown away on a piece that is not his style" : "");
+};
+
 const VENUES = {
   pit:     { name:"The pit behind the ludus", crowd:-22, footing:0.88, missio:-5, fame:0.72,
     say:"Packed earth, a rope, and whoever from the house is not working. Nobody is here who was not already here." },
@@ -24672,8 +24729,24 @@ const PARTY = {
 };
 
 const pct = v => `${v>0?"+":""}${Math.round(v*100)}%`;
-function GearStats({ it, cls }){
+/* ---- THE ROW, AND WHAT THE ROW IS WORTH TO HIM — #303 ----
+   These four figures are the item's own: `it.atk`, `it.def`, `it.spd`, `it.sho` straight off the
+   table. They are the right thing to print about a PIECE and the wrong thing to read as what a MAN
+   gets, because `kitMods` — which is what the bout actually reads — bends every one of them on the
+   way in: a piece off his style is worth HALF with a further −0.045 on attack, wear scales it by
+   `wearEff` (0.5 + wear/200), a named piece adds +0.05, and a shield beside a two-handed weapon
+   costs −0.05 guard. The alien case was already flagged in words — "clumsy in his hands" — and the
+   word does not say it costs half.
+
+   So when the caller knows which man and which slot, a second line says what fitting it would
+   actually move, from `gearWorth`: two `power` calls whose every term but the kit term cancels.
+   Without a man it prints the row alone, as it always did — the house armoury has no man to price
+   it for. */
+function GearStats({ it, id, cls, g, slot }){
   const alien = it.styles && it.styles.length && cls && !it.styles.includes(cls);
+  /* GEAR entries are keyed by id and do not carry it, so the id comes in beside the item —
+     the first cut read `it.id`, which is undefined for every piece in the table. */
+  const mine = (g && slot && id) ? gearSays(g, slot, id) : null;
   const rows = [["atk","Attack",it.atk],["def","Guard",it.def],["spd","Speed",it.spd],["sho","Crowd",it.sho]].filter(r=>r[2]);
   return (
     <div>
@@ -24682,6 +24755,7 @@ function GearStats({ it, cls }){
           <span key={r[0]} style={{color: r[2]>0 ? "var(--laurel)" : "var(--blood-str)"}}>{r[1]} {pct(r[2])}</span>
         ))}
       </div>
+      {mine && <div style={{fontSize:"var(--fs-base)",marginTop:2,color:"var(--gold-line)"}}>On him: {mine}</div>}
       {alien && <div className="blood" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:2}}>Not of his style — clumsy in his hands.</div>}
     </div>
   );
@@ -28698,7 +28772,7 @@ function GearDrawer({ S, pick, close, equip, armWith }){
                           : <span className="tag">Standard</span>}
                     </div>
                     <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"3px 0 4px"}}>{it.desc}</div>
-                    <GearStats it={it} cls={g.cls}/>
+                    <GearStats it={it} id={id} cls={g.cls} g={g} slot={pick.slot}/>
                     {alien && !on && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>Suits: {it.styles.join(", ")}</div>}
                   </button>
                 );
@@ -28744,7 +28818,7 @@ function GearDrawer({ S, pick, close, equip, armWith }){
                         </summary>
                         <div style={{padding:"2px 2px 10px"}}>
                           <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",margin:"2px 0 3px"}}>{it.desc}</div>
-                          <GearStats it={it} cls={g.cls}/>
+                          <GearStats it={it} id={id} cls={g.cls} g={g} slot={pick.slot}/>
                           {alien && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>Suits: {it.styles.join(", ")}</div>}
                           <button className="btn" style={{width:"100%",marginTop:7}} disabled={dear}
                             onClick={()=>{ armWith(g.id, pick.slot, id); close(); }}>
@@ -36363,7 +36437,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* #302 — an eighteen-rule system the player reads and NOTHING held: no check, no probe, not
        on the handle. Exported so the refactor below could be diffed against itself, and so it can
        be held from now on. */
-    readBout, PRE_SAY,
+    readBout, PRE_SAY, gearWorth, gearSays,   /* kitMods and power are already on the handle */
     roadSaysFavour, FAV_DRIP, FAV_AWAY,
     /* the week, and what it writes down */
     endWeek, bookBout, bookOf, newBook, chron, chronAll, bookSays,

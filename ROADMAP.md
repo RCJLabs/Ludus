@@ -12415,7 +12415,7 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
-## AFTER THE QUEUE — v3.272.0 to v3.295.0, twenty-four releases, eleven game changes, seven instruments
+## AFTER THE QUEUE — v3.272.0 to v3.296.0, twenty-five releases, twelve game changes, seven instruments
 that had been lying since they were written — and finally a gate over the instruments
 
 The third pass closed on #275 at v3.271.0, and with it the last item anybody had written down. What
@@ -12450,6 +12450,7 @@ overturned**, and the refusals are the reason to read this section.
 | v3.293.0 | **#297** | **the screen inventory's reference player did nothing and died at week 43 — "fifteen unreached" is five** |
 | v3.294.0 | **#298–#301** | **four prices the game computed and never showed: the sky, the legacies, the crux, the road** |
 | v3.295.0 | **#302** | **the reading you get after a bout, run before it — same rules, one voice later** |
+| v3.296.0 | **#303** | **the armoury showed the piece's row; now it says what the row is worth to the man** |
 
 ## What was actually built
 
@@ -13631,6 +13632,69 @@ the sweep cannot reach because it does not vary kit strength, a worn-out slot or
 catalogued more than any other, committed inside a check written against it. Arm 1 now reads
 `push(w, "key")` out of `readBout` itself (**14 of 14 real**), and arm 3 reports the sweep's reach as
 a limit of the sweep rather than failing on it.
+
+---
+
+### #303 — THE ARMOURY SHOWED THE PIECE'S ROW, NOT WHAT THE ROW IS WORTH
+
+Item 5 off the audit, and **the audit was half wrong about it** — which only driving the real
+screen showed.
+
+The audit said the rack "describes, it doesn't price". Two corrections came out of building it:
+
+1. **The decision is not on the rack.** `SECT.rack` is the house armoury and has no man in scope.
+   A piece is fitted to a named fighter in `GearDrawer`, and that is where a number is worth having.
+2. **The drawer was already printing numbers.** `GearStats` renders `Attack +6% · Guard +3% ·
+   Speed −1%` — and those are the item's row off `GEAR`, which is the right thing to say about a
+   PIECE and the wrong thing to read as what a MAN gets.
+
+### What `kitMods` does to the row on the way in
+
+| | |
+|---|---|
+| off his style | worth **half**, and a further **−0.045** on attack |
+| wear | scaled by `wearEff` = 0.5 + wear/200 — a worn-out piece is **half again** |
+| a named piece | **+0.05** attack and guard |
+| a shield beside a two-handed weapon | **−0.05** guard, **−0.03** speed |
+
+The alien case was already flagged in words — *"clumsy in his hands"* — and the word does not say it
+costs half. Wear was not reflected at all.
+
+So `GearStats` gains a second line when the caller knows the man and the slot: **`On him:`**,
+the marginal difference fitting it would make. The item's row stays, because describing the piece is
+legitimate; what is added is what it does to *him*.
+
+```
+On him: +4.8% to what he can do · −2% wind · +5% crowd
+On him: −4.5% to what he can do · +9% wind · −2% crowd
+```
+
+### The unit is the engine's, because there is no single conversion to invent
+
+`mods.atk` is consumed at **0.6** in `power`, **0.7** in a signature and **0.95** in an exchange.
+Picking one would be a model retyped beside the engine, which is `#150`. So `gearWorth` calls
+`power` twice — once with the piece, once without — and takes the ratio. **Every term but the kit
+term is identical between the two calls and cancels exactly**, so the answer is the engine's own
+valuation and no constant is copied here to be forgotten when that one moves.
+
+**What the ratio cannot see, and says so:** `power`'s kit term reads attack and guard only. Speed
+feeds the wind and showmanship feeds the crowd, elsewhere — so those are reported apart rather than
+silently as nothing.
+
+### Three things the testing caught that reading would not have
+
+- **Stock kit never wears.** `wears` is `!it.stock && it.price > 0`, and the default kit is all
+  stock. The first test varied wear on a default weapon, got the same answer twice, and looked like
+  the feature not working — it was the test asking a question the rules do not have. Measured
+  properly: a Serpent Sica onto a Murmillo costs **5.2%** against a fresh Noric Gladius and **2.8%**
+  against one worn to 5.
+- **`GEAR` entries do not carry their own id.** The first cut read `it.id`, which is undefined for
+  every piece in the table, so the line rendered for nothing.
+- **The buy list is a collapsed `<details>`.** The first UI run reported zero new lines because the
+  list they belong to was shut.
+
+No draw moved: `kitMods` and `power` contain **no `R()` at all**, and `gearSays` is only ever called
+from the panel.
 
 
 ## A THIRD AUDIT PASS — v3.259.0, written off the partial-player sweep
@@ -30130,7 +30194,7 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.295.0 — the reading you get after a bout now runs before it, from one set of conditions*
+*Last updated: v3.296.0 — the armoury says what a piece is worth to the man, not what its row says*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
