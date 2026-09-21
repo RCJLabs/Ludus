@@ -37,11 +37,68 @@
 
    `faces.mjs`'s header says "nine of the 33 authored <Sect> blocks do not render", and then names
    seven reasons. The number is stale: fifteen do not render on this house at this week, and the
-   arithmetic above closes on both sides. Its count of 28 is unaffected — only the prose. */
-import { serve, open, found, tab, clearAll } from "../harness.mjs";
+   arithmetic above closes on both sides. Its count of 28 is unaffected — only the prose.
+
+   ---- AND "FIFTEEN" WAS WRONG TWICE OVER — #297. THE FIGURE IS FIVE ----
+   The block above is left as it was measured; it is the finding, and what follows is what the
+   finding turned out to be worth. Two faults, and the second survived the fix for the first:
+
+     1  THE HOUSE DID NOTHING. This walk clicked "end week" and took no other action ever, so
+        "the reference player" was a house that never booked a bout or bought a man — and one
+        that DIES AT WEEK 43. Asked for 400 weeks it stopped at 43, walked the title screen left
+        behind, and published "32 of 33 never reached" off five empty face tabs.
+     2  SEVEN OF THE REST WERE NEVER ATTEMPTED. `unrest`, `lastWeek`, `year`, `rivals`, `soFar`
+        and `law` are in `SHEETS.stand`; `yard` is in `SHEETS.house`. This walk reads
+        `details.sect` under the face tabs and a man's record. It never opens a sheet.
+
+   Same seed, an acting player at week 301, still standing:
+
+       33 authored  =  21 reached
+                    +   7 in a sheet this walk never opens   (not a finding about the house)
+                    +   5 on a face and genuinely not reached
+                    +   1 unmatchable by title (`staff`, a template with no literal)
+
+   THE CONTENT QUESTION IS FIVE, NOT FIFTEEN: `cellsNight`, `rites`, `aedileship`, `owed`,
+   `square`. Three more — `rome`, `works`, `monuments` — open only over a long career and were in
+   the fifteen purely because a do-nothing house cannot have them.
+
+   WHAT IS STILL NOT CLAIMED: that those five are unreachable. This is ONE pinned house on ONE
+   seed, and #288's ladder is the standing reminder that a sample cannot tell rare from dead.
+   They are five sections this house did not show, and that is the whole of it. */
+import { serve, open, found, tab, clearAll, forge, installRope } from "../harness.mjs";
 import { readFileSync } from "node:fs";
 
-const WEEKS = +(process.env.SHOWS_WEEKS || 26);
+/* ---- WHICH PLAYER THIS INVENTORIES, AND IT USED TO BE A PLAYER WHO DID NOTHING — #297 ----
+   The loop below clicked "end week" and NOTHING ELSE. It never booked a bout, never bought a man,
+   never took a single action, and the run it published as "the reference player" was that. Two
+   consequences, and the second is why the first went unnoticed for eleven releases:
+
+     · "15 of 33 sections never reached" was not a reading about CONTENT. It was a reading about a
+       house that does nothing. Six of the fifteen — `rome`, `works`, `monuments`, `aedileship`,
+       `rivals`, `owed` — are plainly things such a house cannot have.
+     · A house that does nothing DIES AT WEEK 43. Measured, on this seed.
+
+   And the probe could not tell you. Asked for 400 weeks it stopped at 43, walked the title screen
+   that was left, found five face tabs and no sections at all, and printed **"32 of 33 never
+   reached"** — a post-mortem published in the same words as a live reading. Zero rendered sections
+   was the only tell, and nothing in the output said the house was over.
+
+   TWO ARMS NOW, and the output names which one ran:
+
+     rope   (default) a house played forward by `R.lanista` under the full option set — the same
+            acting player `revolt.mjs` uses — planted through `forge` so the UI renders it.
+     idle   the old behaviour, kept so the published figure can be reproduced and compared. It is
+            NOT a reference player and this file will not call it one again.
+
+   Guard below: an inventory that finds no section at all is a broken reading, not an empty game,
+   and it exits non-zero rather than printing zeros in the language of a finding. */
+const PLAY  = (process.env.SHOWS_PLAY || "rope").toLowerCase();
+const WEEKS = +(process.env.SHOWS_WEEKS || (PLAY === "idle" ? 26 : 120));
+
+/* the acting player, as `revolt.mjs` spells it */
+const MOST = { court:true, gambit:true, loan:true, payoff:true, works:true, sell:true, munus:true,
+  rites:true, bury:true, yard:true, booking:true, favours:true, lot:true, overture:true, free:true,
+  mastery:true, signature:true, retire:true };
 
 /* the authored set, read from source: every `<Sect title=...>` under the SECT table */
 const authored = (() => {
@@ -59,16 +116,88 @@ const authored = (() => {
   return out;
 })();
 
+/* ---- AND A THIRD CATEGORY, BECAUSE TWO WAS STILL A LIE — #297 ----
+   With an acting player at week 301 this still reported "12 of 33 never reached". SEVEN OF THE
+   TWELVE ARE IN SHEETS: `unrest`, `lastWeek`, `year`, `rivals`, `soFar` and `law` all sit inside
+   `SHEETS.stand` ("WHERE THINGS STAND"), and `yard` inside `SHEETS.house`. This walk reads
+   `details.sect` under five face tabs and a man's record. IT NEVER OPENS A SHEET.
+
+   So those seven were not unreached by the house. They were never attempted, and calling them
+   "never reached on this house" is a statement about the game made out of a gap in the probe —
+   the same fault as the dead-house reading above, one door further in, and it survived the fix
+   for the first one. A count of what a walk did not visit is not a count of what a house does
+   not show.
+
+   The sheet members are read out of the SHEETS block by brace depth rather than guessed, and
+   reported apart. Opening the sheets is the better fix and is the next piece of work; until then
+   this file will not put those seven in a column headed by the word "reached". */
+const inSheet = (() => {
+  const src = readFileSync(new URL("../../src/ludus.jsx", import.meta.url), "utf8").split("\n");
+  const a = src.findIndex(l => /^\s*const SHEETS = \{/.test(l));
+  if (a < 0) return new Set();
+  let depth = 0, end = a;
+  for (let i = a; i < src.length; i++) {
+    depth += (src[i].match(/\{/g) || []).length - (src[i].match(/\}/g) || []).length;
+    if (i > a && depth <= 0) { end = i; break; }
+  }
+  const body = src.slice(a, end + 1).join("\n");
+  return new Set([...body.matchAll(/SECT\.([a-zA-Z][a-zA-Z0-9]*)\(/g)].map(m => m[1]));
+})();
+
 const { server, port } = await serve({ page: "dist/test.html" });
 const { browser, p, errors } = await open(port);
 await found(p, { seed: "REACH-1" });
-for (let w = 0; w < WEEKS; w++) {
-  const ok = await p.evaluate(() => {
-    const b = [...document.querySelectorAll("button")].find(x => /^end week/i.test((x.innerText || "").trim()));
-    if (b) { b.click(); return true; } return false;
-  });
-  if (!ok) break;
-  await p.waitForTimeout(160); await clearAll(p, 3);
+
+let played = null;          /* { week, ended } — what house the inventory below is of */
+if (PLAY === "idle") {
+  /* the old walk, kept and now INSTRUMENTED: it used to break out of this loop and say nothing */
+  let w = 0, stopped = null;
+  for (; w < WEEKS; w++) {
+    const ok = await p.evaluate(() => {
+      const b = [...document.querySelectorAll("button")].find(x => /^end week/i.test((x.innerText || "").trim()));
+      if (b) { b.click(); return true; } return false;
+    });
+    if (!ok) { stopped = w; break; }
+    await p.waitForTimeout(160); await clearAll(p, 3);
+  }
+  played = { week: stopped == null ? WEEKS : stopped, ended: stopped != null,
+    how: `idle — "end week" and no other action, ${WEEKS} asked` };
+} else {
+  /* `found()` RELOADS THE PAGE and the rope is installed per document, so it has to go back on
+     before the builder runs — `stature` does the same, one line under its own `found`. Without it
+     the builder throws "Cannot read properties of undefined (reading 'lanista')" at week 1 and
+     `forge` plants a house one week old. The instrumentation above caught that on the first run:
+     it printed the throw and the week rather than the 33-section inventory it would have been. */
+  await installRope(p);
+  /* ---- THE ROPE BUILDS THE HOUSE, THE UI RENDERS IT ----
+     `R.lanista` plays a headless `d`; the React state is not reachable from outside, so the two
+     are joined the way `stature` joins them — `forge` plants the state into every save slot and
+     reloads. The step BEFORE the one that ends the house is what gets planted, so the inventory
+     is always of a house that is still standing. */
+  const built = await forge(p, (A, R, arg) => {
+    const d = A.newGameState("Shows", "clean", "REACH-1", null);
+    let before = null;
+    for (let w = 0; w < arg.W; w++) {
+      before = JSON.parse(JSON.stringify(d));
+      try { R.lanista(d, arg.MOST); }
+      catch (e) { return { plant: before, week: before.week, ended: true, threw: true,
+        why: "the rope threw: " + String((e && e.message) || e) }; }
+      if (d.over) return { plant: before, week: before.week, ended: true,
+        why: String((d.over && (d.over.kind || d.over.how)) || d.over) };
+    }
+    return { plant: d, week: d.week, ended: false, why: null };
+  }, { W: WEEKS, MOST });
+  played = { week: built.week, ended: !!built.ended, why: built.why, threw: !!built.threw,
+    how: `rope — R.lanista under the full option set, ${WEEKS} asked` };
+  /* A THROW IS A BROKEN RUN, NOT A SHORT-LIVED HOUSE, and the difference matters because the
+     inventory that follows would be perfectly well-formed and about the wrong house. */
+  if (played.threw) {
+    console.log(`\nNOT A READING — the builder threw at week ${played.week}: ${played.why}`);
+    console.log(`The house planted is that many weeks old, so every count below would be about a`);
+    console.log(`house this arm never meant to build. Fix the builder; do not read the numbers.\n`);
+    await browser.close(); server.close();
+    process.exit(1);
+  }
 }
 
 /* the face switcher, not the tab bar — `faces.mjs` explains why this selector is the probe */
@@ -151,11 +280,33 @@ for (const t of ["ludus", "familia", "arena", "market", "villa"]) {
 await browser.close(); server.close();
 
 const pad = (s, n) => String(s).padEnd(n).slice(0, n);
-console.log(`\nWHAT EACH FACE SHOWS  (pinned REACH-1, week ${WEEKS})\n`);
+console.log(`\nWHAT EACH FACE SHOWS  (pinned REACH-1)\n`);
+console.log(`  the house it inventories: ${played.how}`);
+console.log(`  reached week ${played.week}` + (played.ended
+  ? ` and THE HOUSE ENDED THERE${played.why ? ` (${played.why})` : ""} — the reading below is of `
+    + `the last week it was still standing`
+  : ` and was still standing`));
+console.log("");
 for (const r of rows) console.log(`  ${pad(r.where, 30)} ${String(r.n).padStart(2)} sections`);
 
 const all = [...SEEN.values()].sort((a, b) => b.words - a.words);
 const occ = rows.reduce((a, r) => a + r.n, 0);
+
+/* ---- NO SECTION AT ALL IS A BROKEN READING, NOT AN EMPTY GAME — #297 ----
+   Asked for 400 weeks on the idle arm, this walked the title screen a dead house had left behind,
+   found five face tabs with nothing in them, and reported "32 of 33 never reached". Every number
+   below is (authored − reached), so a walk that reaches NOTHING reports everything as missing, in
+   the same words it would use for a real finding. The only tell was a zero. */
+if (!all.length) {
+  console.log(`\n  NOT A READING — no section rendered on any of the ${rows.length} faces.`);
+  console.log(`  A walk that reaches nothing reports every authored section as never reached, which`);
+  console.log(`  reads as a finding about the game and is a fault in this probe's run.`);
+  console.log(played.ended
+    ? `  The house ended at week ${played.week}${played.why ? ` (${played.why})` : ""}, so this walked whatever was left.`
+    : `  The house was still standing, so the face walk itself is broken — start there.`);
+  console.log("");
+  process.exit(1);   /* the browser and server are already closed above */
+}
 console.log(`\n  ${rows.length} faces · ${occ} section occurrences · ${all.length} distinct `
   + `· ${errors.length} page errors`);
 console.log(`  (\`faces.mjs\` counts the occurrences; this counts the distinct. They should agree.)\n`);
@@ -199,8 +350,10 @@ const hit = a => {
   return seenTitles.some(t => fs.every(f => t.includes(f))) ? "reached" : "missed";
 };
 const verdict = authored.map(a => ({ ...a, v: hit(a) }));
-const missed = verdict.filter(a => a.v === "missed");
-const vague  = verdict.filter(a => a.v === "indeterminate");
+/* a section this walk never tried to open is not a section the house never showed */
+const unopened = verdict.filter(a => a.v === "missed" && inSheet.has(a.key));
+const missed   = verdict.filter(a => a.v === "missed" && !inSheet.has(a.key));
+const vague    = verdict.filter(a => a.v === "indeterminate");
 
 /* and the other direction: what rendered that the SECT table does not author. `faces.mjs` counts
    `details.sect` elements, and not every one of them comes from `SECT` — the gatekeeper's line and
@@ -212,7 +365,13 @@ const foreign = [...SEEN.values()].filter(s2 => {
   return !verdict.some(a => a.v === "reached" && frags(a.title).every(f => t.includes(f)));
 });
 
-console.log(`\n  AUTHORED BUT NEVER REACHED ON THIS HOUSE: ${missed.length} of ${authored.length}`);
+console.log(`\n  IN A SHEET THIS WALK NEVER OPENS: ${unopened.length} of ${authored.length}`
+  + ` — NOT a finding about the house`);
+for (const a of unopened) console.log(`    ${pad(a.key, 16)} "${a.title}"`);
+console.log(`    These live inside \`SHEETS\` and this walk reads \`details.sect\` under the face`);
+console.log(`    tabs and a man's record only. Opening the sheets is the next piece of work.\n`);
+
+console.log(`  AUTHORED, ON A FACE, AND NEVER REACHED: ${missed.length} of ${authored.length}`);
 for (const m of missed) console.log(`    ${pad(m.key, 16)} "${m.title}"`);
 if (vague.length) {
   console.log(`\n  UNMATCHABLE BY TITLE (a template with no literal to match on): ${vague.length}`);

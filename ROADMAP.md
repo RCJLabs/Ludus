@@ -12415,7 +12415,7 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
-## AFTER THE QUEUE — v3.272.0 to v3.292.0, twenty-one releases, six game changes, six instruments
+## AFTER THE QUEUE — v3.272.0 to v3.293.0, twenty-two releases, six game changes, six instruments
 that had been lying since they were written — and finally a gate over the instruments
 
 The third pass closed on #275 at v3.271.0, and with it the last item anybody had written down. What
@@ -12447,6 +12447,7 @@ overturned**, and the refusals are the reason to read this section.
 | v3.290.0 | **#294** | **the missio, templated — 39.3 re-reads to 4.5, and the three-beat finding is closed** |
 | v3.291.0 | **#295** | **`voice` was holding two thirds of the game's registers — three the player reads were reachable by nothing** |
 | v3.292.0 | **#296** | **three checks passed on an empty scan, and one of them was the gate over the instruments** |
+| v3.293.0 | **#297** | **the screen inventory's reference player did nothing and died at week 43 — "fifteen unreached" is five** |
 
 ## What was actually built
 
@@ -13392,6 +13393,81 @@ turns arm 5 red and names the file.
 `fixtures` at 100 against hundreds. A cap set to today's count turns every legitimate addition red
 and teaches the next reader to edit the number without looking, which is worse than no guard. These
 say *"the scan is broken"*, never *"the registry changed"*.
+
+---
+
+### #297 — THE SCREEN INVENTORY'S REFERENCE PLAYER DID NOTHING, AND DIED AT WEEK 43
+
+Proposed as a game question — *`shows.mjs` says 15 of 33 sections never render; are they reachable
+at all?* — and the first measurement **refuted the proposal instead of answering it**.
+
+The plan was to re-run against a long-lived house and compare. Asked for 400 weeks, the probe came
+back with **5 faces · 0 section occurrences · 0 distinct** and printed *"32 of 33 never reached"*.
+
+**Zero rendered sections was the tell**, the same kind that caught #285, #286 and #288. The walk
+clicks "end week" and `break`s when that button disappears — then inventories the faces anyway. The
+house **ends at week 43**; what it measured was the title screen left behind, showing a save card
+reading *"Week 41 · Unknown · 29 fame · 3 men"*. A post-mortem published in the same words as a live
+reading, with nothing in the output saying the house was over.
+
+**And the cause was worse than the symptom.** That loop only ever clicked "end week" — it never
+booked a bout, never bought a man, never took a single action. So the published *"15 of 33"* was
+never a statement about content. It was a statement about a house that does nothing, two thirds of
+the way to collapse. And it could not be fixed by running longer, because a do-nothing house is dead
+by week 43.
+
+### Fix one: the probe says which house it read
+
+Two arms, and the output names the one that ran, the week it reached, and whether the house survived:
+
+| arm | what it is |
+|---|---|
+| `rope` (default) | `R.lanista` under the full option set — the acting player `revolt.mjs` uses — planted through `forge` so the UI renders it, the same joining `stature` uses |
+| `idle` | the old behaviour, kept so the published figure can be reproduced. It is **not** a reference player and this file will not call it one again |
+
+The step *before* the one that ends the house is what gets planted, so the inventory is always of a
+house still standing. Two guards: a walk that renders **no section at all** exits non-zero, and a
+**builder throw aborts** rather than publishing — a throw is a broken run, not a short-lived house.
+
+**The second guard caught my own error on its first run.** `found()` reloads the page and the rope
+is installed per document, so the builder threw at week 1 and `forge` planted a one-week house. The
+old probe would have inventoried it and printed a clean-looking table. This one printed *"reached
+week 1 and THE HOUSE ENDED THERE (the rope threw …)"*, and it was fixed in a minute.
+
+### Fix two was not enough, and the same fault survived it
+
+With an acting player at week 301, still standing, it reported **"12 of 33 never reached"**. That
+was *still* a statement about the game made out of a gap in the probe.
+
+**Seven of the twelve are in sheets.** `unrest`, `lastWeek`, `year`, `rivals`, `soFar` and `law` sit
+inside `SHEETS.stand` ("WHERE THINGS STAND"); `yard` sits inside `SHEETS.house`. The walk reads
+`details.sect` under five face tabs and a man's record — **it never opens a sheet.** Those seven
+were not unreached by the house; they were never attempted.
+
+A third category now, read out of the `SHEETS` block by brace depth rather than guessed:
+
+| | |
+|---|---|
+| reached | **21** |
+| in a sheet this walk never opens | **7** — not a finding about the house |
+| on a face and genuinely not reached | **5** |
+| unmatchable by title (`staff`, a template with no literal) | 1 |
+
+**The content question is five, not fifteen**: `cellsNight`, `rites`, `aedileship`, `owed`,
+`square`. Three more — `rome`, `works`, `monuments` — open only over a long career and were in the
+fifteen purely because a do-nothing house cannot have them.
+
+### What is not claimed, and what this cost
+
+Not that those five are unreachable. **One pinned house, one seed**, and #288's ladder is the
+standing reminder that a sample cannot tell rare from dead. They are five sections this house did
+not show.
+
+And the honest accounting: **this release was proposed as a game change and delivered an instrument
+repair**, the fifth in six releases. The thread keeps finding faults in its own tools because the
+tools are what it has been looking at. Opening the sheets is the next piece of work and would make
+the five a real number; whether that is worth another release is a question about appetite, not
+about evidence.
 
 
 ## A THIRD AUDIT PASS — v3.259.0, written off the partial-player sweep
@@ -29891,7 +29967,7 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.292.0 — three checks passed on an empty scan, and the gate over the instruments was one of them*
+*Last updated: v3.293.0 — the screen inventory's reference player did nothing and died at week 43; "fifteen unreached" is five*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
