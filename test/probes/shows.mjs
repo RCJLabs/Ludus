@@ -37,7 +37,34 @@
 
    `faces.mjs`'s header says "nine of the 33 authored <Sect> blocks do not render", and then names
    seven reasons. The number is stale: fifteen do not render on this house at this week, and the
-   arithmetic above closes on both sides. Its count of 28 is unaffected — only the prose. */
+   arithmetic above closes on both sides. Its count of 28 is unaffected — only the prose.
+
+   ---- AND "FIFTEEN" WAS WRONG TWICE OVER — #297. THE FIGURE IS FIVE ----
+   The block above is left as it was measured; it is the finding, and what follows is what the
+   finding turned out to be worth. Two faults, and the second survived the fix for the first:
+
+     1  THE HOUSE DID NOTHING. This walk clicked "end week" and took no other action ever, so
+        "the reference player" was a house that never booked a bout or bought a man — and one
+        that DIES AT WEEK 43. Asked for 400 weeks it stopped at 43, walked the title screen left
+        behind, and published "32 of 33 never reached" off five empty face tabs.
+     2  SEVEN OF THE REST WERE NEVER ATTEMPTED. `unrest`, `lastWeek`, `year`, `rivals`, `soFar`
+        and `law` are in `SHEETS.stand`; `yard` is in `SHEETS.house`. This walk reads
+        `details.sect` under the face tabs and a man's record. It never opens a sheet.
+
+   Same seed, an acting player at week 301, still standing:
+
+       33 authored  =  21 reached
+                    +   7 in a sheet this walk never opens   (not a finding about the house)
+                    +   5 on a face and genuinely not reached
+                    +   1 unmatchable by title (`staff`, a template with no literal)
+
+   THE CONTENT QUESTION IS FIVE, NOT FIFTEEN: `cellsNight`, `rites`, `aedileship`, `owed`,
+   `square`. Three more — `rome`, `works`, `monuments` — open only over a long career and were in
+   the fifteen purely because a do-nothing house cannot have them.
+
+   WHAT IS STILL NOT CLAIMED: that those five are unreachable. This is ONE pinned house on ONE
+   seed, and #288's ladder is the standing reminder that a sample cannot tell rare from dead.
+   They are five sections this house did not show, and that is the whole of it. */
 import { serve, open, found, tab, clearAll, forge, installRope } from "../harness.mjs";
 import { readFileSync } from "node:fs";
 
@@ -87,6 +114,34 @@ const authored = (() => {
     if (t && cur) { out.push({ key: cur, title: t[1] }); cur = null; }
   }
   return out;
+})();
+
+/* ---- AND A THIRD CATEGORY, BECAUSE TWO WAS STILL A LIE — #297 ----
+   With an acting player at week 301 this still reported "12 of 33 never reached". SEVEN OF THE
+   TWELVE ARE IN SHEETS: `unrest`, `lastWeek`, `year`, `rivals`, `soFar` and `law` all sit inside
+   `SHEETS.stand` ("WHERE THINGS STAND"), and `yard` inside `SHEETS.house`. This walk reads
+   `details.sect` under five face tabs and a man's record. IT NEVER OPENS A SHEET.
+
+   So those seven were not unreached by the house. They were never attempted, and calling them
+   "never reached on this house" is a statement about the game made out of a gap in the probe —
+   the same fault as the dead-house reading above, one door further in, and it survived the fix
+   for the first one. A count of what a walk did not visit is not a count of what a house does
+   not show.
+
+   The sheet members are read out of the SHEETS block by brace depth rather than guessed, and
+   reported apart. Opening the sheets is the better fix and is the next piece of work; until then
+   this file will not put those seven in a column headed by the word "reached". */
+const inSheet = (() => {
+  const src = readFileSync(new URL("../../src/ludus.jsx", import.meta.url), "utf8").split("\n");
+  const a = src.findIndex(l => /^\s*const SHEETS = \{/.test(l));
+  if (a < 0) return new Set();
+  let depth = 0, end = a;
+  for (let i = a; i < src.length; i++) {
+    depth += (src[i].match(/\{/g) || []).length - (src[i].match(/\}/g) || []).length;
+    if (i > a && depth <= 0) { end = i; break; }
+  }
+  const body = src.slice(a, end + 1).join("\n");
+  return new Set([...body.matchAll(/SECT\.([a-zA-Z][a-zA-Z0-9]*)\(/g)].map(m => m[1]));
 })();
 
 const { server, port } = await serve({ page: "dist/test.html" });
@@ -295,8 +350,10 @@ const hit = a => {
   return seenTitles.some(t => fs.every(f => t.includes(f))) ? "reached" : "missed";
 };
 const verdict = authored.map(a => ({ ...a, v: hit(a) }));
-const missed = verdict.filter(a => a.v === "missed");
-const vague  = verdict.filter(a => a.v === "indeterminate");
+/* a section this walk never tried to open is not a section the house never showed */
+const unopened = verdict.filter(a => a.v === "missed" && inSheet.has(a.key));
+const missed   = verdict.filter(a => a.v === "missed" && !inSheet.has(a.key));
+const vague    = verdict.filter(a => a.v === "indeterminate");
 
 /* and the other direction: what rendered that the SECT table does not author. `faces.mjs` counts
    `details.sect` elements, and not every one of them comes from `SECT` — the gatekeeper's line and
@@ -308,7 +365,13 @@ const foreign = [...SEEN.values()].filter(s2 => {
   return !verdict.some(a => a.v === "reached" && frags(a.title).every(f => t.includes(f)));
 });
 
-console.log(`\n  AUTHORED BUT NEVER REACHED ON THIS HOUSE: ${missed.length} of ${authored.length}`);
+console.log(`\n  IN A SHEET THIS WALK NEVER OPENS: ${unopened.length} of ${authored.length}`
+  + ` — NOT a finding about the house`);
+for (const a of unopened) console.log(`    ${pad(a.key, 16)} "${a.title}"`);
+console.log(`    These live inside \`SHEETS\` and this walk reads \`details.sect\` under the face`);
+console.log(`    tabs and a man's record only. Opening the sheets is the next piece of work.\n`);
+
+console.log(`  AUTHORED, ON A FACE, AND NEVER REACHED: ${missed.length} of ${authored.length}`);
 for (const m of missed) console.log(`    ${pad(m.key, 16)} "${m.title}"`);
 if (vague.length) {
   console.log(`\n  UNMATCHABLE BY TITLE (a template with no literal to match on): ${vague.length}`);
