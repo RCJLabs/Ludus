@@ -18583,10 +18583,62 @@ function standingLow(kind, v, marks){
    The arena is watched, not driven, which means a new lanista sees his man die and
    has no idea whether he was under-armed, exhausted, badly matched or unlucky. This
    reads the bout back and says what actually decided it, in order of weight. */
+/* ---- AND THE SAME READING, BEFORE — #302 ----
+   `readBout` is called with `wasG`, the man as he was BEFORE the bout, plus three facts that only
+   exist after it: whether he won, what the crowd reached, and whether the plan read him right.
+   Every other rule in it is a fact about the pairing that was true when the card was still an
+   offer on the table — the footing, the sky, what he is carrying, how tired he is, who he is
+   matched against, whether the styles counter. Fourteen of the twenty-one.
+
+   So the report does not need a second implementation to run early; it needs a second VOICE.
+   Passing no `res` puts it in pre-flight mode: `won` is false so the four "and he won" rules stand
+   down, the two crowd rules are skipped, and every surviving rule renders from `PRE_SAY` instead
+   of its own past tense. NOT ONE CONDITION IS TOUCHED, which is the whole point — the warning a
+   player gets beforehand and the explanation he gets afterwards are the same test, or they are two
+   systems that will disagree the first time one is edited.
+
+   `#200` is the argument, in the file already: "a demand you cannot see before you fight is not a
+   demand." This is that, applied to the eighteen rules that were only ever read out afterwards.
+
+   PRE_SAY RECOMPUTES `kitMods` RATHER THAN CLOSING OVER `m`: `push` is called by the footing and
+   sky rules before `m` exists, so reaching for it there is a temporal-dead-zone throw waiting for
+   whoever adds the fifteenth rule. A second cheap call is worth more than that trap. */
+const PRE_SAY = {
+  footing:     (g, o) => `The footing at ${VEN(o.venue).name.toLowerCase()} suits a heavy man. He is quick, and it will not help him.`,
+  sky:         (g, o) => o.sky === "rain"
+    ? `It is raining. The sand will not hold for anybody trying to move on it.`
+    : `It is blazing out there and he has never had much wind.`,
+  kit_style:   (g)    => { const c = (kitMods(g.kit, g.cls, g).clumsy || []).length;
+    return c === 1 ? `He is carrying a piece that is not his style.`
+      : `He is carrying ${c} pieces that are not his style.`; },
+  kit_thin:    ()     => `He is under-armed for this card. The other man has the better of it before either of them moves.`,
+  kit_worn:    (g)    => { const w = SLOTS.filter(x=>wears(GEAR[g.kit&&g.kit[x]]) && (g.wear&&g.wear[x]||100) < 30);
+    return `His ${GEAR[g.kit[w[0]]].name.toLowerCase()} is close to gone.`; },
+  tired:       (g)    => g.fatigue >= 55
+    ? `He is at ${Math.round(g.fatigue)} fatigue, which is most of a man's edge before anything else happens.`
+    : `He is not fresh.`,
+  strain:      ()     => `He is carrying deep strain from the yard, and it does not rest off in a week.`,
+  lasting:     (g)    => `${LASTING[lastingOf(g)[0]].name.replace(/^a /,"His ").replace(/^the /,"His ")} — past the sixth round he is not the same man.`,
+  form:        ()     => `He has been off his stride for weeks and it has not turned round on its own.`,
+  regard:      ()     => `He thinks very little of this house, and a man who thinks little of you does not spend himself for you.`,
+  overmatched: (g, o) => `He is matched against a man with ${(o.opp||{}).wins} behind him and ${g.wins===0?"none":g.wins} of his own.`,
+  over_tier:   (g, o) => `That is a tier ${o.tier} card and he is not a tier ${o.tier} man yet.`,
+  counter:     (g, o) => `The ${((o.opp||{}).cls||"").toLowerCase()} is the wrong match for a ${g.cls.toLowerCase()}, and everyone at the editor's table knows it.`,
+  sine:        ()     => `There is no mercy on this card. There will be no decision to lean on.`,
+};
+
 function readBout(d, g, offer, res, ctx){
   const R2 = [];
   const opp = offer.opp || {};
-  const push = (w, k, s) => R2.push({ w, k, s });
+  /* no `res` means the bout has not happened: same rules, `PRE_SAY`'s voice, and anything with no
+     pre-flight line simply does not appear. */
+  const pre = !res;
+  res = res || {};
+  const push = (w, k, s) => {
+    if(!pre) return R2.push({ w, k, s });
+    const f = PRE_SAY[k]; if(!f) return;
+    R2.push({ w, k, s: f(g, offer, d) });
+  };
   const won = !!res.win;
 
   /* the ground and the sky */
@@ -18631,12 +18683,16 @@ function readBout(d, g, offer, res, ctx){
   else if(ctx && ctx.plan && ctx.plan.right === true) push(4, "plan", `You read him correctly beforehand and it was worth about seven bouts in a hundred.`);
 
   /* and the room */
-  if(!offer.city && facOf(d, "front") < 22 && res.crowd < 40) push(4, "cold_room", `The front rows have gone cold on this house, and a cold house gets no help when a decision is being made.`);
-  if(res.crowd >= 76) push(3, "crowd", `The crowd was with him from the third exchange, which is worth more than it sounds.`);
+  if(!pre && !offer.city && facOf(d, "front") < 22 && res.crowd < 40) push(4, "cold_room", `The front rows have gone cold on this house, and a cold house gets no help when a decision is being made.`);
+  if(!pre && res.crowd >= 76) push(3, "crowd", `The crowd was with him from the third exchange, which is worth more than it sounds.`);
   if(offer.stakes === "sine") push(5, "sine", `There was no mercy on that card. There was never going to be a decision to lean on.`);
 
   R2.sort((a,b)=>b.w - a.w);
   const top = R2.slice(0, 3).map(x=>({ k:x.k, s:x.s }));
+  /* the fallback is a consolation for a bout already lost — "nothing WAS wrong with any of it" —
+     and in pre-flight there is no bout and nothing to console. An empty list is the honest answer
+     and the panel shows nothing at all, which is what "no warnings" should look like. */
+  if(pre) return top;
   if(!top.length) top.push({ k:"nothing", s: won
     ? `Nothing decided it but the two of them. He was the better man on the day.`
     : `Nothing was wrong with any of it. Some afternoons the other man is simply better and there is nothing in the ledger to blame.` });
@@ -35687,6 +35743,19 @@ export default function App(){
                   `skyMods`, the same call the bout makes. */}
               {o.sky && me && o.opp && (()=>{ const w = skySays(o.sky, o.venue, me.cls, o.opp.cls);
                 return w ? <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2,color:"var(--azure)"}}>{w}</div> : null; })()}
+              {/* #302 — the same reading the result panel gives afterwards, run before. `readBout`
+                  with no `res` is pre-flight: the same conditions, PRE_SAY's voice, and nothing at
+                  all when there is nothing to say. */}
+              {me && o.opp && (()=>{ const warns = readBout(S, me, o) || [];
+                if(!warns.length) return null;
+                return (
+                  <div style={{borderTop:"1px dotted var(--line)",marginTop:7,paddingTop:5}}>
+                    <span className="tag tag-blood">What is against him</span>
+                    {warns.map(w=>(
+                      <div key={w.k} className="dim" style={{fontSize:"var(--fs-sm)",marginTop:3}}>{w.s}</div>
+                    ))}
+                  </div>
+                ); })()}
               {/* #200 — a demand you cannot see before you fight is not a demand. Printed on the
                   offer, with what it is worth and what flouting it costs, because both are real. */}
               <AppetiteLine offer={o} />
@@ -36291,6 +36360,10 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        are reachable from a test the way `voice.mjs` asks. `sigLand` is the one the bout also
        rolls against, which is the whole point of it being one function. */
     skySays, skyMods, sigLand, sigTech, legacyRows, legacyHeld, LEGACY_WORTH,
+    /* #302 — an eighteen-rule system the player reads and NOTHING held: no check, no probe, not
+       on the handle. Exported so the refactor below could be diffed against itself, and so it can
+       be held from now on. */
+    readBout, PRE_SAY,
     roadSaysFavour, FAV_DRIP, FAV_AWAY,
     /* the week, and what it writes down */
     endWeek, bookBout, bookOf, newBook, chron, chronAll, bookSays,

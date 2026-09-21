@@ -12415,7 +12415,7 @@ says. `checks/matron.mjs`, five arms.
 
 ---
 
-## AFTER THE QUEUE — v3.272.0 to v3.294.0, twenty-three releases, ten game changes, six instruments
+## AFTER THE QUEUE — v3.272.0 to v3.295.0, twenty-four releases, eleven game changes, seven instruments
 that had been lying since they were written — and finally a gate over the instruments
 
 The third pass closed on #275 at v3.271.0, and with it the last item anybody had written down. What
@@ -12449,6 +12449,7 @@ overturned**, and the refusals are the reason to read this section.
 | v3.292.0 | **#296** | **three checks passed on an empty scan, and one of them was the gate over the instruments** |
 | v3.293.0 | **#297** | **the screen inventory's reference player did nothing and died at week 43 — "fifteen unreached" is five** |
 | v3.294.0 | **#298–#301** | **four prices the game computed and never showed: the sky, the legacies, the crux, the road** |
+| v3.295.0 | **#302** | **the reading you get after a bout, run before it — same rules, one voice later** |
 
 ## What was actually built
 
@@ -13571,6 +13572,65 @@ moved.** `simulateFight` stayed at **462**.
 `App` 5853 → **5862** and `SECT` 1497 → **1517**, both with the division this allowance exists for:
 every figure and every word is built in the domain code (`skySays`, `legacyRows`, `LEGACY_WORTH`,
 `sigLand`, `roadSaysFavour`) and the panels print them.
+
+---
+
+### #302 — THE READING YOU GET AFTER A BOUT, RUN BEFORE IT
+
+Item 4 off the audit. `readBout` is the eighteen-rule reading behind **"What decided it"** — the
+footing, the sky, what he is carrying, how tired he is, who he is matched against, whether the
+styles counter — and it is good. It only ever ran once the man was already carried off.
+
+**And it was already reading pre-bout state.** It is called with `wasG`, the man as he was *before*
+the fight, plus exactly three facts that only exist after: whether he won, what the crowd reached,
+and whether the plan read him right. **Fourteen of the twenty-one rules never needed the bout at
+all** — including `counter`, at weight 9.5 the heaviest rule in the whole report.
+
+### One set of conditions, two voices
+
+So the report did not need a second implementation. It needed a second **voice**. Calling it with no
+`res` puts it in pre-flight mode: `won` is false so the four "and he won" branches stand down, the
+two crowd rules are guarded, and every surviving rule renders from `PRE_SAY` instead of its own past
+tense.
+
+**Not one condition was touched.** That is the whole argument — a warning beforehand and an
+explanation afterwards built from two rule sets are two systems that will disagree the first time
+one is edited.
+
+```
+COUNTER   The secutor is the wrong match for a retiarius, and everyone at the editor's table knows it.
+          He is carrying a piece that is not his style.
+STACKED   …and he is at 62 fatigue, which is most of a man's edge before anything else happens.
+FRESH     (nothing)
+```
+
+**Proved byte-identical**: `readBout`'s post-bout output over **3,000 swept pairings, 776 distinct
+outputs, byte for byte** against the capture taken before the change. It contains no `R()` at all,
+so no fixture could re-phase.
+
+### The fallback was a consolation for a bout that had not happened
+
+First run of the pre-flight on a clean pairing returned *"Nothing **was** wrong with any of it. Some
+afternoons the other man is simply better…"* — the empty-list fallback, which is a line about a loss,
+in past tense, before the card was taken. In pre-flight an empty list is the honest answer and the
+panel shows nothing at all.
+
+### And `readBout` was held by nothing, which is why `checks/reads.mjs` exists now
+
+An eighteen-rule system the player reads after every bout: **no check, no probe, not on the handle.**
+Doubling its responsibility without covering it was not an option. Four arms — no ghost `PRE_SAY`
+keys, no outcome rule leaking into a pre-flight, which entries a sweep selects, and nothing
+rendering `undefined`.
+
+**Its first run went red, and the check was wrong, not the game.** Arm 1 compared `PRE_SAY`'s keys
+against the keys a 4,000-pairing sweep happened to produce and flagged `kit_thin`, `kit_worn` and
+`lasting` as rules that "the engine never pushes" — three rules sitting plainly in the source, which
+the sweep cannot reach because it does not vary kit strength, a worn-out slot or a lasting injury.
+
+*A sample did not produce it* is not *it does not exist*. That is the fault this section has
+catalogued more than any other, committed inside a check written against it. Arm 1 now reads
+`push(w, "key")` out of `readBout` itself (**14 of 14 real**), and arm 3 reports the sweep's reach as
+a limit of the sweep rather than failing on it.
 
 
 ## A THIRD AUDIT PASS — v3.259.0, written off the partial-player sweep
@@ -30070,7 +30130,7 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.294.0 — four prices the game computed and never showed, and the obvious number for one of them was wrong*
+*Last updated: v3.295.0 — the reading you get after a bout now runs before it, from one set of conditions*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
