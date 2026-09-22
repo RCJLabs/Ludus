@@ -4525,7 +4525,10 @@ function serveWants(d, ev){
     } else if(ev.type==="party" && w.kind==="party") hit = true;
     else if(ev.type==="sell" && w.kind==="sell" && ev.gid===w.gid) hit = true;
     if(!hit) continue;
-    p.favor = clamp(p.favor + WANTS[w.kind].gain, 0, 100);
+    /* #306 — "Editors take your calls. Every patron warms a shade faster." Serving a want is how
+       a patron warms at all; the rep drip above is one patron of one style, this is every one of
+       them. 1 without the feat, so no house without it moves by a point. */
+    p.favor = clamp(p.favor + WANTS[w.kind].gain * perkPatron(d), 0, 100);
     p.served++; p.want = null;
     { const D = WANTS[w.kind].done, g = w.gid ? d.gladiators.find(x=>x.id===w.gid) : null;
       chron(d, `${p.name}: ${typeof D === "function" ? D(d, p, g) : D}`, "good"); }
@@ -13750,6 +13753,25 @@ const featNear = (d, k) => { const F = FEATS[k];
   try { return F.near(d) || null; } catch(e){ return null; } };
 const perkOn = (d,p) => FEAT_KEYS.some(k=>hasFeat(d,k) && FEATS[k].perk===p);
 /* the small permanent things a feat leaves behind */
+/* ---- AND TWO OF THE SEVEN WERE WRITTEN AND SPENT NOWHERE — #306 ----
+   `perkFame` and `perkPatron` sat here with their five siblings, each a one-line multiplier off
+   `perkOn`, each quoting the exact figure `PERKS` promises the player — and `grep` returned their
+   definitions AND NOTHING ELSE. `perkOn` is called in seven places and all seven are the lines
+   below it, so there was no inline delivery either.
+
+   THAT IS FIVE OF THE NINETEEN FEATS WHOSE PERMANENT REWARD WAS A SENTENCE. `name` is A Hundred
+   on the Sand and The Circuit; `standing` is Primus of Capua, Ten Years a Lanista and The Sand at
+   Rome — three of the hardest things in this game. A house won a hundred bouts, was told "the name
+   carries, fame +1 a week", and carried nothing.
+
+   Found by `claims.mjs`, which is the general form of the check `boon.mjs` was: a definition the
+   game never calls, in a file where the player is told what that definition does. It named
+   `legacyPrice` and `legacyRegard` too, on the build before they were wired — #305 found those by
+   reading a review's finding, and this would have found them in under a second.
+
+   WIRED WHERE THE SIBLINGS ARE, one term in the one expression that already computes the quantity:
+   `perkFame` beside the weekly fade in `ludusLedger`, `perkPatron` on the want-gain in
+   `servePatron` — the main channel by which a patron warms at all. */
 const perkTrain = d => perkOn(d,"drill") ? 1.06 : 1;
 const perkCalm  = d => perkOn(d,"order") ? 0.45 : 0;
 const perkFame  = d => perkOn(d,"name") ? 1 : 0;
@@ -24141,6 +24163,10 @@ function ludusLedger(d, men){
   const auctors = act.filter(isAuctor).length;
   d.unrest = clamp(d.unrest + (avgDef-34)/9 - 0.6 - docCalm(d) - cellCalm(d) - auctors*0.35 - perkCalm(d) - lanCalm(d) - (collOn(d)?0.4:0) + (seasonOf(d).unrest + docUnrest(d)) * pit(d,"unrest"), 0, 100);
   if(d.fame>60) d.fame -= 1;
+  /* #306 — "The name carries. Fame +1 a week." It is 0 without the feat, so a house that has not
+     won its hundred fades exactly as it did. With it, the +1 meets the −1 above and the house
+     simply stops slipping, which is what carrying a name is. */
+  d.fame += perkFame(d);
   d.week++;
   /* #251 phase 1 — the doctore has a birthday too, off `doctore.weeks`, which this function has
      incremented a few lines up since v3.156.0 and nothing has ever read but the greybeard's gate. */
@@ -36745,6 +36771,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     OVER_TEXT, DEBT_STAGE,   /* #247 — the end screen's own table, so a check can ask whether a kind can be shown */
     swingOf, exposed, swingWeek, SWING_KEEP,   /* #247a — what an ordinary week of this house moves */
     docCalm, cellCalm, perkCalm, lanCalm, collOn, docUnrest, pit,   /* #247b — the terms of the weekly drift */
+    /* #306 — the two that were written and spent nowhere, so `claims.mjs` can hold them paying out */
+    perkOn, perkFame, perkPatron, perkTrain, perkGear, perkNerve, PERKS,
     CENSUS_TOP, CREDIT_WEEKS, FAME_TIERS, FAME_WARM_AT, fameWarm, acclaimIdx, feastFresh, AMB_COOL,
     /* and the patrons the climb rests on */
     patronWeek, serveWants, recomputeFavor, patronsOf, makePatron, favourWorth, WANTS, RANKS,
