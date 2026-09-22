@@ -30398,9 +30398,99 @@ The count that matters: **five features shipped across #298–#303, and five of 
 into main.** Every one was a claim to the player that nothing in the code paid out. That is one
 fault with five faces, and `boon.mjs` is the first instrument in this suite pointed at it.
 
+
+
+### #306 — the sweep: what else is written, promised, and paid by nobody
+**v3.299.0.** #305 found two helpers that computed a promised effect and were never called. It
+found them by reading a review's finding, one table at a time. The obvious question was whether
+that was one bug or a class, and it is mechanically answerable: **a top-level definition whose name
+appears in the game exactly once, on its own line.**
+
+Two things have to be cut before the count means anything. **The test handle is not a caller** — an
+export list mentions a name without using it, and four of the entries below survived precisely by
+looking used to a naive grep. **Comments are not callers either** — this file argues with itself in
+prose and names its own functions constantly.
+
+**The scan validates against the known case.** Run against v3.297.0 it names `legacyPrice` and
+`legacyRegard` at positions 2 and 3 of a 26-line list, in under a second. #305 spent an afternoon
+getting there.
+
+#### What it found: 1,904 definitions, 23 of them called by nothing
+
+Two were the same fault as #305's, and worse:
+
+| | promised | delivered |
+|---|---|---|
+| `perkFame` | *"The name carries. Fame +1 a week."* | nothing |
+| `perkPatron` | *"Editors take your calls. Every patron warms a shade faster."* | nothing |
+
+`perkOn` is called in exactly seven places and all seven are the seven helper definitions, so there
+was no inline delivery either. **That is five of the nineteen feats whose permanent reward was a
+sentence** — `name` is A Hundred on the Sand and The Circuit; `standing` is Primus of Capua, Ten
+Years a Lanista and The Sand at Rome, three of the hardest things in this game. A house won a
+hundred bouts, was told the name carries, and carried nothing.
+
+Wired the way their five live siblings are — one term in the one expression that already computes
+the quantity. Measured, isolated:
+
+| | without | with |
+|---|---|---|
+| fame after one week, same seed, empty house, fame 200 | **207** | **208** |
+| a patron's favour for a want served (`WANTS.win.gain` = 11) | **11** | **16.5** |
+
+Exactly +1 a week, and exactly ×1.5. The fame term meets the −1 fade above 60 fame, so what the
+feat actually buys is that the house **stops slipping**, which is what carrying a name is.
+
+#### And the other twenty-one, ranked rather than fixed
+
+Six are a sentence the player never gets or a rule enforced some other way:
+
+- **`agAge` / `agendaRanked` / `agendaTop` / `agWord`** — a whole feature. `agendaTick` runs once a
+  week and writes a first-seen week into `flags.agSeen` for every standing demand. Four functions
+  exist to read it — *"new this week"*, *"3 weeks now"*, *"standing"* — and **nothing calls any of
+  them.** The game has known how long each demand has been standing, in every save, for as long as
+  `agendaTick` has run, and has never said so.
+- **`masterNeed`** — builds *"N more wins, N more renown"* toward a mastery and nothing prints it.
+  That is exactly the gap #299 closed for the legacies, still open one system over.
+- **`pactBlocks`** — the precise exclusivity rule: a festival, in Capua, another editor's. The live
+  filter in `weekGames` instead truncates the week's offers to the first one, **whoever's it is**.
+  So *"nobody else's games in Capua until it is done"* is enforced as *"one card a week"*. This one
+  is a wrong implementation, not a missing one, and it wants a measurement before a patch.
+
+Two are #150 — a number written twice with one copy dead: `REGARD_HOUSE` against `houseWord`'s
+inline 75/50/25, and `FEAST_FRESH = 6` against `feastFresh`'s `gap - 3`. One is said twice
+(`pairWordSays`; the deadline and the agenda row already say it). Six are derived tables and word
+ladders nothing reads. Six are plain dead helpers with no claim attached.
+
+**One I was wrong about on first read, and the check is why.** `pactBlocks` looked like an
+unenforced contract until `grep exclusive` found the live filter. `pairWordSays` looked like a
+missing reminder until `heldQuestions` turned out to put the deadline up already. Reading a dead
+definition and inferring what is missing is the same error as reading a live one and inferring what
+runs — **the scan ranks, it does not diagnose.**
+
+#### `claims.mjs`, and why its list is a ratchet
+
+Three arms. Arm 0 is its own floor guard. Arm 2 holds `PERKS` the way `boon.mjs` holds `LEGACIES`
+and deliberately does not repeat it — two checks asserting the same thing about one table is the
+fault they both exist for.
+
+Arm 1 is the interesting one: **every dead definition is named with a reason, and the list may only
+shrink.** A new one fails; an entry that has since acquired a caller *also* fails, so a stale entry
+cannot sit there. A suppression file that is allowed to grow is not a check.
+
+**Validated by sabotage** rather than by reading it. Unwiring `perkFame` and adding one dead `const`
+turned it red on both, by line number and independently: arm 1 named `zzDeadOnPurpose (line 1451)`
+and `perkFame (line 13778)`, arm 2 named `name → perkFame is defined and never called`.
+
+**And the release is inert for a house without the feats.** `perkFame` is 0 and `perkPatron` is 1
+without them, so the ten-house sixty-week digest is `43afc6ae` on v3.298.0 and `43afc6ae` after —
+the same figure the last two releases have carried. That proves it costs nothing to a house that
+has not earned them; it is not a claim about the balance of a house that has, and the houses in
+that digest are far too young to hold either feat.
+
 ---
 
-*Last updated: v3.298.0 — a review of my own five shipped features found five real defects, and the boons the title screen had promised since the legacies were written are paid out at last*
+*Last updated: v3.299.0 — the sweep: 23 definitions the game never calls, two of them the permanent reward of five feats, and a ratchet that may only shrink*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
