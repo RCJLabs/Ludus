@@ -1338,7 +1338,11 @@ const TRADE_KEY = "ludus-trade-v1";
 const LEGACIES = {
   freed:   { name:"The Wooden Sword", need:12, unit:"men freed",
     say:"Lanistae talk. Yours is a house men have walked out of, and it reaches the block before you do.",
-    boon:"New men arrive with 6 more regard for you." },
+    /* the wording is the wiring: `legacyRegard` is spent in `buyFromBlock` and `applyLegacy` gives
+       the founding yard the same six. Men who arrive any OTHER way — the pit, a gift, an event —
+       get nothing, and there is no single door into this roster to hang it on, so the sentence
+       says the block rather than promising every arrival. #305. */
+    boon:"Men bought off the block come in with 6 more regard — and the whole yard did, at the founding." },
   buried:  { name:"The Long Bill", need:60, unit:"men buried",
     say:"You have put a great many people in the ground and the trade knows your name for it.",
     boon:"The block fears you: bought men cost 6% less." },
@@ -1383,37 +1387,63 @@ function applyLegacy(d, L){
   if(legacyEarned(L,"freed")) d.gladiators.forEach(g=>{ g.regard = clamp(regardOf(g)+6,0,100); });
   recomputeFavor(d);
 }
-const legacyPrice = d => legacyEarned(d.legacy,"buried") ? 0.94 : 1;
-const legacyRegard = d => legacyEarned(d.legacy,"freed") ? 6 : 0;
+/* ---- AND THESE TWO WERE WRITTEN AND WIRED TO NOTHING — #305 ----
+   Both have sat here since the legacies were built, both quote the exact figure the title screen
+   has been promising all along — 6% off the block, 6 regard on a new man — and `grep` returned
+   their definitions AND NOTHING ELSE. So The Long Bill, which is sixty men in the ground and the
+   longest grind in the game, did absolutely nothing, while the only screen that mentions it said
+   "the block fears you: bought men cost 6% less."
+
+   THIS IS NOT A BALANCE DECISION SOMEBODY MADE AND I AM UNDOING. A deliberate choice would have
+   deleted the function or the sentence; what is here is a function whose constant matches the
+   sentence's constant to the digit, and no call. That is a wiring that was forgotten. It is wired
+   below, at the three places a price is BORN — see `genGladiator`, `soldOnMan` and the captive lot
+   — rather than at the charge, because #230's rule is that the box must show the number the
+   transaction uses, and the block shows `g.price`.
+
+   BOTH ARE TOTAL. `genGladiator`'s own note two hundred lines down says `d` is optional there and
+   the checks on the handle pass it as undefined; `gladValue` paid for exactly this with a NaN.
+   `d && d.legacy` costs nothing and cannot throw. */
+const legacyPrice = d => legacyEarned(d && d.legacy, "buried") ? 0.94 : 1;
+const legacyRegard = d => legacyEarned(d && d.legacy, "freed") ? 6 : 0;
 
 /* ---- AND THE HOUSE COULD NOT SEE ANY OF IT — #299 ----
    Six legacies, and `applyLegacy` above shows they are not ornaments: a senator already in your
-   pocket, every price 6% cheaper for ever, every man +6 regard, every patron +8 warmer, forty
-   fame at the founding, three years off the lanista. They render in ONE place — the title screen,
-   under "What Capua remembers of you" — so during a run you cannot see which you hold, how close
-   the next one is, or why your prices are cheaper than the ledger says they should be.
+   pocket, every price 6% cheaper, every man +6 regard, every patron +8 warmer, forty fame at the
+   founding, three years off the lanista. They render in ONE place — the title screen, under "What
+   Capua remembers of you" — so during a run you cannot see which you hold, how close the next one
+   is, or why your prices are cheaper than the ledger says they should be.
 
-   TWO OF THE SIX ARE STANDING EFFECTS AND FOUR ARE GIFTS AT THE FOUNDING, and that is the part a
-   player most needs and could least deduce. `legacyPrice` and `legacyRegard` are read every week
-   for ever; the other four were spent the moment the keys changed hands. The `when` field says
-   which, so the panel does not have to know.
+   ---- AND THE FIRST CUT OF THIS WROTE A SECOND TABLE OF CLAIMS — #305 ----
+   It built `LEGACY_WORTH`, six fresh sentences about what the six legacies are worth, beside the
+   six `boon` strings `LEGACIES` has carried since they were written. TWO TABLES SAYING THE SAME
+   THING ABOUT THE SAME SIX FACTS is #150 exactly — a price written twice drifts — and it drifted
+   inside one release: `LEGACY_WORTH.freed` ended up saying "at the founding" while the `boon` two
+   hundred lines up still said "new men arrive", and the two panels that print them disagreed with
+   each other about the same legacy on the same save.
 
-   The wording is built here rather than in the panel, the same division `riteSays` and `pietySays`
-   set: the section prints rows, it does not decide what a legacy is worth. */
-const LEGACY_WORTH = {
-  freed:  { when:"standing", say:"every man here thinks +6 more of you, and still does" },
-  buried: { when:"standing", say:"every price in Capua is 6% cheaper, still" },
-  bouts:  { when:"founding", say:"the house opened on +40 fame" },
-  primus: { when:"founding", say:"every patron came in +8 warmer" },
-  rome:   { when:"founding", say:"a senator was yours before you began" },
-  years:  { when:"founding", say:"you took the keys three years younger" },
+   So there is one table again. `boon` is the claim, `legacyRows` hands it to the standing panel,
+   and the title screen goes on printing it beside `say`. Correcting a boon now corrects both
+   screens, because there is only one sentence to correct.
+
+   AND BOTH SCREENS WERE PRINTING TWO CLAIMS THAT WERE FALSE — see the note over `legacyPrice`:
+   the block discount and the new man's regard were promised by the `boon` strings and delivered by
+   nothing, because the two functions that compute them were never called. They are called now.
+   What `applyLegacy` does at the founding and what those two do every week after is the whole of
+   what a legacy is worth, and the six `boon` strings say exactly that and nothing more. */
+/* ---- AND THE PROGRESS HAD TO BE LIVE, WHICH IT WAS NOT — #305 ----
+   `d.legacy` is written once, by `applyLegacy` at the founding, and never again: the running
+   house's own tally is folded in by `mergeLegacy(legacy, legacyFrom(S))` only when the house ENDS.
+   So the first cut of this panel read the figure the house STARTED with and never moved — "11/12
+   men freed" in week one and still 11/12 in week four hundred, after the twelfth man walked out.
+   The whole point of #299 was showing a player how close the next one is, and the number it printed
+   could not get closer. It merges the same two the ending does, so the panel and the ledger agree. */
+const legacyNow = d => mergeLegacy((d && d.legacy) || {}, legacyFrom(d));
+const legacyRows = d => { const L = legacyNow(d);
+  return LEG_KEYS.map(k => { const E = LEGACIES[k];
+    return { k, name:E.name, unit:E.unit, need:E.need, have:Math.min(L[k]||0, E.need),
+      got:legacyEarned(L, k), say:E.boon }; });
 };
-const legacyRows = d => LEG_KEYS.map(k => {
-  const L = (d && d.legacy) || {}, E = LEGACIES[k], W = LEGACY_WORTH[k];
-  return { k, name:E.name, unit:E.unit, need:E.need, have:Math.min(L[k]||0, E.need),
-    got:legacyEarned(L, k), say:W ? W.say : null, standing:!!(W && W.when === "standing") };
-});
-const legacyHeld = d => legacyRows(d).filter(r => r.got).length;
 
 /* ---- MASTERY, AND A SECOND STYLE ----
    Six stats forever is not a career. A man who has been at this long enough stops
@@ -5904,6 +5934,9 @@ const skySays = (k, venue, myCls, foeCls) => {
   };
   two(m.footing, f && f.footing, "footing", v => v > 1);
   two(m.stam,    f && f.stam,    "wind",    v => v < 1);   /* stam multiplies the DRAIN: lower is better */
+  /* these two ARE percentages of the thing the bout multiplies — `ctx.footing` and `ctx.sky` go in
+     as the multipliers `skyMods` returns, so the figure is the engine's own. The gear line below
+     had no such luck; see the note over `gearSays`. */
   if(skyPc(m.purse) >= 2) bits.push(`purse ${m.purse > 1 ? "+" : "−"}${skyPc(m.purse)}%`);
   /* the same minus sign as the terms above it — the raw number carries a hyphen and the rest of
      this line does not, which read as two different kinds of figure on one row. */
@@ -5948,8 +5981,19 @@ const gearWorth = (g, slot, id) => {
   const it = GEAR[id]; if(!g || !slot || !it) return null;
   const kit = g.kit || defaultKit(g.cls);
   if(kit[slot] === id) return null;                       /* already on him */
+  /* ---- AND IT PRICED A SWAP THE RULES REFUSE — #305 ----
+     `equipOne` returns false on `g.named && g.named.slot === slot`: steel forged for one man does
+     not come off him. So on that slot every figure below is the worth of an exchange that cannot
+     be made, and quoting it is the same fault as quoting a price the guard will reject. The lock
+     is read here, in the domain code, so every caller of this is covered at once rather than each
+     panel remembering. */
+  if(isNamed(g, slot)) return null;
   const a = kitAs(g, kit);
-  /* fitting a piece resets that slot's wear, so the comparison is against a fresh one */
+  /* THE CANDIDATE IS PRICED FRESH, AND THAT IS EXACT FOR A PURCHASE AND OPTIMISTIC FOR A SPARE.
+     `buyGearItem` puts a new piece in at 100, so the buy-and-arm list is right. `swapSlot` hands
+     over the BEST condition on the rack, and a spare returned from a dead man keeps its wear — so
+     for an owned piece already worn this reads better than it will be. Stated rather than hidden;
+     pricing the spare exactly wants the rack pool passed in, which the drawer does not have. */
   const b = kitAs(g, Object.assign({}, kit, { [slot]:id }),
                   Object.assign({}, g.wear || {}, { [slot]:100 }));
   const pa = power(a, "measured", null, 0, 1), pb = power(b, "measured", null, 0, 1);
@@ -5958,14 +6002,25 @@ const gearWorth = (g, slot, id) => {
     spd: b.mods.spd - a.mods.spd, sho: b.mods.sho - a.mods.sho,
     alien: !!(it.styles && it.styles.length && !it.styles.includes(g.cls)) };
 };
+/* ---- AND IT PRINTED TWO NUMBERS IT HAD NO RIGHT TO — #305 ----
+   The first cut added `+7% wind` and `+4% crowd` beside the power figure, straight off
+   `mods.spd` and `mods.sho`. NEITHER IS A PERCENTAGE OF ANYTHING THE ENGINE DOES. Speed enters as
+   `1 - mods.spd*0.5` on the stamina drain, so +0.07 is a 3.5% saving and not 7%; showmanship
+   enters the crowd as `(A.mods.sho+B.mods.sho)*22` at the open and `mods.sho*14` a blow, which is
+   crowd POINTS and not a percentage at all.
+
+   Converting them would mean copying 0.5, 22 and 14 out of the engine into a panel — the exact
+   retyped model the header two blocks up says this feature avoided for attack by calling `power`
+   twice. Having refused it there and done it here in the same release is the whole of the lesson.
+
+   So the line prices what `power` prices — attack and guard — and says so. Speed and showmanship
+   are the item's own figures and `GearStats` already prints them on the row above, in the units the
+   table states them in, which is the one honest place for them. */
 const gearSays = (g, slot, id) => {
   const w = gearWorth(g, slot, id); if(!w) return null;
-  const bits = [];
-  if(Math.abs(w.pc) >= 0.1) bits.push(`${w.pc > 0 ? "+" : "\u2212"}${Math.abs(w.pc).toFixed(1)}% to what he can do`);
-  if(Math.abs(w.spd) >= 0.005) bits.push(`${w.spd > 0 ? "+" : "\u2212"}${Math.abs(w.spd*100).toFixed(0)}% wind`);
-  if(Math.abs(w.sho) >= 0.005) bits.push(`${w.sho > 0 ? "+" : "\u2212"}${Math.abs(w.sho*100).toFixed(0)}% crowd`);
-  if(!bits.length) return null;
-  return bits.join(" \u00b7 ") + (w.alien ? " \u2014 and half of it thrown away on a piece that is not his style" : "");
+  if(Math.abs(w.pc) < 0.1) return null;
+  return `${w.pc > 0 ? "+" : "\u2212"}${Math.abs(w.pc).toFixed(1)}% to what he can do in an exchange`
+    + (w.alien ? " \u2014 and half of it thrown away on a piece that is not his style" : "");
 };
 
 const VENUES = {
@@ -6861,9 +6916,12 @@ function genGladiator(d, quality){
      could produce cost about twice the worst, and a great house could buy the whole
      stall out of a week's purse. What a fighting man is worth climbs the way the
      stat curve climbs. */
-  g.price = rnd((90 + quality*4.5 + g.potential*2)
+  /* `legacyPrice` last, on the finished figure, so the discount is in the number the block SHOWS
+     and the number `buyFromBlock` CHARGES — #230's rule. It is 1 unless The Long Bill is held, and
+     `rnd(x*1)` is `rnd(x)`, so no seeded house moves by a denarius. NO DRAW EITHER WAY. #305. */
+  g.price = rnd(legacyPrice(d) * ((90 + quality*4.5 + g.potential*2)
     * (1 + Math.pow(Math.max(0, quality - 62)/40, 1.8) * 1.9)
-    + (g.legend?150:0) + ri(0,40));
+    + (g.legend?150:0) + ri(0,40)));
   return g;
 }
 
@@ -7053,7 +7111,8 @@ function soldOnMan(d){
   g.soldOn = gone.length && R()<0.6 ? `House ${pick(gone)}` : pick(SOLD_ON_FROM);
   /* a finished man out of a folding house is not a bargain. You are paying for the
      years somebody else spent on him and for not having to spend them yourself. */
-  g.price = rnd(gladValue(g) * (1.6 + R()*0.7));
+  g.price = rnd(legacyPrice(d) * gladValue(g) * (1.6 + R()*0.7));   /* #305 — this one discards
+     `genGladiator`'s figure and builds its own, so it has to charge the discount itself */
   return g;
 }
 const SOLD_ON_FROM = ["a school at Puteoli that has closed its gates",
@@ -7136,7 +7195,7 @@ function makeMarket(d){
   d.powLot = null;
   if(d.war && !d.war.done && R() < 0.7){
     const n = ri(2,3);
-    d.powLot = { n, price: rnd((110 + d.fame*0.35) * n * 0.82) };
+    d.powLot = { n, price: rnd(legacyPrice(d) * (110 + d.fame*0.35) * n * 0.82) };   /* #305 */
   }
   if(par) d.market = [par, ...d.market];        /* he was here before the stall was */
 }
@@ -11390,6 +11449,10 @@ function buyFromBlock(d, id, bidPrice){
     /* a name past the census buys the one thing coin never has: how the men take you */
     if(fameWarm(d)){ g.regard = clamp((g.regard!=null?g.regard:50) + fameWarm(d), 0, 100);
       g.morale = clamp((g.morale!=null?g.morale:50) + fameWarm(d), 0, 100); }
+    /* and so does a house men have walked out of — `legacyRegard`, promised on the title screen
+       since the legacies were written and paid out by nobody until #305. Regard only: what the
+       Wooden Sword buys is how a new man rates the house, which is not the same as his mood. */
+    if(legacyRegard(d)) g.regard = clamp((g.regard!=null?g.regard:50) + legacyRegard(d), 0, 100);
     d.gladiators.push(g);
     d.flags.everBought = 1;
     if(g.paragon){
@@ -11779,7 +11842,20 @@ const canLearnSig = (d,g) => !!(!g.signature && !g.teaching && !g.learning
    drawn after the word is spoken. The UI passes 0 for it and says so in words rather than quoting
    a precision it does not have. NO NEW DRAW: the `R() <` stays exactly where it was. */
 const sigLand = (g, edge, forced, T) =>
-  clamp(0.42 + edge*0.5 + (((g && g.tec) || 50) - 50)/300 + (forced ? 0.12 : 0) + (T ? 0.08 : 0), 0.16, 0.92);
+  /* ---- AND THE BUTTON WAS HANDED THE WRONG OBJECT, WHICH ONE EXPRESSION CANNOT PREVENT — #305 ----
+     #300 put the landing chance here so the button and the roll could not drift. The button then
+     called it with `fight.A` — the stripped face `runBout` builds for the modal, carrying a name, a
+     class and a kit and NO `tec` AND NO `signature`. So this took its `|| 50` default, `sigTech`
+     returned null, and EVERY MAN IN THE GAME WAS QUOTED 54 IN 100 while the engine rolled 75 for a
+     drilled tec-88 man and 44 for a tec-20 one — 21 points low for a good man, 10 high for a poor
+     one. One expression cannot drift; one expression handed the wrong object can, and did.
+     `simulateFight` computes it now, where the real fighter is, and it travels on the crux.
+
+     AND `?? 50` RATHER THAN `|| 50`: the falsy-zero form is what let a man with no `tec` at all
+     read as a median man and quote a plausible number instead of a NaN anyone would have caught
+     the first time they looked. This repo has paid for that idiom before, on `g.wear` and `|| 100`.
+     Absent should be loud. */
+  clamp(0.42 + edge*0.5 + (((g && g.tec) ?? 50) - 50)/300 + (forced ? 0.12 : 0) + (T ? 0.08 : 0), 0.16, 0.92);
 
 function triesSignature(g, mom, stam, tac){
   const S = sigOf(g.cls); if(!S) return false;
@@ -12858,7 +12934,10 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
       break;
     }
   }
-  if(crux) return { beats, crux, unfinished:true };
+  /* the crux carries its own quote — see `sigLand`, #305: the box is handed the number rather
+     than the means to work it out, because the modal's face has no `tec` to work it out from */
+  if(crux) return { beats, crux, unfinished:true,
+    sigOdds: sigOf(A.cls) ? Math.round(sigLand(A, 0, true, sigTech(A)) * 100) : null };
 
   if(!ended){
     if(vA<=20 && vB<=20){ winner = vA>=vB?"A":"B"; fell=true; push("fall", `Both men are ruined — but ${winner==="A"?B.name:A.name} falls first!`, {actor:winner==="A"?"B":"A"}); }
@@ -14905,6 +14984,12 @@ const roadSaysWear = d => { const n = roadWear(d); return !n ? null
    IT IS THE EXTRA, NOT THE TOTAL. Patrons shed favour at home too; only the difference is the
    road's doing, so only the difference is charged here. Both terms come off the named constants,
    so this cannot drift from the line that spends them. */
+/* ---- AND HALF ITS OWN GUARD COULD NEVER FIRE — #305 ----
+   `(d.city || d.travel)` matches what `recomputeFavor` charges, which is right. But the only place
+   this is PRINTED is the in-town card, and the road panel returns its own "on the road" card before
+   reaching it whenever `S.travel` is set. So a house between towns sheds favour at the away rate
+   for every travelling week and is told nothing until it arrives. The line is rendered on both
+   cards now; the guard stays as the decay writes it. */
 const roadSaysFavour = d => {
   if(!(d.city || d.travel)) return null;
   const n = (patronsOf(d) || []).length;
@@ -14913,7 +14998,8 @@ const roadSaysFavour = d => {
   const w = roadWeeks(d) || 0;
   const lost = Math.round(extraEach * n * w);
   return `Your ${n === 1 ? "patron sheds" : `${n} patrons shed`} standing ${FAV_AWAY}x faster while you `
-    + `are away` + (lost >= 1 ? ` — about ${lost} points of favour the road has cost you so far` : "");
+    + `are away` + (lost >= 1 ? ` — about ${lost} point${lost === 1 ? "" : "s"} of favour the road has `
+      + `cost you so far` : "");
 };
 function wagonWeek(d){
   if(d.over || !awayFromCapua(d) || !roadWear(d)) return;
@@ -18758,6 +18844,17 @@ function readBout(d, g, offer, res, ctx){
   else if(ctx && ctx.plan && ctx.plan.right === true) push(4, "plan", `You read him correctly beforehand and it was worth about seven bouts in a hundred.`);
 
   /* and the room */
+  /* ---- AND THE `!pre` HERE IS NOT THE REDUNDANCY IT LOOKS LIKE — #305 ----
+     `push` already drops anything with no `PRE_SAY` entry, so these two would be absent from a
+     pre-flight read without the guard. It stays because it is doing a DIFFERENT job: both of them
+     READ `res`, which in pre-flight is the `{}` two hundred lines up. `undefined < 40` is false by
+     coercion, not by intent — the same silent-falsy shape this release just took `|| 50` out of
+     `sigLand` for. Take the guard away and the two rules stop firing for a reason nobody wrote
+     down, and the next person to give `cold_room` a pre-flight line (the faction half of it is
+     perfectly knowable beforehand) gets a rule that is in the table, passes the filter, and never
+     appears. `push` gates ABSENCE; `!pre` gates READING A RESULT THAT DOES NOT EXIST. These two
+     are the only rules in the eighteen that touch `res`, which is why they are the only two
+     carrying it. */
   if(!pre && !offer.city && facOf(d, "front") < 22 && res.crowd < 40) push(4, "cold_room", `The front rows have gone cold on this house, and a cold house gets no help when a decision is being made.`);
   if(!pre && res.crowd >= 76) push(3, "crowd", `The crowd was with him from the third exchange, which is worth more than it sounds.`);
   if(offer.stakes === "sine") push(5, "sine", `There was no mercy on that card. There was never going to be a decision to lean on.`);
@@ -22177,6 +22274,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   if(res.unfinished){
     return { pending:{ gid, offer, tactic, bet, plan:planKey, crux:res.crux, bribeHouse },
       beats: res.beats, crux:true, tier:offer.tier, stakes:offer.stakes, festival:offer.festival, venue:offer.venue, factions:d.factions,
+      sigOdds: res.sigOdds != null ? res.sigOdds : null,   /* #305 */
       A:{ name:g.name, nick:g.nick, cls:g.cls, origin:g.origin, sub:"your house", kit:gc.kit, scars:gc.scars||[], fem:isF(g), bore:boreOf(g) },
       B:{ name:offer.opp.name, nick:offer.opp.nick, cls:offer.opp.cls, origin:offer.opp.origin,
           sub:offer.opp.house? `House ${offer.opp.house}`:"the pits", kit:oc.kit, scars:marksOf(offer.opp), fem:isF(offer.opp), bore:boreOf(offer.opp) } };
@@ -26194,8 +26292,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
                  rolls against. `edge` is the power gap on the round the order lands and is drawn
                  after the word is spoken, so 0 is passed for it and the words below say so rather
                  than quoting a precision this moment does not have. */
-              const odds = (k === "finish" && sig && solo && fight.A)
-                ? Math.round(sigLand(fight.A, 0, true, sigTech(fight.A)) * 100) : null;
+              const odds = (k === "finish" && sig && solo) ? fight.sigOdds : null;
               return (
                 <button key={k} className={`btn ${(k==="cloth"||k==="pullall")?"btn-blood":""}`}
                   style={{width:"100%",marginBottom: solo?4:7, textAlign: solo?"left":"center"}} onClick={()=>onSpeak(k)}>
@@ -27718,7 +27815,7 @@ const SECT = {
                            <span className="rowval dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{r.have}/{r.need} {r.unit}</span>
                          </div>
                          {r.got && r.say && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>
-                           {r.say}{r.standing ? "" : " \u2014 spent at the founding"}</div>}
+                           {r.say}</div>}
                        </div>
                      ))}
                    </div>); })()}
@@ -28766,6 +28863,16 @@ function GearDrawer({ S, pick, close, equip, armWith }){
         const kit = g.kit || defaultKit(g.cls);
         const opts = Object.entries(GEAR).filter(([id,it])=>it.slot===pick.slot && (isBasic(id) || gearFree(S,id)>0 || kit[pick.slot]===id));
         const dualLock = pick.slot==="offhand" && GEAR[kit.weapon] && GEAR[kit.weapon].art==="dual";
+        /* ---- AND THE DRAWER SOLD A SWAP THE RULES REFUSE, AND TOOK COIN FOR IT — #305 ----
+           `equipOne` returns false when a forged piece sits in this slot — "it is his, and it is
+           not going back on the rack" is the chronicle's own line. The drawer had NO idea: every
+           row was a live button that did nothing when pressed, and the buy rows were worse than
+           nothing, because `armWith` is `buyGearItem` THEN `equipOne` — the armourer took the
+           money, the steel went on the rack, the man was unchanged, and not one sentence said
+           why. `buyGearItem`'s own note, forty lines above `equipOne`, names that exact fault and
+           says it was fixed; it was fixed for the price guard and left standing here.
+           A locked slot now shows what is on him and offers nothing. #305. */
+        const forged = isNamed(g, pick.slot) ? g.named : null;
         return (
           <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.gear}} onClick={()=>close()}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
@@ -28775,17 +28882,18 @@ function GearDrawer({ S, pick, close, equip, armWith }){
               </div>
               <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:10}}>
                 For {g.name} — {g.cls}.{dualLock ? " Both his hands are full; a shield would only hinder him." : ""}
+                {forged ? ` ${forged.title} was forged for him and does not come off — the smith made it for this man and no other.` : ""}
               </div>
-              {opts.map(([id,it])=>{
+              {(forged ? opts.filter(([id])=>kit[pick.slot]===id) : opts).map(([id,it])=>{
                 const on = kit[pick.slot]===id;
                 const alien = it.styles && it.styles.length && !it.styles.includes(g.cls);
                 const spare = isBasic(id) ? null : (S.gear[id]||0);
                 return (
-                  <button key={id} className={`optrow ${on?"on":""}`}
+                  <button key={id} className={`optrow ${on?"on":""}`} disabled={!!forged}
                     onClick={()=>{ equip(g.id, pick.slot, id); close(); }}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"var(--ink-hi)":"var(--ink)"}}>{it.name}</span>
-                      {on ? <span className="tag tag-gold">Worn</span>
+                      <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"var(--ink-hi)":"var(--ink)"}}>{forged ? forged.title : it.name}</span>
+                      {on ? <span className="tag tag-gold">{forged ? "His own" : "Worn"}</span>
                           : spare!=null ? <span className="dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{spare} owned</span>
                           : <span className="tag">Standard</span>}
                     </div>
@@ -28802,6 +28910,7 @@ function GearDrawer({ S, pick, close, equip, armWith }){
                    keep their face — it is where stock and the room's capacity are read — but you
                    no longer have to go there to put a sword in a man's hand. */}
               {(()=>{
+                if(forged) return null;          /* #305 — and this one CHARGED for the refusal */
                 const inStyle = it => !it.styles || !it.styles.length || it.styles.includes(g.cls);
                 const buyable = Object.entries(GEAR)
                   .filter(([id,it])=> it.slot===pick.slot && !isBasic(id) && it.price>0
@@ -32806,6 +32915,10 @@ export default function App(){
                   {S.travel.home ? "Back up the road to Capua" : `South for ${CITIES[S.travel.to].name}`} — {S.travel.weeks} week{S.travel.weeks===1?"":"s"}.
                 </div>
                 <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>Wagons, tolls, and nothing to fight for until you arrive.</div>
+                {/* #305 — the weeks BETWEEN towns are charged the away rate too, and this card was
+                    the one place the player could be standing when it happens. */}
+                {(()=>{ const f = roadSaysFavour(S);
+                  return f ? <div style={{fontSize:"var(--fs-sm)",color:"var(--blood-hi)",marginTop:4}}>{f}.</div> : null; })()}
               </div>
             );
             if(C) return (
@@ -32827,8 +32940,11 @@ export default function App(){
                   The wagons are telling on them — {roadSaysWear(S)}.</div>}
                 {/* #301 — and the bill the wear line does not carry. Built in `roadSaysFavour`
                     off the same constants the decay spends; this prints it. */}
-                {roadSaysFavour(S) && <div style={{fontSize:"var(--fs-sm)",color:"var(--blood-hi)",marginTop:4}}>
-                  {roadSaysFavour(S)}.</div>}
+                {/* #305 — one call, not two: the adjacent #298 and #302 blocks already use this
+                    form and this one ran the patron scan, `lanPatronDecay` and `roadWeeks` twice
+                    on every render. */}
+                {(()=>{ const f = roadSaysFavour(S);
+                  return f ? <div style={{fontSize:"var(--fs-sm)",color:"var(--blood-hi)",marginTop:4}}>{f}.</div> : null; })()}
                 <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={goHome}>Break camp and go home</button>
               </div>
             );
@@ -36451,7 +36567,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* #298-#301 — the four lines this release adds are all written in the domain code, so they
        are reachable from a test the way `voice.mjs` asks. `sigLand` is the one the bout also
        rolls against, which is the whole point of it being one function. */
-    skySays, skyMods, sigLand, sigTech, legacyRows, legacyHeld, LEGACY_WORTH,
+    skySays, skyMods, sigLand, sigTech, legacyRows, legacyNow, legacyPrice, legacyRegard,
+    LEGACIES, legacyEarned, isNamed,   /* #305 — the boon strings and the two locks a check has to read */
     /* #302 — an eighteen-rule system the player reads and NOTHING held: no check, no probe, not
        on the handle. Exported so the refactor below could be diffed against itself, and so it can
        be held from now on. */
