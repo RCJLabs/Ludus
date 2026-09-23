@@ -8,6 +8,11 @@
      a row that names a panel opens it as a document, unfolded, exactly as the desk does
      a row that names none travels to the face it says, and the sheet closes behind it
 
+   And since #307 a fourth: EVERY ROW CARRIES EXACTLY ONE TAG — a dated row its clock, an undated
+   row how long it has stood — and the undated row's tag is `agWord` of `agAgeBy`, computed from the
+   same saved state the count is. A tag that said "standing" over a row the domain dates as new
+   this week would be the copied-number fault again, one slot to the right.
+
    Walked on the played pinned morning, like desk and scene.
 */
 import { found, tab, clearAll, installRope , forge, waitSaved } from "../harness.mjs";
@@ -67,6 +72,43 @@ export async function run({ p, errors }){
   /* v3.99.0: the sheet leads with a masthead row — the week that was — which is not an agenda
      item and carries the .leadrow mark so this count stays the agenda's. */
   if(sheet !== truth.agendaN) fails.push(`the sheet holds ${sheet} rows over an agenda of ${truth.agendaN}`);
+
+  /* ---- #307: ONE TAG PER ROW, AND THE AGE IS THE DOMAIN'S ---- */
+  const tags = await p.evaluate(()=>{
+    const A = window.__LVDVS;
+    const S = (()=>{ try { return JSON.parse(localStorage.getItem(
+      Object.keys(localStorage).find(k=>/ludus-slot-\d/.test(k)))); } catch(e){ return null; } })();
+    if(!S || !A.agenda || !A.agWord || !A.agAgeBy || !A.agId) return { why:"no saved state or no age helpers on the handle" };
+    const byLabel = new Map((A.agenda(S)||[]).map(a=>[String(a.label), a]));
+    const w = [...document.querySelectorAll(".modalwrap")].pop();
+    const out = { rows:0, aged:0, dated:0, wrong:[], counts:{} };
+    const AGEWORD = /^(new this week|\d+ weeks? now|standing)$/;
+    for(const b of (w ? w.querySelectorAll("button.optrow:not(.leadrow)") : [])){
+      const label = (b.innerText||"").split("\n")[0].trim();
+      const a = byLabel.get(label); if(!a) continue;
+      out.rows++;
+      const t = [...b.querySelectorAll(".tag")].map(x=>(x.innerText||"").trim().toLowerCase());
+      if(t.length !== 1){ out.wrong.push(`"${label.slice(0,30)}" carries ${t.length} tags`); continue; }
+      if(a.when != null){
+        out.dated++;
+        if(AGEWORD.test(t[0])) out.wrong.push(`"${label.slice(0,30)}" is dated and shows an age ("${t[0]}")`);
+      } else {
+        out.aged++;
+        const want = A.agWord(A.agAgeBy(S, A.agId(a)));
+        out.counts[t[0]] = (out.counts[t[0]]||0) + 1;
+        if(t[0] !== want) out.wrong.push(`"${label.slice(0,30)}" reads "${t[0]}" where the domain says "${want}"`);
+      }
+    }
+    return out;
+  });
+  if(tags.why) fails.push(`the tag arm could not run: ${tags.why}`);
+  else {
+    /* a sheet with no undated row proves nothing about the age tag — #296's rule */
+    if(!tags.aged) fails.push(`${tags.rows} rows matched and none of them undated — the age tag arm read nothing`);
+    for(const x of tags.wrong.slice(0, 3)) fails.push(x);
+    lines.push(`tags: ${tags.rows} rows · ${tags.dated} dated with a clock · ${tags.aged} undated with an age`
+      + ` · ${Object.entries(tags.counts).map(([k,n])=>`${k} ×${n}`).join(", ")} · wrong: ${tags.wrong.length}`);
+  }
 
   const openRow = await p.evaluate(()=>{ const w=[...document.querySelectorAll(".modalwrap")].pop();
     const b=[...(w?w.querySelectorAll("button.optrow:not(.leadrow)"):[])].find(x=>/open ›/.test(x.innerText||""));

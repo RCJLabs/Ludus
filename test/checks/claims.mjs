@@ -19,6 +19,11 @@
    scan: an export list mentions a name without using it, and four of the entries below survived
    precisely by being on the handle and looking used to a naive grep.
 
+   IT SEES TOP-LEVEL DEFINITIONS AND NOTHING ELSE. #307 found five dead locals inside App's render
+   — the remains of a panel that no longer draws, costing an `agenda(S)` per render — which this scan
+   is structurally blind to. A clean run here says nothing about locals, and should not be read as
+   if it did.
+
    COMMENTS ARE NOT CALLERS EITHER. This file argues with itself in prose and names its own
    functions constantly; `voice.mjs` paid for that once. Comments are blanked, preserving newlines
    so the line numbers stay true.
@@ -47,11 +52,16 @@ export const describe = "nothing is written, promised to the player, and called 
 const KNOWN = {
   /* a sentence the player would want and never sees */
   masterNeed:    "builds \"N more wins, N more renown\" toward a mastery and nothing prints it — the same gap #299 closed for the legacies",
-  agAge:         "the agenda's ageing: `agendaTick` writes a first-seen week EVERY WEEK and these four read it",
-  agendaRanked:  "  — so the game knows a demand has been standing nine weeks and never says so",
-  agendaTop:     "  — a whole feature, saved into `flags.agSeen`, wired to no panel",
-  agWord:        "  — \"new this week\" / \"3 weeks now\" / \"standing\", written and never spoken",
   pactBlocks:    "the PRECISE exclusivity rule (a festival, in Capua, another editor's). The live filter at `weekGames` truncates the week's offers to the first one instead, whoever's it is — so \"nobody else's games in Capua\" is enforced as \"one card a week\"",
+
+  /* an instrument, kept on purpose: the game does not call these, the suite does, through the
+     handle. #306 listed them as "a whole feature wired to no panel" off their definitions alone;
+     the note over `AG_FRESH` records the decision (v3.159.0) that ranking by age is for the checks
+     and not the player. #307 wired the one part that decision never covered — `agWord`, printed on
+     the report — and it came off this list the day it got a caller, which is the ratchet working. */
+  agAge:         "the instrument `rank`, `week` and `tally` reason with — see the note over `AG_FRESH`",
+  agendaRanked:  "the age-aware sort; urgency outranks novelty in the game by decision, so only the suite sorts this way",
+  agendaTop:     "the novelty filter; nothing in the game filters on age, by the same decision",
 
   /* a number written twice, one copy dead — #150 */
   REGARD_HOUSE:  "the house-warmth thresholds, which `houseWord` on the next line re-types as 75/50/25",
@@ -128,10 +138,11 @@ export async function run({ p }){
   lines.push(`top-level definitions the game defines: ${defs.length} · never called: ${dead.length}`
     + ` · all of them accounted for: ${fresh.length === 0 && stale.length === 0 ? "yes" : "no"}`);
   if(!fresh.length && !stale.length){
-    const claims = ["masterNeed","agAge","agendaRanked","agendaTop","agWord","pactBlocks"]
-      .filter(k => KNOWN[k]).length;
+    const claims = ["masterNeed","pactBlocks"].filter(k => KNOWN[k]).length;
+    const kept = ["agAge","agendaRanked","agendaTop"].filter(k => KNOWN[k]).length;
     lines.push(`   of those, ${claims} would be a sentence the player never gets or a rule enforced `
-      + `some other way; the rest are duplications and plain dead helpers. See the list in this file.`);
+      + `some other way, ${kept} are an instrument kept for the suite on purpose, and the rest are `
+      + `duplications and plain dead helpers. See the list in this file.`);
   }
 
   /* ---- ARM 2: EVERY PERK REACHES A LIVE HELPER ---- */
