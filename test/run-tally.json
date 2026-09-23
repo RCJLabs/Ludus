@@ -319,4 +319,5 @@
 {"v":"3.301.0","checks":209,"failed":["probe"]},
 {"v":"3.301.0","checks":209,"failed":[]},
 {"v":"3.302.0","checks":209,"failed":["doors"]},
-{"v":"3.302.0","checks":209,"failed":[]}]
+{"v":"3.302.0","checks":209,"failed":[]},
+{"v":"3.303.0","checks":209,"failed":[]}]
