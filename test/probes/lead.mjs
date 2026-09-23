@@ -30,7 +30,12 @@
 
    AND WHAT IT DID NOT MOVE: the good ending (26 -> 27 against 6; 19 -> 20 against 5) and burials.
    That half is lethality, on Capua's side — section 2 shows the Pits killing ~10 men per 100 bouts
-   against ~3 for a town's lower cards. It is the next item, and this probe is its baseline. */
+   against ~3 for a town's lower cards. It is the next item, and this probe is its baseline.
+
+   #311: IT IS NOT LETHALITY. Picking the pit's likeliest win cut burials from a median 30 to 12 on 40
+   houses, and Capua's ordinary games cut deaths per week of life 15% on 160; neither moved the good
+   ending. `closed` fires only on an EMPTY yard, so the headline counts which houses finish. Read beside
+   `alive`, the gap that is left is DEBT. `probes/pooled.mjs` prints both. */
 import { serve, open, found, clearAll, installRope } from "../harness.mjs";
 const H = +(process.argv[2] || 40), W = +(process.argv[3] || 420), SEEDP = process.argv[4] || "WAGON";
 /* the option set `probes/wagons.mjs` plays, so the two read the same houses */

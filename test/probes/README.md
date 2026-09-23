@@ -120,6 +120,14 @@ Three things follow, and they are the rule now:
 
     node test/probes/sample.mjs 72 420 SEED '{"favours":"wise"}'   # any rope arm, as JSON
 
+`pooled` is that rule applied to the tour/stay headline: four seed sets at once, every ending's share
+with its interval, burials per 100 weeks lived, and how often the fast-forward is open. #311's first
+verdict on Capua's ordinary games was read off one prefix of 40 houses and did not survive 160. To
+judge a change before it is in the source, build it with `--out` and point the probe at that page:
+
+    node test/probes/pooled.mjs 40 420 WAGON,SEEDB,SEEDC,SEEDD '{"court":false}'   # #311; rope options as JSON
+    LUDUS_STALE_OK=1 PAGE=dist/draft.html node test/probes/pooled.mjs          # a draft built with --out=
+
 `keep`, `walk` and `fires` run in about 25 seconds at 72 houses, which is cheap enough that **they take
 a seed prefix and should always be run on three or four of them.** Two findings died this session for
 being read off 24 houses on one seed, and one of them was a MAXIMUM. If a figure moves between seeds it
