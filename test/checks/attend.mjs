@@ -1,4 +1,21 @@
-/* NOTHING URGENT FALLS OFF THE END OF THE PANEL
+/* NOTHING URGENT FALLS OFF THE END OF THE PANEL — AND THE PANEL HAD BEEN GONE FOR 157 RELEASES
+
+   ---- READ THIS FIRST — #307 ----
+   The "ludus panel" below, `agenda(S)` minus the men cut to `.slice(0, 7)`, STOPPED RENDERING IN
+   v3.2.0 (2026-08-12): that release removed its `AG.map` and left the slice computed and unread.
+   This check was written in v3.159.0 (2026-09-01), a hundred and fifty-seven releases later, to
+   guard it. `git log -S'AG.map'` dates both. The header below condemns three audit items "written
+   off a comment that claimed a dead filter was the player's screen" — and was itself written, in
+   the same release, off a note claiming a dead PANEL was the player's screen. #307 deleted the
+   unread slice from App.
+
+   WHAT THE ARMS HOLD NOW. Arm 1 — `agenda` sorted by urgency — is true and measured, and NOTHING IN
+   THE GAME CONSUMES THE ORDER: the Scene files rows into rooms, the report bar takes the worst
+   urgency, and the morning report regroups by urgency and re-sorts by `when` itself. Arms 2 and 3
+   measure the cut of a list that does not exist. They are kept, not deleted, because they cost
+   nothing and would be exactly the right guard the day a capped list comes back; they are not a
+   statement about any screen today. The one list a player does see, the morning report, has no cap
+   and cannot drop a row — `report.mjs` holds its count to the agenda's, every morning it walks.
 
    Audit item #211, and the correction that closed it. The item said the shown block is a novelty
    filter — "75% of what fills it is there for being new against 3% for being urgent" — and asked
@@ -30,10 +47,12 @@
 import { found, clearAll, installRope } from "../harness.mjs";
 
 export const name = "attend";
-export const describe = "nothing urgent falls off the end of the ludus panel";
+export const describe = "agenda stays sorted by urgency — guarding a capped panel removed in v3.2.0, kept for when one returns";
 export const slow = true;   /* plays houses and reads the agenda every week */
 
-/* what the panel keeps — the same figure as the `.slice(0, 7)` in App */
+/* what the panel kept. This said "the same figure as the `.slice(0, 7)` in App" — that slice was
+   computed and never rendered from v3.2.0 on, and #307 deleted it, so there is no figure in App
+   for this to match. It is the old panel's size, held as a constant, for the day a cap returns. */
 const PANEL = 7;
 
 export async function run({ p, errors }){

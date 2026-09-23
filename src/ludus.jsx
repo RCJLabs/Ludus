@@ -3661,10 +3661,40 @@ function agendaRanked(d){
    while urgency-3 stays flat near 1.5. The panel overflows on 57% of late weeks and what it cuts
    is urgency-1 furniture — an urgent row fell off the end on 0 of 2,382 weeks. `attend` holds
    that, because it holds only while `agenda` stays sorted. */
+/* ---- AND THE FIRST OF THOSE TWO SURFACES IS GONE — #307 ----
+   The note above lists the ludus panel's "seven most urgent" as the first thing a player is shown.
+   It no longer renders. The block that built it still computed `agenda(S)`, split off the men,
+   sliced seven and counted the rest — and then rendered banners and never read any of it; the
+   `allTodos` toggle that sized it had no setter call in the file. Removed in #307. So there is ONE
+   list-shaped surface for the agenda now, the morning report, which shows every row, and the
+   "an urgent row fell off the end" measurement above can no longer happen because nothing cuts.
+
+   The six locals cost a whole `agenda(S)` on every render of the ludus face, for a list thrown
+   away. `claims.mjs` could not see them — it scans top-level definitions and these were locals —
+   which is a limit of that instrument, and its header now says so.
+
+   What #307 adds is the half this decision did not cover. The note settled RANKING — urgency
+   outranks novelty, and still does, and nothing here re-sorts on age. It never considered PRINTING
+   the age, which is what `agWord` was written for and what the report's empty tag slot was for.
+   Measured over 1,635 played weeks on 8 houses: 97% of the sheet's rows carry no date, so that slot
+   sat empty on nearly every line, and on 92% of mornings the sheet held rows new that week beside
+   rows standing for months with nothing to tell them apart. A dated row keeps its clock; an undated
+   one says how long it has stood — never both, so the slot means one thing per row. Three steps of
+   brightness and no borrowed colour, because gold and blood already mean a deadline on that line.
+
+   ONE PROPERTY WORTH KNOWING, NOT FIXING. `agendaTick` forgets a row the first week it is absent, so
+   a row that returns reads "new this week" again. Of 4,045 such readings, 84% had not been seen for
+   three mornings or more; 16% came back after one or two weeks away — "men not sworn in", "men on
+   the block", "He Will Not Go Out", mostly re-raised after being answered. "Anything answered
+   forgets" is the ageing's own stated meaning and three checks reason with it, so the tag reports
+   the design rather than softening it. `agAge`, `agendaTop` and `agendaRanked` stay as they were — the
+   instrument `rank`, `week` and `tally` reason with — and are named as that on `claims.mjs`'s list,
+   where #306 had called them a feature wired to no panel, reading their definitions and not this. */
 const AG_FRESH = 3;                 /* three weeks is new; past that it is furniture */
+const AG_STANDING = 12;             /* #307 — named, because the report's tag now dims on it too */
 const agendaTop = list => list.filter(a=>a.urgency >= 3 || a.age <= AG_FRESH);
 const agWord = age => age <= 0 ? "new this week" : age <= AG_FRESH ? `${age} week${age===1?"":"s"} now`
-  : age < 12 ? `${age} weeks now` : "standing";
+  : age < AG_STANDING ? `${age} weeks now` : "standing";
 
 /* ---- `|| 100` READ A DESTROYED PIECE AS A PRISTINE ONE ----
    The steel guard inside `agenda` reads a man's wear, and wear counts DOWN from 100. Written
@@ -30657,7 +30687,6 @@ export default function App(){
   const [showGuide,setShowGuide] = useState(false);
   const [guideStep,setGuideStep] = useState(0);
   const [showSettings,setShowSettings] = useState(false);
-  const [allTodos,setAllTodos] = useState(false);
   const [showChron,setShowChron] = useState(false);
   const [chronFilt,setChronFilt] = useState("all");   /* what the chronicle is showing */
   const [chronQ,setChronQ] = useState("");            /* and who it is being searched for */
@@ -32276,11 +32305,7 @@ export default function App(){
                of the report sheet, the year-ahead sits beside the year in WHERE THINGS STAND, and
                the house summary leads the villa's House face, which is what it describes. */}
           {/* the men's business belongs on the men's tab; this one keeps the house's */}
-          {(()=>{ const EVERY = agenda(S);
-            const MEN = EVERY.filter(a=>a.tab==="men");
-            const ALL = EVERY.filter(a=>a.tab!=="men");
-            const AG = allTodos ? ALL : ALL.slice(0, 7), rest = ALL.length - AG.length;
-            const TABN = TAB_NAMES;
+          {(()=>{ /* #307 — six dead locals removed from here; see the note over `AG_FRESH` */
             const banners = [];
             const bnr = (c,title,sub,urgent,explain)=>banners.push({c,title,sub,urgent:!!urgent,explain});
             /* urgent = something you can act on now; the rest are threads you are simply in.
@@ -34905,6 +34930,11 @@ export default function App(){
                             borderColor: a.when<=0 ? "var(--blood-edge)" : a.when===1 ? "var(--gold-edge)" : "var(--line-3)",
                             color: a.when<=0 ? "var(--blood)" : a.when===1 ? "var(--gold)" : "var(--ink-dim)"}}>{clock(a)}</span>
                         )}
+                        {/* #307 — an undated row says how long it has stood; see the note over `AG_FRESH` */}
+                        {!clock(a) && (()=>{ const age = agAgeBy(S, agId(a));
+                          return <span className="tag" style={{flex:"0 0 auto",fontSize:"var(--fs-micro)",padding:"2px 7px",
+                            borderColor:"var(--line-3)",
+                            color: age <= 0 ? "var(--ink)" : age < AG_STANDING ? "var(--ink-dim)" : "var(--ink-faint)"}}>{agWord(age)}</span>; })()}
                       </div>
                     </button>
                     {/* the deed itself, on the line, for the rows whose deed is one press */}

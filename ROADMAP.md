@@ -30488,9 +30488,81 @@ the same figure the last two releases have carried. That proves it costs nothing
 has not earned them; it is not a claim about the balance of a house that has, and the houses in
 that digest are far too young to hold either feat.
 
+
+
+### #307 — how long a thing has been asking, and a check that guarded a panel gone for 157 releases
+**v3.300.0.** #306 listed the agenda's ageing as "a whole feature wired to no panel". **That framing
+was wrong, and the file already said so.** The note over `AG_FRESH` records a decision from v3.159.0:
+ranking by age is an instrument the checks use, and urgency outranks novelty in the game on
+purpose. I had read the four definitions and not the note above them — the same error as reading a
+dead definition and inferring what is missing, which #306's own entry warned against.
+
+**What the decision never covered was PRINTING the age.** It settled ranking. `agWord` —
+*"new this week"*, *"3 weeks now"*, *"standing"* — is a label, not a sort, and the morning report
+has an empty slot for it: dated rows carry a clock on the right of their sub-line, undated ones carry
+nothing. Measured before building, over 1,635 played weeks on 8 houses:
+
+| | |
+|---|---|
+| agenda rows with no date (where the tag would sit) | **97.4%** (17,718 of 18,183) |
+| mornings with both a standing row and a fresh one on the sheet | **92.0%** (1,504 of 1,635) |
+| "What the house still wants" rows that are standing | 52% |
+| "Due" rows that are new this week | 53% |
+
+So on nine mornings in ten the sheet held rows new that week beside rows months old, with nothing on
+screen to tell them apart. An undated row now says how long it has stood; a dated row keeps its
+clock; never both. **Nothing re-ranks** — the v3.159.0 decision stands. Three steps of brightness and
+no borrowed colour, because gold and blood already mean a deadline on that line. `AG_STANDING = 12`
+is named, because the tag dims on it and `agWord` breaks on it, and a number written twice drifts.
+
+**One property worth knowing and not fixing.** `agendaTick` forgets a row the first week it is
+absent, so a returning row reads "new this week". Of 4,045 such readings, 84% had not been seen for
+three mornings or more; 16% returned after one or two weeks away — mostly re-raised after being
+answered ("men not sworn in", "men on the block"). "Anything answered forgets" is the ageing's
+stated meaning and three checks reason with it; the tag reports the design rather than softening it.
+
+`report.mjs` gains an arm: every row carries exactly one tag, a dated row never shows an age, and an
+undated row's tag is `agWord(agAgeBy(...))` computed from the same saved state the count uses.
+**Validated by sabotage** — printing `agWord(age + 20)` turned it red on three rows by name, each with
+both words. And `claims.mjs`'s ratchet fired in the shrink direction for the first time: `agWord`
+acquired a caller and the check refused until the entry came off. 21 dead definitions → 20.
+
+#### The panel that was not there
+
+Tracing where the agenda renders turned up six dead locals at the top of App's banner block —
+`EVERY`, `MEN`, `ALL`, `AG`, `rest`, `TABN` — computing `agenda(S)`, slicing seven, counting the rest,
+and never reading any of it. The `allTodos` toggle that sized the slice had no setter call in the
+file. They cost a full `agenda(S)` on every render of the ludus face. Removed; that removal is what
+paid for the tag, so **App lands exactly at its 5,882 cap with no allowance raised.** `claims.mjs`
+could not have seen them — it scans top-level definitions and these were locals — and its header now
+says so.
+
+**And one check was guarding them.** `attend`, *"nothing urgent falls off the end of the ludus
+panel"*, holds that no urgency-3 row sits outside the first seven. `git log -S'AG.map'` dates it:
+
+| | |
+|---|---|
+| the panel's render removed | **v3.2.0**, 2026-08-12 |
+| `attend` written to guard it | **v3.159.0**, 2026-09-01 |
+
+**A hundred and fifty-seven releases between them.** Its own header condemns three audit items
+"written off a comment that claimed a dead filter was the player's screen" — and it was written, in
+that same release, off a note claiming a dead *panel* was the player's screen. Nothing in the game
+consumes `agenda`'s order today: the Scene files rows into rooms, the report bar takes the worst
+urgency, the report regroups and re-sorts itself. Its arms are kept — they cost nothing and are
+exactly the guard a capped list would need — and its header and `describe` now say what they hold
+and what they do not.
+
+**Moved nothing in the simulation.** Digest `43afc6ae` on v3.299.0 and after. The container was
+recycled overnight and the dependencies had to be reinstalled; the rebuild reproduced the committed
+`index.html` and `sw.js` byte for byte and the recreated digest reproduced `43afc6ae` on the
+baseline, so the new container computes exactly as the old one did. Worth noting for next time: the
+fresh install pulls playwright 1.63, which wants Chromium 1243, and the image carries 1194 —
+`npm install --no-save playwright@1.56.1` matches it without touching `package.json`.
+
 ---
 
-*Last updated: v3.299.0 — the sweep: 23 definitions the game never calls, two of them the permanent reward of five feats, and a ratchet that may only shrink*
+*Last updated: v3.300.0 — the morning report says how long each thing has been asking, and a check turns out to have guarded a panel removed 157 releases before it was written*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
