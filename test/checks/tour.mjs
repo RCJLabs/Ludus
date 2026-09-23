@@ -50,7 +50,13 @@
 import { installRope } from "../harness.mjs";
 
 export const name = "tour";
-export const describe = "the reference player stays home, and going on the road is worth about sixty times the coin";
+/* ---- "ABOUT SIXTY TIMES" WAS A NUMBER FROM A BUILD WHERE THE REFERENCE MEDIAN SAT NEAR ZERO ----
+   The note below says why the ratio is not asserted: the reference house's median gold crosses zero
+   across seed sets, so median-over-median swings wildly. The headline kept the old figure anyway.
+   Read at v3.301.0 it was 6.2x; at v3.302.0 (#309, towns hold their great games only at the
+   festivals) 7.4x — same order, different seeds from the paired measure, which moved the other way.
+   The headline now says what the check holds, not a ratio it deliberately declines to assert. */
+export const describe = "the reference player stays home, and going on the road pays several times the coin";
 
 const HOUSES = 16, WEEKS = 420;
 

@@ -30638,9 +30638,130 @@ pre-flight set. Its figures were identical after the fix, which confirms it; the
 instruments behind the digests use the same string, so every figure in #305–#308 was taken on
 clean houses, consistently. The rerun went **209/209 in 34.2 min**.
 
+
+
+### #309 — where the road's lead lives, and the half of it a town's calendar can fix
+**v3.302.0. Audit item 10 — "content for the road" — withdrawn as framed; what it led to is shipped.**
+The item read the eleven home-only events as a hole in the road. The file had already answered it
+twice: #268 refused to fill it until someone decided whether the road needed a ceiling, and #280
+decided — *"the road was not thin and underpaid, it was thin and winning"* — and priced it with
+`wagonWeek`. v3.283.0 re-took #280 and found the road winning harder. Re-taken today, 40 paired
+houses x 420 weeks: **touring 2.39x the median gold, the good ending 26 times against 6**. Content on
+the road would widen a lead the file has been trying to narrow for forty releases.
+
+**Nobody had located why the road wins.** Three explanations, each measured and each wrong:
+
+| explanation | the test | result |
+|---|---|---|
+| #280: the eleven cards "are things that go wrong", so skipping them is skipping problems | every choice of every card, evaluated on a clone, 6,528 weeks | **most are windfalls** — the condemned and a fee, an invitation, a mentor, a purse; only `patronGone` and `roomFire` are bad |
+| mine: the rope overpays at home (a lavish funeral, a sealed omen) | give both arms the cheap answers | **the staying houses got worse** — the costly answers buy a blessing and a warmer successor patron |
+| the purse multiplier (the towns' 1.05-1.4) | set every town's to 1 | **nothing moved** — 2.39x before, 2.39x after |
+
+**My second one failed twice over.** The card-worth table recorded one label per choice slot and
+merged `omen`'s two variants under the fair reading's labels, so the "sensible" arm I built from it
+declined every blessing **and defied every ill omen** — a reckless policy that I named sensible off a
+table I had not checked against the event's own code. The measurement was right; the arm was wrong.
+
+**What it was.** The same touring house, every finished bout split by where it was fought:
+
+| | bouts a week | deaths per 100 bouts | its bouts that were tier 3 |
+|---|---|---|---|
+| in Capua | 0.93 | **9.1** | 8% — two thirds were **the Pits** |
+| in a town | 0.90 | **2.8** | **93%** |
+
+`cityTier` read renown in the town and nothing else: known 60 and every card was tier 3, **the
+Primus**, 850-1,150 a purse, on three game-weeks in four. Capua puts on a Primus card at its
+festivals — five or six weeks of eighteen — only for a house of fame 300 and favour 40, and fills its
+ordinary weeks with the Pits at 50-90 a purse. A Primus-calibre house got **0.95 tier-3 bouts a week
+down the bay and 0.10 at home**. That is what "a town week pays 3.6x a Capua week at the same bout
+rate" was measuring all along: tier 3 against tier 0, not the multiplier.
+
+#### The fix, and the first cut that did nothing
+
+The first cut capped a town's tier by the house's fame, off `TIERS` through `rivalTier` — Capua's own
+rule. **It moved nothing** (2.39x -> 2.34x): touring houses are Primus-calibre by the time a town
+knows them, so there was nothing to cap. The asymmetry was never WHO gets tier 3 but HOW OFTEN.
+
+**The great games are Roman, not Capuan.** A town now holds its Primus card in the festival weeks
+Capua does — the Ludi and the Floralia are Rome's calendar — and between them its best card is the
+Arena (`CITY_ORDINARY` = 2). The fame cap stays, because it is the rule. Measured, two seed sets:
+
+| | tours' median gold | stays' median gold | good ending, tours / stays |
+|---|---|---|---|
+| seeds WAGON, before -> after | 12,061 -> **7,066** | 5,053 -> 5,053 | 26 -> 27 / 6 |
+| seeds SEEDB, before -> after | 12,741 -> **7,871** | 1,160 -> 1,160 | 19 -> 20 / 5 |
+
+**Touring gold falls about 40% on both**, staying houses are untouched, and the road still pays more —
+#280's "priced, not killed". **I set the bar before measuring and it is met on half:** the ratio lands
+at 1.40x on one seed set and 6.79x on the other, because the staying median slides into debt on some
+seeds and a quotient of two medians swings with it. The robust reading is the two medians, and the
+probe now prints them rather than their ratio.
+
+**The good-ending gap did not move on either set, and that is stated, not chased.** It is lethality,
+and it lives on Capua's side: a staying house's ordinary weeks are the Pits, ~10 of its men dead per
+100 bouts against ~3 for even a town's lower cards. That is the next item, and `probes/lead.mjs` is
+its baseline.
+
+#### What else moved
+
+- **The panels that choose a town print the rule, not this week's value** — *"tier 3 cards at the
+  festivals, tier 2 between them"*, built in `citySaysTier`. A tour is many weeks; "tier 2" on an
+  ordinary week would hide the festivals as surely as "tier 3" would hide the rest.
+- **`bay` went red on the first run**, reading `cityTier` on a fresh house of fame ~0: *"0→1 … 100→1"*.
+  That was the cap working. It now holds the three rules separately — the renown bands on a house of
+  Primus fame, the cap on a house of fame 0, and the calendar on one house at a festival and off it.
+- **`tour`'s headline said "about sixty times the coin" and had been wrong before this change** — 6.2x
+  on v3.301.0, 7.4x after, on a ratio it deliberately does not assert. It says what it holds now.
+- **The digest moves for the first time in five releases**: `43afc6ae` -> `72acc990` for #309 alone (the
+  default rope accepts a town's invitation, and the town it arrives in now keeps a calendar), then
+  -> `70f1a8a2` with #310 below, which changes when a poached man leaves.
+- `probes/lead.mjs`, a standing instrument: the paired headline and every bout by where it was fought.
+
+
+
+### #310 — the gate found a man leaving through a door nobody opened, and it had been open for a while
+**Same release, v3.302.0, because #309 could not ship without it.** The gate for #309 went 208/209
+on `doors`: *"every one of the 14 men lost went without a card being offered."* The seeds had moved
+under #309, so the first question was whether #309 caused it. **It did not** — the same check on
+v3.301.0:
+
+| | poaches | shown | men lost | lost with no card ever offered |
+|---|---|---|---|---|
+| v3.301.0 | 52 | 71% | 17 | **16** |
+| #309 alone | 58 | 79% | 14 | **14** |
+| #309 + #310 | 56 | — | **1** | **0** |
+
+**#246 closed this once, and it came back underneath a check that could only see it at 100%.** Its
+own header recorded 6 of 11 losses unoffered after that fix. The arm asserted only that *not every*
+loss was silent, so it held green at 16 of 17 for as many releases as it took the share to creep up,
+and went red only when a re-phased seed removed the one offered loss.
+
+**My first hypothesis was wrong again, and the trace said so at once.** I guessed the road — a poach
+beginning away and completing while its card could not show. Traced week by week on `doors`' own
+houses: **0 of 14** were away (`poachWeek` only runs at home). **14 of 14** had the offer planted and
+due, and on **every week** of the poach's life the one pending-event slot was held by another card —
+a refusal, a feud, the league's year, an inspector, an edict, a challenge. #246 planted the beat so
+it would beat the week's random draw. It never beat the RAISED cards, which claim the slot earlier in
+`endWeek` while `poachWeek`, earlier still, counts down and lets the man walk at zero. Every raised
+card added since #246 took a little more of that slot.
+
+**The fix is the check's own title.** `offered` is marked the week the card actually lands in the slot
+— one line after `fireArc` and the die, covering both routes — and until it has, the clock holds at one
+week left while the planted beat keeps asking. A rival's patience is `POACH_PATIENCE` (6) held weeks;
+past that the talk comes to nothing and says so, so no hold outlives its own deadline row. No draw.
+
+**What it moved**: 1 man lost in 56 poaches instead of 14 in 58, and that one offered first; 47 kept
+after an offer; the patience lapsing **once**; the clock held on 42 house-weeks, which is how often the
+slot was full. That is a real balance shift — a poach is now almost always an expense rather than a
+loss — and it is the one #246 intended: *"every poach the player was offered, the player answered and
+kept the man."*
+
+`doors`' second arm now asserts the rule exactly — **no** loss without an offer — and was sabotaged to
+prove it: with the hold removed it fails on 14 of 14, naming the hold and the mark.
+
 ---
 
-*Last updated: v3.301.0 — the fast-forward says why it is shut, the dead no longer hide it, and it never runs past them*
+*Last updated: v3.302.0 — the road's lead is located, a town holds its great games when the festivals fall, and a poached man can no longer leave before the offer reaches you*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a

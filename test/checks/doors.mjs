@@ -135,10 +135,16 @@ export async function run({ p, errors }){
       + `${Math.round(SHOWN_FLOOR*100)}%, measured 84.8 and 87.5] — \`startPoach\` plants the beat and \`fireArc\` `
       + `raises it ahead of the week's draw; if that has come apart the card is back to winning a 45%-a-week `
       + `lottery inside a three-week window, which is how 18 men in 18 left a house that was never told`);
-  /* 2 */
-  if(t.lost >= 3 && t.neverOffered === t.lost)
-    bad.push(`every one of the ${t.lost} men lost went without a card being offered — that is the exact state `
-      + `this release measured and closed, and it has come back`);
+  /* 2 — ---- AND IT ASSERTED "NOT EVERY LOSS IS SILENT", WHICH IS HOW IT STAYED GREEN AT 16 OF 17 — #310 ----
+     This fired only when ALL losses were unoffered. v3.301.0 lost 17 men, 16 of them never offered a
+     card, and passed on the one that was; #246's own header had read 6 of 11. The silent share crept
+     up for dozens of releases underneath an arm that could only see it at 100%, and it went red at
+     last because a re-phased seed took the one offered loss away. `poachWeek` now holds the clock
+     until the offer has landed, so the check's own title is assertable exactly: NO man is taken out
+     of the house without the offer reaching it. One silent loss is the fault, not a rate. */
+  if(t.neverOffered > 0)
+    bad.push(`${t.neverOffered} of the ${t.lost} men lost went without a card ever being offered — \`poachWeek\` `
+      + `holds the clock until the offer lands (#310), so a silent loss means that hold or the \`offered\` mark has come apart`);
   /* 3 */
   if(shapes.why) bad.push(shapes.why);
   else {

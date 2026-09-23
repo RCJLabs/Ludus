@@ -15103,7 +15103,42 @@ const manFollow = (g,k) => (g && g.known && g.known[k]) || 0;
 const manBestTown = g => { let best = null, v = 0;
   for(const k of Object.keys(CITIES)){ const n = manFollow(g,k); if(n > v){ v = n; best = k; } }
   return best ? { town:best, n:v } : null; };
-const cityTier = (d,k) => knownIn(d,k) >= 60 ? 3 : knownIn(d,k) >= 30 ? 2 : 1;
+/* ---- THE GREAT GAMES ARE ROMAN, NOT CAPUAN — #309 ----
+   This read renown in the town and nothing else: known 60 there and EVERY card was tier 3, the
+   Primus, 850-1,150 a purse, on three game-weeks in four. Capua puts on a Primus card at its
+   festivals — five or six weeks of an eighteen-week year — "only for a house the editors would
+   actually put on that bill", and fills its ordinary weeks with the Pits.
+
+   MEASURED, and it is where the road's lead lived. 40 paired houses x 420 weeks, touring against
+   staying, on v3.301.0: 2.39x the gold, the good ending 26 times against 6. NOT the purse
+   multiplier — every town's set to 1 moved nothing. NOT the eleven home-only cards — most of them
+   are windfalls the road goes without. The same touring house, by where it stood: 93% of its town
+   bouts were tier 3 while two thirds of its Capua bouts were the Pits. A Primus-calibre house got
+   0.95 tier-3 bouts a week down the bay and 0.10 at home.
+
+   So a town holds its great games when the festivals fall, as Capua does — the Ludi and the
+   Floralia are Rome's calendar, not Capua's — and between them its best card is the Arena. Measured
+   the same way: the gold ratio 2.39x -> 1.40x, the road still paying more, which is #280's intent
+   ("priced, not killed").
+
+   IT DOES NOT CLOSE THE GOOD-ENDING GAP, and that is stated rather than chased: 26 -> 27 against 6,
+   and burials 9 against 29, untouched. That gap is lethality and it lives on Capua's side — its
+   ordinary weeks are the Pits, which killed ~10 men per 100 bouts against ~3 for even a town's
+   lower cards. A separate lever, left for its own item.
+
+   AND THE FAME CAP, which was the first cut and is kept because it is Capua's rule: a town cannot
+   make a house a bigger act than `TIERS` says its fame is, read through `rivalTier` so the
+   thresholds live in one place. It is nearly inert under the reference player — touring houses are
+   Primus-calibre by the time a town knows them (2.39x -> 2.34x on its own) — and it is the rule, so
+   it stays. Floored at 1 because a town holds no pit card. */
+const CITY_ORDINARY = 2;          /* the Arena, at most, between the festivals */
+const cityTierTop = (d,k) => Math.max(1, Math.min(knownIn(d,k) >= 60 ? 3 : knownIn(d,k) >= 30 ? 2 : 1, rivalTier(d)));
+const cityTier = (d,k) => festivalNow(d) ? cityTierTop(d,k) : Math.min(cityTierTop(d,k), CITY_ORDINARY);
+/* what the panels that choose a town print: the RULE, not this week's value — a tour is many weeks,
+   and "tier 2" on an ordinary week hides the festivals as surely as "tier 3" on a festival week
+   hides the rest */
+const citySaysTier = (d,k) => { const t = cityTierTop(d,k);
+  return t > CITY_ORDINARY ? `tier ${t} cards at the festivals, tier ${CITY_ORDINARY} between them` : `tier ${t} cards`; };
 /* a house known the length of the bay carries further than Campania — word of it
    reaches Rome, and shortens the road there. capped at 60 known per town. */
 const bayKnownTotal = d => CITY_KEYS.reduce((n,k)=>n+Math.min(knownIn(d,k),60),0);   // 0..180
@@ -16004,6 +16039,27 @@ const poachedMan = d => { if(!d.poach) return null;
   const g = (d.gladiators||[]).find(x=>x.id===d.poach.gid);
   return (g && g.status === "active") ? g : null; };
 
+/* ---- AND THE CLOCK RAN OUT ON OFFERS NOBODY HAD SEEN — #310 ----
+   #246 planted the offer as a beat so it would beat the week's RANDOM draw, and it did: the share
+   shown went from 4 in 32 to 35 in 41. What it never beat were the RAISED cards. There is one slot,
+   `fireArc` steps aside when it is full, and the phases that raise a refusal, a feud, the league's
+   year, an inspector, an edict, a challenge all run before it in `endWeek` — while this function,
+   earlier still, counts the poach down and lets the man walk at zero.
+
+   MEASURED on `doors`' own houses (24 x 380): 14 poaches took a man, 0 had been shown, and on every
+   week of all fourteen the slot was held by another card — the beat planted, due, and never given a
+   turn. None of them was on the road (this only runs at home). v3.301.0 read 16 of 17 losses
+   unoffered; #246's own header had read 6 of 11. Every raised card added since took a little more of
+   the slot, and `doors` asserted only that NOT EVERY loss was silent, so it stayed green on one lucky
+   offered-and-lost man until a re-phased seed took even that away.
+
+   So the rule is the check's own title: a man is not taken out of your house without the offer ever
+   reaching you. `offered` is set the week the card actually lands in the slot (one line after
+   `fireArc` and the die, covering both); until it has, the clock holds at one week left and the
+   planted beat keeps asking for the slot. A rival's patience is not endless — past `POACH_PATIENCE`
+   held weeks the talk comes to nothing, so no hold outlives its own deadline row. NO DRAW: the hold
+   and the patience are counts. */
+const POACH_PATIENCE = 6;
 function poachWeek(d){
   if(d.poach){
     /* ---- THE MAN CAN LEAVE WHILE THE OFFER IS STILL OUT ----
@@ -16014,6 +16070,16 @@ function poachWeek(d){
        and so saw the same broken string four times across ten houses of 420 weeks instead of four
        different men. A rival does not keep courting a corpse. */
     if(!poachedMan(d)){ d.poach = null; return; }
+    if(!d.poach.offered && d.poach.weeks <= 1){
+      d.poach.held = (d.poach.held || 0) + 1;
+      if(d.poach.held > POACH_PATIENCE){
+        const g = poachedMan(d), h = d.poach.house;
+        d.poach = null;
+        d.arcs = (d.arcs || []).filter(a => a.id !== "poached");
+        chron(d, `Whatever House ${h} was saying to ${g.name} at the wall, it never came to a conversation with you, and in the end it comes to nothing. ${PR(g).He} is still here.`, "info");
+      }
+      return;
+    }
     d.poach.weeks--;
     if(d.poach.weeks<=0) defect(d, d.poach);
     return;
@@ -24695,6 +24761,7 @@ function endWeek(d){
   acclaimWeek(d);
   fireArc(d);   /* a beat planted weeks ago comes due — ahead of the week's random event */
   if(!d.pendingEvent && !d.rome && R()<0.45){ const ev=pickEvent(d); if(ev) d.pendingEvent=ev; }
+  if(d.poach && d.pendingEvent && d.pendingEvent.id === "poached") d.poach.offered = true;   /* #310 — planted or drawn, it has landed */
   if(d.flags.spartacusAtLarge && R()<0.25){
     d.flags.sparkCount = (d.flags.sparkCount||0)+1;
     const n = d.flags.spartacusAtLarge;
@@ -30335,7 +30402,7 @@ function CampaniaMap({ S, onPick }){
           <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>
             {home
               ? (W && W.mercyHome!=null ? `They spare at ${W.mercyHome} on your own sand.` : "No man in the yard yet to say what mercy would cost.")
-              : <>tier {cityTier(S,pick)} cards{W && W.mercyHere!=null?` · they spare at ${W.mercyHere}`:""}
+              : <>{citySaysTier(S,pick)}{W && W.mercyHere!=null?` · they spare at ${W.mercyHere}`:""}
                   {P?` · ${P.mag} puts on the games`:" · you have never set foot in it"}</>}
           </div>
           {P && P.grudge >= 45 && <div style={{fontSize:"var(--fs-sm)",marginTop:2,color:"var(--blood)"}}>House {P.house} wants you off this sand.</div>}
@@ -33114,7 +33181,7 @@ export default function App(){
                           </div>
                         ); })()}
                       {knownIn(S,k)>0 ? (<>
-                        <div className="dim" style={{fontSize:"var(--fs-base)"}}>They know you there: {Math.round(knownIn(S,k))}/100 — tier {cityTier(S,k)} cards.</div>
+                        <div className="dim" style={{fontSize:"var(--fs-base)"}}>They know you there: {Math.round(knownIn(S,k))}/100 — {citySaysTier(S,k)}.</div>
                         {!S.city && !S.travel && <div style={{fontSize:"var(--fs-base)",color:"var(--gold)"}}>
                           Bleeding away at {BAY_DECAY.toFixed(2)} a week while you are not in it.
                         </div>}
@@ -36696,6 +36763,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        are reachable from a test the way `voice.mjs` asks. `sigLand` is the one the bout also
        rolls against, which is the whole point of it being one function. */
     runnable, runSays, honourLeft, SOFT_LOAD,   /* #308 — the one rule the button and the run share */
+    cityTierTop, citySaysTier, CITY_ORDINARY,   /* #309 — the town's tier at the festivals (`cityTier` is exported below) */
     skySays, skyMods, sigLand, sigTech, legacyRows, legacyNow, legacyPrice, legacyRegard,
     LEGACIES, legacyEarned, isNamed,   /* #305 — the boon strings and the two locks a check has to read */
     /* #302 — an eighteen-rule system the player reads and NOTHING held: no check, no probe, not

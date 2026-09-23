@@ -410,13 +410,36 @@ export async function run({ p }){
       if(t1[0] !== t0[0]) bad.push(`the bottom rung of the circuit moved ${t0[0]} → ${t1[0]} — it is the floor, and the opening must not move`);
       if(!(t1[3] > t0[3])) bad.push(`the top rung of the circuit did not reach for a better bay (${t0[3]} → ${t1[3]})`);
 
-      /* cityTier's bands, off the game's own thresholds rather than a copy */
-      const tiers = [0, 29, 30, 59, 60, 100].map(kn=>{ const e = A.clone(d); e.known = { pompeii:kn };
-        return `${kn}→${A.cityTier(e,"pompeii")}`; });
-      lines.push(`cityTier: ${tiers.join(" · ")}`);
-      const band = kn => { const e = A.clone(d); e.known = { pompeii:kn }; return A.cityTier(e,"pompeii"); };
-      if(!(band(0) === 1 && band(100) === 3 && band(0) < band(60)))
-        bad.push(`\`cityTier\` does not climb with local standing: ${tiers.join(" ")}`);
+      /* cityTier's bands, off the game's own thresholds rather than a copy.
+         ---- #309: AND TWO MORE RULES, SO THE BANDS ARE READ WHERE THEY STILL DECIDE ----
+         A town's tier is now capped by the house's own fame (`rivalTier`) and held to the Arena
+         between the festivals. This arm read `cityTier` on a fresh house of fame ~0 and went red on
+         the first run — 0→1 … 100→1 — which was the cap working, not the bands failing. So the bands
+         are read on `cityTierTop` for a house of Primus fame, and the cap and the calendar are each
+         held on their own below, rather than all three being asserted through one number. */
+      const famous = A.clone(d); famous.fame = 900;
+      const top = kn => { const e = A.clone(famous); e.known = { pompeii:kn }; return A.cityTierTop(e,"pompeii"); };
+      const tiers = [0, 29, 30, 59, 60, 100].map(kn=>`${kn}→${top(kn)}`);
+      lines.push(`cityTierTop, a house of Primus fame: ${tiers.join(" · ")}`);
+      if(!(top(0) === 1 && top(100) === 3 && top(0) < top(60)))
+        bad.push(`\`cityTierTop\` does not climb with local standing: ${tiers.join(" ")}`);
+      /* the cap: fame the town cannot see past */
+      const humble = A.clone(d); humble.fame = 0; humble.known = { pompeii:100 };
+      const capped = A.cityTierTop(humble, "pompeii");
+      if(capped !== 1) bad.push(`a house of fame 0 known 100/100 in Pompeii is a tier ${capped} act there — `
+        + `a town cannot make a house bigger than \`TIERS\` says its fame is`);
+      /* the calendar: the great games at the festivals, the Arena between them */
+      const at = wk => { const e = A.clone(famous); e.known = { pompeii:100 }; e.week = wk; return e; };
+      const weeks = Array.from({ length:A.YEAR_WEEKS * 2 }, (_, i) => i + 1);
+      const fest = weeks.find(w => A.festivalNow(at(w))), plain = weeks.find(w => !A.festivalNow(at(w)));
+      if(fest == null || plain == null) bad.push(`could not find both a festival week and an ordinary one in two years`);
+      else {
+        const tf = A.cityTier(at(fest), "pompeii"), tp = A.cityTier(at(plain), "pompeii");
+        lines.push(`the same house, known 100 in Pompeii: tier ${tf} at a festival (week ${fest}) · tier ${tp} between (week ${plain})`
+          + ` · the panels say "${A.citySaysTier(at(plain), "pompeii")}"`);
+        if(tf !== 3) bad.push(`a Primus-calibre house known 100 got tier ${tf} at a festival — the great games should be his`);
+        if(tp > A.CITY_ORDINARY) bad.push(`tier ${tp} on an ordinary week — between the festivals a town's best card is the Arena`);
+      }
 
       /* cityCustom is a table with a name, a want and three numbers, for every town */
       for(const k of A.CITY_KEYS){
