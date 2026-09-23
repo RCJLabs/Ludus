@@ -15103,7 +15103,42 @@ const manFollow = (g,k) => (g && g.known && g.known[k]) || 0;
 const manBestTown = g => { let best = null, v = 0;
   for(const k of Object.keys(CITIES)){ const n = manFollow(g,k); if(n > v){ v = n; best = k; } }
   return best ? { town:best, n:v } : null; };
-const cityTier = (d,k) => knownIn(d,k) >= 60 ? 3 : knownIn(d,k) >= 30 ? 2 : 1;
+/* ---- THE GREAT GAMES ARE ROMAN, NOT CAPUAN — #309 ----
+   This read renown in the town and nothing else: known 60 there and EVERY card was tier 3, the
+   Primus, 850-1,150 a purse, on three game-weeks in four. Capua puts on a Primus card at its
+   festivals — five or six weeks of an eighteen-week year — "only for a house the editors would
+   actually put on that bill", and fills its ordinary weeks with the Pits.
+
+   MEASURED, and it is where the road's lead lived. 40 paired houses x 420 weeks, touring against
+   staying, on v3.301.0: 2.39x the gold, the good ending 26 times against 6. NOT the purse
+   multiplier — every town's set to 1 moved nothing. NOT the eleven home-only cards — most of them
+   are windfalls the road goes without. The same touring house, by where it stood: 93% of its town
+   bouts were tier 3 while two thirds of its Capua bouts were the Pits. A Primus-calibre house got
+   0.95 tier-3 bouts a week down the bay and 0.10 at home.
+
+   So a town holds its great games when the festivals fall, as Capua does — the Ludi and the
+   Floralia are Rome's calendar, not Capua's — and between them its best card is the Arena. Measured
+   the same way: the gold ratio 2.39x -> 1.40x, the road still paying more, which is #280's intent
+   ("priced, not killed").
+
+   IT DOES NOT CLOSE THE GOOD-ENDING GAP, and that is stated rather than chased: 26 -> 27 against 6,
+   and burials 9 against 29, untouched. That gap is lethality and it lives on Capua's side — its
+   ordinary weeks are the Pits, which killed ~10 men per 100 bouts against ~3 for even a town's
+   lower cards. A separate lever, left for its own item.
+
+   AND THE FAME CAP, which was the first cut and is kept because it is Capua's rule: a town cannot
+   make a house a bigger act than `TIERS` says its fame is, read through `rivalTier` so the
+   thresholds live in one place. It is nearly inert under the reference player — touring houses are
+   Primus-calibre by the time a town knows them (2.39x -> 2.34x on its own) — and it is the rule, so
+   it stays. Floored at 1 because a town holds no pit card. */
+const CITY_ORDINARY = 2;          /* the Arena, at most, between the festivals */
+const cityTierTop = (d,k) => Math.max(1, Math.min(knownIn(d,k) >= 60 ? 3 : knownIn(d,k) >= 30 ? 2 : 1, rivalTier(d)));
+const cityTier = (d,k) => festivalNow(d) ? cityTierTop(d,k) : Math.min(cityTierTop(d,k), CITY_ORDINARY);
+/* what the panels that choose a town print: the RULE, not this week's value — a tour is many weeks,
+   and "tier 2" on an ordinary week hides the festivals as surely as "tier 3" on a festival week
+   hides the rest */
+const citySaysTier = (d,k) => { const t = cityTierTop(d,k);
+  return t > CITY_ORDINARY ? `tier ${t} cards at the festivals, tier ${CITY_ORDINARY} between them` : `tier ${t} cards`; };
 /* a house known the length of the bay carries further than Campania — word of it
    reaches Rome, and shortens the road there. capped at 60 known per town. */
 const bayKnownTotal = d => CITY_KEYS.reduce((n,k)=>n+Math.min(knownIn(d,k),60),0);   // 0..180
@@ -30335,7 +30370,7 @@ function CampaniaMap({ S, onPick }){
           <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>
             {home
               ? (W && W.mercyHome!=null ? `They spare at ${W.mercyHome} on your own sand.` : "No man in the yard yet to say what mercy would cost.")
-              : <>tier {cityTier(S,pick)} cards{W && W.mercyHere!=null?` · they spare at ${W.mercyHere}`:""}
+              : <>{citySaysTier(S,pick)}{W && W.mercyHere!=null?` · they spare at ${W.mercyHere}`:""}
                   {P?` · ${P.mag} puts on the games`:" · you have never set foot in it"}</>}
           </div>
           {P && P.grudge >= 45 && <div style={{fontSize:"var(--fs-sm)",marginTop:2,color:"var(--blood)"}}>House {P.house} wants you off this sand.</div>}
@@ -33114,7 +33149,7 @@ export default function App(){
                           </div>
                         ); })()}
                       {knownIn(S,k)>0 ? (<>
-                        <div className="dim" style={{fontSize:"var(--fs-base)"}}>They know you there: {Math.round(knownIn(S,k))}/100 — tier {cityTier(S,k)} cards.</div>
+                        <div className="dim" style={{fontSize:"var(--fs-base)"}}>They know you there: {Math.round(knownIn(S,k))}/100 — {citySaysTier(S,k)}.</div>
                         {!S.city && !S.travel && <div style={{fontSize:"var(--fs-base)",color:"var(--gold)"}}>
                           Bleeding away at {BAY_DECAY.toFixed(2)} a week while you are not in it.
                         </div>}
@@ -36696,6 +36731,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        are reachable from a test the way `voice.mjs` asks. `sigLand` is the one the bout also
        rolls against, which is the whole point of it being one function. */
     runnable, runSays, honourLeft, SOFT_LOAD,   /* #308 — the one rule the button and the run share */
+    cityTierTop, citySaysTier, CITY_ORDINARY,   /* #309 — the town's tier at the festivals (`cityTier` is exported below) */
     skySays, skyMods, sigLand, sigTech, legacyRows, legacyNow, legacyPrice, legacyRegard,
     LEGACIES, legacyEarned, isNamed,   /* #305 — the boon strings and the two locks a check has to read */
     /* #302 — an eighteen-rule system the player reads and NOTHING held: no check, no probe, not

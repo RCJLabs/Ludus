@@ -30638,9 +30638,87 @@ pre-flight set. Its figures were identical after the fix, which confirms it; the
 instruments behind the digests use the same string, so every figure in #305–#308 was taken on
 clean houses, consistently. The rerun went **209/209 in 34.2 min**.
 
+
+
+### #309 — where the road's lead lives, and the half of it a town's calendar can fix
+**v3.302.0. Audit item 10 — "content for the road" — withdrawn as framed; what it led to is shipped.**
+The item read the eleven home-only events as a hole in the road. The file had already answered it
+twice: #268 refused to fill it until someone decided whether the road needed a ceiling, and #280
+decided — *"the road was not thin and underpaid, it was thin and winning"* — and priced it with
+`wagonWeek`. v3.283.0 re-took #280 and found the road winning harder. Re-taken today, 40 paired
+houses x 420 weeks: **touring 2.39x the median gold, the good ending 26 times against 6**. Content on
+the road would widen a lead the file has been trying to narrow for forty releases.
+
+**Nobody had located why the road wins.** Three explanations, each measured and each wrong:
+
+| explanation | the test | result |
+|---|---|---|
+| #280: the eleven cards "are things that go wrong", so skipping them is skipping problems | every choice of every card, evaluated on a clone, 6,528 weeks | **most are windfalls** — the condemned and a fee, an invitation, a mentor, a purse; only `patronGone` and `roomFire` are bad |
+| mine: the rope overpays at home (a lavish funeral, a sealed omen) | give both arms the cheap answers | **the staying houses got worse** — the costly answers buy a blessing and a warmer successor patron |
+| the purse multiplier (the towns' 1.05-1.4) | set every town's to 1 | **nothing moved** — 2.39x before, 2.39x after |
+
+**My second one failed twice over.** The card-worth table recorded one label per choice slot and
+merged `omen`'s two variants under the fair reading's labels, so the "sensible" arm I built from it
+declined every blessing **and defied every ill omen** — a reckless policy that I named sensible off a
+table I had not checked against the event's own code. The measurement was right; the arm was wrong.
+
+**What it was.** The same touring house, every finished bout split by where it was fought:
+
+| | bouts a week | deaths per 100 bouts | its bouts that were tier 3 |
+|---|---|---|---|
+| in Capua | 0.93 | **9.1** | 8% — two thirds were **the Pits** |
+| in a town | 0.90 | **2.8** | **93%** |
+
+`cityTier` read renown in the town and nothing else: known 60 and every card was tier 3, **the
+Primus**, 850-1,150 a purse, on three game-weeks in four. Capua puts on a Primus card at its
+festivals — five or six weeks of eighteen — only for a house of fame 300 and favour 40, and fills its
+ordinary weeks with the Pits at 50-90 a purse. A Primus-calibre house got **0.95 tier-3 bouts a week
+down the bay and 0.10 at home**. That is what "a town week pays 3.6x a Capua week at the same bout
+rate" was measuring all along: tier 3 against tier 0, not the multiplier.
+
+#### The fix, and the first cut that did nothing
+
+The first cut capped a town's tier by the house's fame, off `TIERS` through `rivalTier` — Capua's own
+rule. **It moved nothing** (2.39x -> 2.34x): touring houses are Primus-calibre by the time a town
+knows them, so there was nothing to cap. The asymmetry was never WHO gets tier 3 but HOW OFTEN.
+
+**The great games are Roman, not Capuan.** A town now holds its Primus card in the festival weeks
+Capua does — the Ludi and the Floralia are Rome's calendar — and between them its best card is the
+Arena (`CITY_ORDINARY` = 2). The fame cap stays, because it is the rule. Measured, two seed sets:
+
+| | tours' median gold | stays' median gold | good ending, tours / stays |
+|---|---|---|---|
+| seeds WAGON, before -> after | 12,061 -> **7,066** | 5,053 -> 5,053 | 26 -> 27 / 6 |
+| seeds SEEDB, before -> after | 12,741 -> **7,871** | 1,160 -> 1,160 | 19 -> 20 / 5 |
+
+**Touring gold falls about 40% on both**, staying houses are untouched, and the road still pays more —
+#280's "priced, not killed". **I set the bar before measuring and it is met on half:** the ratio lands
+at 1.40x on one seed set and 6.79x on the other, because the staying median slides into debt on some
+seeds and a quotient of two medians swings with it. The robust reading is the two medians, and the
+probe now prints them rather than their ratio.
+
+**The good-ending gap did not move on either set, and that is stated, not chased.** It is lethality,
+and it lives on Capua's side: a staying house's ordinary weeks are the Pits, ~10 of its men dead per
+100 bouts against ~3 for even a town's lower cards. That is the next item, and `probes/lead.mjs` is
+its baseline.
+
+#### What else moved
+
+- **The panels that choose a town print the rule, not this week's value** — *"tier 3 cards at the
+  festivals, tier 2 between them"*, built in `citySaysTier`. A tour is many weeks; "tier 2" on an
+  ordinary week would hide the festivals as surely as "tier 3" would hide the rest.
+- **`bay` went red on the first run**, reading `cityTier` on a fresh house of fame ~0: *"0→1 … 100→1"*.
+  That was the cap working. It now holds the three rules separately — the renown bands on a house of
+  Primus fame, the cap on a house of fame 0, and the calendar on one house at a festival and off it.
+- **`tour`'s headline said "about sixty times the coin" and had been wrong before this change** — 6.2x
+  on v3.301.0, 7.4x after, on a ratio it deliberately does not assert. It says what it holds now.
+- **The digest moves for the first time in five releases**: `43afc6ae` -> `72acc990`. The default rope
+  accepts a town's invitation, and the town it arrives in now keeps a calendar.
+- `probes/lead.mjs`, a standing instrument: the paired headline and every bout by where it was fought.
+
 ---
 
-*Last updated: v3.301.0 — the fast-forward says why it is shut, the dead no longer hide it, and it never runs past them*
+*Last updated: v3.302.0 — the road's lead is located, and a town now holds its great games when the festivals fall*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
