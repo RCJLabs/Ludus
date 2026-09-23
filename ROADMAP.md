@@ -30700,7 +30700,9 @@ probe now prints them rather than their ratio.
 **The good-ending gap did not move on either set, and that is stated, not chased.** It is lethality,
 and it lives on Capua's side: a staying house's ordinary weeks are the Pits, ~10 of its men dead per
 100 bouts against ~3 for even a town's lower cards. That is the next item, and `probes/lead.mjs` is
-its baseline.
+its baseline. *#311 withdraws "it is lethality": cutting the Pits' toll by more than half,
+and deaths per week of life by 15%, left the good ending where it was, and the gap that remains, read
+beside `alive`, is debt.*
 
 #### What else moved
 
@@ -30759,9 +30761,134 @@ kept the man."*
 `doors`' second arm now asserts the rule exactly — **no** loss without an offer — and was sabotaged to
 prove it: with the hold removed it fails on 14 of 14, naming the hold and the mark.
 
+
+
+### #311 — Capua's ordinary games and a sane climb: both built, both measured on 160 houses, both refused
+**v3.303.0. No game code: the rest of audit item 10, written down.** #309 fixed the gold half of the
+road's lead and named the other half: *"It is lethality, and it lives on Capua's side ... That is the
+next item."* This is that item. Two changes were built for it, one to the game and one to the
+reference player, and neither ships. What each found is recorded here so the next attempt starts from
+it, and the instrument that settled both is kept.
+
+#### The Pits' toll is the reference player's choice before it is the game's
+
+`lead.mjs` put the staying house's deaths in the Pits. The rope fights `pitMen(d)[0]`, the headliner,
+and for a known house the pit draws its headliner from the top of the circuit. Every pit bout split by
+the game's own odds, 40 staying houses on one prefix (WAGON):
+
+| the rope's pit pick | pit bouts | its men dead per 100 | taken at under 30% | median buried | closed / debt, of 40 |
+|---|---|---|---|---|---|
+| **the headliner, always** (as it plays) | 6,599 | **9.2** | **56%**, 15.1 dead per 100 | 30 | 4 / 13 |
+| the likeliest win of the three | 6,325 | **0.7** | 3% | 12 | 3 / 18 |
+
+**More than half its pit bouts were taken at under a 30% chance of winning.** A lanista who picks
+the man his fighter can beat loses one in 135 pit bouts instead of one in 11. The burial difference is
+far outside noise on 40 houses; the ending counts are not. But what they show is the first sign #309's
+reading was wrong: **burials fell by more than half and the good ending did not move.**
+
+#### Capua's ordinary games: the draft
+
+What #309 left structurally is the calendar. Between the festivals a town now holds cards up to the
+Arena; Capua holds nothing but the Pits. The draft gave Capua the same: on half its non-festival weeks
+a house of Local fame gets **"the ordinary games"**, two offers capped at `CITY_ORDINARY`, with no sine
+missione, no challenge, no Primus offer and no announcement in the chronicle (`CAPUA_ORDINARY = 0.5`;
+`ORDINARY_GAMES = { tier:0, offers:2, ordinary:true, noSine:true }` into `makeGames(d, ordinary)`,
+fired in `endWeek` beside the festival and the munera). Its bouts were what they were meant to be:
+**769 a purse and 4.2 dead per 100**, against the pit's 423 and 7.9, and they displaced pit bouts
+(0.56 -> 0.34 a week), not better ones.
+
+#### The first verdict came off 40 houses, and it was wrong twice
+
+On one prefix of 40, staying houses with the draft earned +297 a week, lost men more slowly (bout
+deaths 9.2 -> 7.7 per 100 weeks lived), and ended **in debt more often**: 13 -> 18, and 15 -> 20 on a
+second prefix. The money trace found where the extra went. The rope climbed the census ladder
+(liturgy -189 -> -248 a week) and built (upkeep -30 -> -53). I called it a trap: variable income
+turned into a fixed bill, so the first bad run tips the house under. I then proposed changing the
+reference player's climb before re-judging anything.
+
+**The trap is impossible by construction.** `ludusLedger` charges the city's call only
+`if(d.gold - upkeep >= lit)`. A house that cannot pay sends the clerk away with a promise and loses
+four points of standing. The ladder can cost a house its standing, never its solvency.
+
+**The sane climb said the same thing.** It was a rope that claims a rung only when the next rung's
+stipend covers its liturgy, or when it can spare the fee plus a year of the shortfall. It refused
+**609 of 980** claimable rungs on 80 staying houses (62%). On 160, staying houses reached the same median rung, 6,
+and their debt went 35% ±7 -> 42% ±8. Nothing moved. It is reverted, and the reference player climbs as
+it did.
+
+**The debt itself was never established.** On 160 houses it is 35% -> 41%, a difference inside its
+own interval (about ±11 points). The README's rule was
+already written: *"If a figure moves between seeds it is not a finding"*, run on three or four
+prefixes. I read one.
+
+#### Re-judged on 160 houses, against the reference player unchanged
+
+`probes/pooled.mjs`: 4 seed sets x 40 houses an arm x 420 weeks, every ± a 95% interval. The v3.303.0
+arm reproduces the earlier pooled baseline exactly, and the draft arm reproduces the earlier draft run,
+so asking `runnable` each week does not move the play.
+
+| | v3.303.0 | with ordinary games |
+|---|---|---|
+| staying: `closed`, the good ending | 16, 10% ±5 | 24, 15% ±6 |
+| staying: still running at week 420 | 61, 38% ±8 | 53, 33% ±7 |
+| staying: debt | 56, 35% ±7 | 66, 41% ±8 |
+| staying: ruin | 22, 14% ±5 | **8, 5% ±3** |
+| staying: banned | 3, 2% ±2 | 9, 6% ±4 |
+| staying: buried a house | median 25, mean 25.3 ±2.3 | median 25, mean 23.6 ±1.7 |
+| staying: buried per 100 weeks lived | 9.31 ±0.40 | **7.87 ±0.28** |
+| staying: weeks lived, all houses | 43,385 | **47,962** (+10.5%) |
+| staying: weeks the fast-forward is open | 8.7% ±0.5 | **4.2% ±0.3** |
+| touring: `closed` | 100, 63% ±8 | 105, 66% ±7 |
+| touring: debt | 11, 7% ±4 | 8, 5% ±3 |
+| touring: buried per 100 weeks lived | 4.55 ±0.37 | 4.22 ±0.33 |
+| touring: fast-forward open, weeks at home | 13.0% ±1.1 | **7.4% ±1.0** |
+
+The bar was set before this run:
+
+| the bar | result |
+|---|---|
+| 1. the good-ending gap halves | ✗ 53 -> 51 points |
+| 2. staying houses bury fewer men | ✗ per house, median 25 either way. ✓ per week of life, -15%: they live longer and bury the same number |
+| 3. staying does not become the stronger strategy | ✓ |
+| 4. the fast-forward #308 just opened is not quietly shut | ✗ open on about half as many weeks, at home and away |
+
+**Refused on 1 and 4, whichever way 2 is read.** What it would have bought is real, and recorded so
+it is not re-derived: ruin 14% -> 5% (the one ending that moved outside its interval), 15% fewer
+deaths per week of life, and 10% longer lives. That is not what item 10 asked for. The fast-forward
+cost is mechanical, not a fault: a card on offer is a week with a choice in it, and `runnable` rightly
+declines to skip it. Two variants would trade differently: a lower rate, or ordinary cards that do not
+count as load. Both leave the gap where it is, so neither is tried.
+
+#### What the gap is, read properly
+
+**`closed` fires only on an empty yard:** `!alive && houseRecord(d).freed >= 5`. It counts houses that
+FINISH, with five men freed and nobody left. A staying house still running at week 420 reads `alive`,
+and 38% of them are, against 11% of touring houses. Counted as failures (debt, ruin, emptied, banned,
+rebellion, disgrace), the two are **27% of touring houses against 52% of staying ones**. That is about
+half the headline gap, and most of it is one ending: **debt, 7% against 35%**. Ruin is level, 13% against
+14%.
+
+So #309's *"It is lethality"* is withdrawn. Cutting the Pits' toll by more than half left the good
+ending where it was on 40 houses. Cutting deaths per week of life 15% left it where it was on 160.
+What puts a staying house under the credit line is the open question. It is not the ladder, above,
+not the Pits' toll (picking left 18 of 40 in debt against 13), and not Capua's empty weeks.
+`pooled.mjs` is its baseline.
+
+#### What else
+
+- **`probes/pooled.mjs`**, a standing instrument. It prints the paired headline over several seed sets,
+  every ending's share with its interval, and burials a house and per 100 weeks lived, the second with
+  the ratio estimator's interval over houses (a binomial over weeks would be several times too narrow).
+  It also prints how often the fast-forward is open, in all and at home. `PAGE=` points it at a draft
+  built with `--out=`, so a change is judged before it is in the source. It does not take the place of
+  `lead.mjs`, which splits bouts by where they were fought.
+- **The digest is unchanged**, `70f1a8a2`, because no game code moved. The version string is the only
+  change to `index.html` and `sw.js`.
+- `lead.mjs`'s header and #309's paragraph carry the withdrawal where they make the claim.
+
 ---
 
-*Last updated: v3.302.0 — the road's lead is located, a town holds its great games when the festivals fall, and a poached man can no longer leave before the offer reaches you*
+*Last updated: v3.303.0 — two answers to the road's other half are measured on 160 houses and refused, and what is left of the gap is debt, not death*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
