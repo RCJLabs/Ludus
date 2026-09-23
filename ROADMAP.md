@@ -30712,13 +30712,56 @@ its baseline.
   Primus fame, the cap on a house of fame 0, and the calendar on one house at a festival and off it.
 - **`tour`'s headline said "about sixty times the coin" and had been wrong before this change** — 6.2x
   on v3.301.0, 7.4x after, on a ratio it deliberately does not assert. It says what it holds now.
-- **The digest moves for the first time in five releases**: `43afc6ae` -> `72acc990`. The default rope
-  accepts a town's invitation, and the town it arrives in now keeps a calendar.
+- **The digest moves for the first time in five releases**: `43afc6ae` -> `72acc990` for #309 alone (the
+  default rope accepts a town's invitation, and the town it arrives in now keeps a calendar), then
+  -> `70f1a8a2` with #310 below, which changes when a poached man leaves.
 - `probes/lead.mjs`, a standing instrument: the paired headline and every bout by where it was fought.
+
+
+
+### #310 — the gate found a man leaving through a door nobody opened, and it had been open for a while
+**Same release, v3.302.0, because #309 could not ship without it.** The gate for #309 went 208/209
+on `doors`: *"every one of the 14 men lost went without a card being offered."* The seeds had moved
+under #309, so the first question was whether #309 caused it. **It did not** — the same check on
+v3.301.0:
+
+| | poaches | shown | men lost | lost with no card ever offered |
+|---|---|---|---|---|
+| v3.301.0 | 52 | 71% | 17 | **16** |
+| #309 alone | 58 | 79% | 14 | **14** |
+| #309 + #310 | 56 | — | **1** | **0** |
+
+**#246 closed this once, and it came back underneath a check that could only see it at 100%.** Its
+own header recorded 6 of 11 losses unoffered after that fix. The arm asserted only that *not every*
+loss was silent, so it held green at 16 of 17 for as many releases as it took the share to creep up,
+and went red only when a re-phased seed removed the one offered loss.
+
+**My first hypothesis was wrong again, and the trace said so at once.** I guessed the road — a poach
+beginning away and completing while its card could not show. Traced week by week on `doors`' own
+houses: **0 of 14** were away (`poachWeek` only runs at home). **14 of 14** had the offer planted and
+due, and on **every week** of the poach's life the one pending-event slot was held by another card —
+a refusal, a feud, the league's year, an inspector, an edict, a challenge. #246 planted the beat so
+it would beat the week's random draw. It never beat the RAISED cards, which claim the slot earlier in
+`endWeek` while `poachWeek`, earlier still, counts down and lets the man walk at zero. Every raised
+card added since #246 took a little more of that slot.
+
+**The fix is the check's own title.** `offered` is marked the week the card actually lands in the slot
+— one line after `fireArc` and the die, covering both routes — and until it has, the clock holds at one
+week left while the planted beat keeps asking. A rival's patience is `POACH_PATIENCE` (6) held weeks;
+past that the talk comes to nothing and says so, so no hold outlives its own deadline row. No draw.
+
+**What it moved**: 1 man lost in 56 poaches instead of 14 in 58, and that one offered first; 47 kept
+after an offer; the patience lapsing **once**; the clock held on 42 house-weeks, which is how often the
+slot was full. That is a real balance shift — a poach is now almost always an expense rather than a
+loss — and it is the one #246 intended: *"every poach the player was offered, the player answered and
+kept the man."*
+
+`doors`' second arm now asserts the rule exactly — **no** loss without an offer — and was sabotaged to
+prove it: with the hold removed it fails on 14 of 14, naming the hold and the mark.
 
 ---
 
-*Last updated: v3.302.0 — the road's lead is located, and a town now holds its great games when the festivals fall*
+*Last updated: v3.302.0 — the road's lead is located, a town holds its great games when the festivals fall, and a poached man can no longer leave before the offer reaches you*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a

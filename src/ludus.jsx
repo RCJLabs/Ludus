@@ -16039,6 +16039,27 @@ const poachedMan = d => { if(!d.poach) return null;
   const g = (d.gladiators||[]).find(x=>x.id===d.poach.gid);
   return (g && g.status === "active") ? g : null; };
 
+/* ---- AND THE CLOCK RAN OUT ON OFFERS NOBODY HAD SEEN — #310 ----
+   #246 planted the offer as a beat so it would beat the week's RANDOM draw, and it did: the share
+   shown went from 4 in 32 to 35 in 41. What it never beat were the RAISED cards. There is one slot,
+   `fireArc` steps aside when it is full, and the phases that raise a refusal, a feud, the league's
+   year, an inspector, an edict, a challenge all run before it in `endWeek` — while this function,
+   earlier still, counts the poach down and lets the man walk at zero.
+
+   MEASURED on `doors`' own houses (24 x 380): 14 poaches took a man, 0 had been shown, and on every
+   week of all fourteen the slot was held by another card — the beat planted, due, and never given a
+   turn. None of them was on the road (this only runs at home). v3.301.0 read 16 of 17 losses
+   unoffered; #246's own header had read 6 of 11. Every raised card added since took a little more of
+   the slot, and `doors` asserted only that NOT EVERY loss was silent, so it stayed green on one lucky
+   offered-and-lost man until a re-phased seed took even that away.
+
+   So the rule is the check's own title: a man is not taken out of your house without the offer ever
+   reaching you. `offered` is set the week the card actually lands in the slot (one line after
+   `fireArc` and the die, covering both); until it has, the clock holds at one week left and the
+   planted beat keeps asking for the slot. A rival's patience is not endless — past `POACH_PATIENCE`
+   held weeks the talk comes to nothing, so no hold outlives its own deadline row. NO DRAW: the hold
+   and the patience are counts. */
+const POACH_PATIENCE = 6;
 function poachWeek(d){
   if(d.poach){
     /* ---- THE MAN CAN LEAVE WHILE THE OFFER IS STILL OUT ----
@@ -16049,6 +16070,16 @@ function poachWeek(d){
        and so saw the same broken string four times across ten houses of 420 weeks instead of four
        different men. A rival does not keep courting a corpse. */
     if(!poachedMan(d)){ d.poach = null; return; }
+    if(!d.poach.offered && d.poach.weeks <= 1){
+      d.poach.held = (d.poach.held || 0) + 1;
+      if(d.poach.held > POACH_PATIENCE){
+        const g = poachedMan(d), h = d.poach.house;
+        d.poach = null;
+        d.arcs = (d.arcs || []).filter(a => a.id !== "poached");
+        chron(d, `Whatever House ${h} was saying to ${g.name} at the wall, it never came to a conversation with you, and in the end it comes to nothing. ${PR(g).He} is still here.`, "info");
+      }
+      return;
+    }
     d.poach.weeks--;
     if(d.poach.weeks<=0) defect(d, d.poach);
     return;
@@ -24730,6 +24761,7 @@ function endWeek(d){
   acclaimWeek(d);
   fireArc(d);   /* a beat planted weeks ago comes due — ahead of the week's random event */
   if(!d.pendingEvent && !d.rome && R()<0.45){ const ev=pickEvent(d); if(ev) d.pendingEvent=ev; }
+  if(d.poach && d.pendingEvent && d.pendingEvent.id === "poached") d.poach.offered = true;   /* #310 — planted or drawn, it has landed */
   if(d.flags.spartacusAtLarge && R()<0.25){
     d.flags.sparkCount = (d.flags.sparkCount||0)+1;
     const n = d.flags.spartacusAtLarge;
