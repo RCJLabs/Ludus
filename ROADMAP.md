@@ -30631,6 +30631,13 @@ with a reason, or it does not happen.
 **Digest `43afc6ae`** before and after: the rope never presses the fast-forward, so the simulation
 cannot move. App grows by **one** line, the one that prints `runSays`; the button got a line shorter.
 
+**And the first gate went 208/209, on my new check.** `probe` caught `runon` opening its houses as
+`"capua"` — not a scenario; `newGameState` falls back to `clean` for anything it does not know, so
+the check measured clean houses under a label that said otherwise. I had not put `probe` in the
+pre-flight set. Its figures were identical after the fix, which confirms it; the scratchpad
+instruments behind the digests use the same string, so every figure in #305–#308 was taken on
+clean houses, consistently. The rerun went **209/209 in 34.2 min**.
+
 ---
 
 *Last updated: v3.301.0 — the fast-forward says why it is shut, the dead no longer hide it, and it never runs past them*
