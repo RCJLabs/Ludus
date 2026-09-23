@@ -31690,5 +31690,234 @@
    ]
   ],
   "pass": true
+ },
+ {
+  "v": "3.302.0",
+  "weeks": 557,
+  "scanned": 483,
+  "longest": 220,
+  "firstAt": {
+   "ludusNight": 0,
+   "fever": 0,
+   "bodyguard": 0,
+   "bargain": 0,
+   "rivalOffer": 0,
+   "bribe": 0,
+   "affair": 0,
+   "grain": 0,
+   "doctore": 0,
+   "damnatio": 0,
+   "auctoratus": 0,
+   "foundling": 2,
+   "sacramentum": 4,
+   "ambition": 4,
+   "omen": 7,
+   "bayCall": 19,
+   "plea": 52,
+   "crowdCalls": 93,
+   "stash": 95,
+   "sabotage": 101,
+   "mentor": 103,
+   "poached": 110,
+   "bribedEditor": 111,
+   "thugs": 113,
+   "warTax": 124,
+   "warWord": 124,
+   "patronGone": 126,
+   "warLevy": 140,
+   "theRoad": 157,
+   "escape": 37,
+   "uprising": 77
+  },
+  "drawn": 36,
+  "raised": 28,
+  "p50": 13,
+  "atLeast4": 98.3,
+  "top": [
+   [
+    "grain",
+    100
+   ],
+   [
+    "fever",
+    96.5
+   ],
+   [
+    "bodyguard",
+    96.5
+   ],
+   [
+    "rivalOffer",
+    96.5
+   ],
+   [
+    "bribe",
+    93.2
+   ],
+   [
+    "affair",
+    93
+   ]
+  ],
+  "floor": [
+   [
+    "escape",
+    7
+   ],
+   [
+    "poached",
+    6.4
+   ],
+   [
+    "warWord",
+    3.7
+   ],
+   [
+    "theRoad",
+    2.1
+   ],
+   [
+    "stash",
+    1
+   ],
+   [
+    "uprising",
+    0.2
+   ]
+  ],
+  "never": [
+   "owedLife",
+   "primacy",
+   "roomFire",
+   "whispers",
+   "stolenSteel"
+  ],
+  "reach": [
+   [
+    "grain",
+    100
+   ],
+   [
+    "fever",
+    96.5
+   ],
+   [
+    "bodyguard",
+    96.5
+   ],
+   [
+    "rivalOffer",
+    96.5
+   ],
+   [
+    "bribe",
+    93.2
+   ],
+   [
+    "affair",
+    93
+   ],
+   [
+    "sacramentum",
+    84.9
+   ],
+   [
+    "damnatio",
+    69.2
+   ],
+   [
+    "bayCall",
+    67.7
+   ],
+   [
+    "omen",
+    62.1
+   ],
+   [
+    "bargain",
+    59.8
+   ],
+   [
+    "auctoratus",
+    53.2
+   ],
+   [
+    "foundling",
+    49.1
+   ],
+   [
+    "plea",
+    46.8
+   ],
+   [
+    "ambition",
+    45.3
+   ],
+   [
+    "sabotage",
+    38.1
+   ],
+   [
+    "ludusNight",
+    27.1
+   ],
+   [
+    "patronGone",
+    25.5
+   ],
+   [
+    "doctore",
+    24.2
+   ],
+   [
+    "bribedEditor",
+    20.5
+   ],
+   [
+    "crowdCalls",
+    16.8
+   ],
+   [
+    "warTax",
+    14.9
+   ],
+   [
+    "thugs",
+    11.6
+   ],
+   [
+    "warLevy",
+    9.3
+   ],
+   [
+    "mentor",
+    8.5
+   ],
+   [
+    "escape",
+    7
+   ],
+   [
+    "poached",
+    6.4
+   ],
+   [
+    "warWord",
+    3.7
+   ],
+   [
+    "theRoad",
+    2.1
+   ],
+   [
+    "stash",
+    1
+   ],
+   [
+    "uprising",
+    0.2
+   ]
+  ],
+  "pass": true
  }
 ]
