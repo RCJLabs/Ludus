@@ -57,7 +57,7 @@ export async function run({ p }){
     const o = { gameSoft, weeks:0, open:0, oldOpen:0, deadOnly:0, deadOnlyOpen:0, deadClosing:0, drove:0, pastWindow:[],
       hard:0, hardOpen:[], said:0, saidWrong:[] };
     for(let h=0; h<8; h++){
-      const d = A.newGameState("Run","capua",`RUNON-${h}`);
+      const d = A.newGameState("Run","clean",`RUNON-${h}`);
       for(let w=0; w<320 && !d.over; w++){
         R.lanista(d); if(d.over) break;
         const W = A.weekWeight(d); if(W.kind === "held") continue;
