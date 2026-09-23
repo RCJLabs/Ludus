@@ -3910,7 +3910,11 @@ function agenda(d){
     if(wrong.length === 1) add(1, "men:armory", `${wrong[0].name} is carrying the wrong thing`, "it is not his style");
     else if(wrong.length > 1) add(1, "men:armory", `${wrong.length} men are carrying the wrong thing`, "none of it is their style"); }
   for(const m of unhonoured(d)) if(!m.done){ const left = RITE_WINDOW - (d.week - m.week);
-    add(left <= 2 ? 3 : 2, "villa:council:rites", `${m.name} is not buried properly`, `${left} weeks to decide`); }
+    /* #308 — `when` declared, so the report tags it with its clock ("next week") rather than its age;
+       the run now stops for this window, and the row it stops for should say when it shuts. And
+       "1 weeks to decide" read that way on the last week but one. */
+    add(left <= 2 ? 3 : 2, "villa:council:rites", `${m.name} is not buried properly`,
+      `${left} week${left === 1 ? "" : "s"} to decide`, null, null, left); }
   agendaSchool(d, add);
   agendaFolk(d, add);
   agendaGods(d, add);
@@ -19165,16 +19169,29 @@ function paragonExpire(d){
    whether anything was in it or not. Measured: after week 75 a campaign sees a
    third as many new things per band while the weeks keep arriving at the same rate.
    This lets an empty stretch pass as one decision and a full one slow down. */
+/* ---- AND IT NEVER SAID WHICH — #308 ----
+   The button's absence was silent. A player saw "End week" on most mornings and "Let it run" on a
+   few, and nothing on screen said what made the difference — so the fast-forward read as a mood of
+   the interface rather than a rule. Eleven terms decide it and the player could see none of them.
+
+   Every term now goes through `add`, which records it in `why` with the weight it carries and the
+   few words that name it, and `load` IS THE SUM OF `why`. That is the point of the shape: the
+   sentence the masthead prints and the number that hides the button are one list, so they cannot
+   disagree the way a hand-written explanation beside a hand-written gate eventually would. */
 function weekWeight(d){
-  if(d.over || d.rome || d.travel) return { kind:"held", n:1 };
-  let load = 0;
-  if(d.pendingEvent) load += 4;
-  if(d.games && d.games.offers && d.games.offers.length
-     && activeG(d).some(g=>canFight(g) && g.lastFought < d.week)) load += 3;
-  if(d.city) load += 2;
-  load += Math.min(4, deadlines(d).filter(x=>x.due - d.week <= 2).length * 2);
-  load += activeG(d).filter(g=>refusing(g)).length * 3;
-  if(d.election && !d.election.done) load += 2;
+  if(d.over || d.rome || d.travel) return { kind:"held", n:1, why:[] };
+  const why = [];
+  const add = (k, w, say) => { if(w > 0) why.push({ k, w, say }); };
+  if(d.pendingEvent) add("event", 4, "a matter waiting on you");
+  { const idle = (d.games && d.games.offers && d.games.offers.length)
+      ? activeG(d).filter(g=>canFight(g) && g.lastFought < d.week).length : 0;
+    if(idle) add("card", 3, `games on the card and ${idle === 1 ? "a man" : `${idle} men`} not yet out`); }
+  if(d.city) add("city", 2, `the house is in ${(CITIES[d.city]||{}).name || "another town"}`);
+  { const near = deadlines(d).filter(x=>x.due - d.week <= 2).length;
+    if(near) add("deadline", Math.min(4, near * 2), near === 1 ? "a named day inside two weeks" : `${near} named days inside two weeks`); }
+  { const r = activeG(d).filter(g=>refusing(g)).length;
+    if(r) add("refusing", r * 3, r === 1 ? "a man refusing" : `${r} men refusing`); }
+  if(d.election && !d.election.done) add("election", 2, "an election running");
   /* ---- A MAN YOU CAN NO LONGER PUT RIGHT IS NOT THIS WEEK'S BUSINESS ----
      This read `(d.unburied||[]).some(m=>!m.done)`, with no window, and it was the only reader of
      that list without one. The agenda line uses `unhonoured(d)` and prints "after this nobody can
@@ -19190,15 +19207,69 @@ function weekWeight(d){
      to week 145-325 for seven of the ten and quiet weeks go from 1.8% of play to 4.1%.
      It was invisible because none of `weekWeight`, `unhonoured` or `holdMunera` was on the handle,
      so no check could ask the week its shape or bury a man. */
-  if(unhonoured(d).some(m=>!m.done)) load += 1;
-  if(d.poach || d.doctoreOffer || d.reSignOffer || d.romeOffer) load += 2;
-  if(activeG(d).some(g=>canMaster(d,g))) load += 1;
-  if(owedList(d).some(x=>d.week - x.due >= 4)) load += 1;
-  if(d.unrest >= 68) load += 2;
-  return load >= 5 ? { kind:"full", n:1, load }
-       : load >= 1 ? { kind:"ordinary", n:1, load }
-       : { kind:"quiet", n:1, load };
+  if(unhonoured(d).some(m=>!m.done)) add("dead", 1, "a dead man still to be honoured");
+  if(d.poach || d.doctoreOffer || d.reSignOffer || d.romeOffer) add("offer", 2, "an offer waiting on an answer");
+  if(activeG(d).some(g=>canMaster(d,g))) add("master", 1, "a man ready for his mastery");
+  if(owedList(d).some(x=>d.week - x.due >= 4)) add("owed", 1, "a debt four weeks overdue");
+  if(d.unrest >= 68) add("unrest", 2, "the cells close to trouble");
+  const load = why.reduce((n, x) => n + x.w, 0);
+  return load >= 5 ? { kind:"full", n:1, load, why }
+       : load >= 1 ? { kind:"ordinary", n:1, load, why }
+       : { kind:"quiet", n:1, load, why };
 }
+/* ---- WHICH OF THE ELEVEN ACTUALLY STAND BETWEEN A PLAYER AND THE NEXT FEW WEEKS — #308 ----
+   Audit item 8 asked for the fast-forward to be loosened, on the grounds that "a fit man who has not
+   fought this week" held it off. That term fires only when games are ON THE CARD, and measured it
+   is the sole thing holding the run on 42 weeks in 1,665 — 2.5%. The audit's table listed six of
+   the eleven terms and misstated the one it put in bold.
+
+   MEASURED over 12 houses x 400 weeks (1,665 read), with `why` giving each term by name: the run
+   was open on 6.2% of weeks. The two standing +1s that looked like permanent retirers — a man ready
+   for his mastery, a debt four weeks overdue — held it on 0 and 1 weeks. What held it, on its own,
+   on 93 weeks — nearly as many as the 104 it was open — was THE DEAD: a man still inside his six
+   weeks, his rites unheld. That term stands in runs of six, the window's own length, every time a
+   man dies.
+
+   It weighs on the week deliberately, and `quiet` holds that: inside the window there is something
+   still to do. What it must not do is hide the run for six weeks from a house that has decided not
+   to hold rites — nor let a run carry the house past the last week they could be held, because
+   after that "nobody can put it right". `hurry` already guarantees exactly that shape for a named
+   day. So the dead are SOFT here: they no longer hide the run, and the run stops on the last week the
+   rites can still be held. `weekWeight` is untouched — the dead still weigh 1, `quiet` still holds —
+   and so is `weeksToSomething`, so `hurry` is too. Everything else still hides the run.
+
+   TWO THINGS THE LOOSENING BROUGHT WITH IT, both found by looking at the screen rather than the
+   numbers. A dead-only week carries the rites as an urgent row, so "End week · 1 unanswered" now
+   stands beside "Let it run" — a pair that never met while the run needed a quiet week — and at
+   390px it clipped the run off the right edge. The masthead's button group may wrap now; the bar's
+   height is measured into `--hdr-h`, so a second row pushes the page down rather than over it. And
+   the rites row printed a countdown without declaring `when`, so the report tagged it with its AGE
+   ("4 weeks now") on the very row the run stops for; it declares its clock now. */
+const SOFT_LOAD = new Set(["dead"]);
+/* weeks until the last week any unhonoured man can still be put right; Infinity when there is none */
+const honourLeft = d => { const w = unhonoured(d).filter(m=>!m.done).map(m=>m.week + RITE_WINDOW - d.week);
+  return w.length ? Math.min(...w) : Infinity; };
+/* how many weeks may be run on from here, 0 for none — ONE rule, read by the button AND the run, so
+   the number on the label is the number of weeks that pass (#230) */
+function runnable(d){
+  if(d.over || d.pendingEvent || d.doctoreOffer || d.romeOffer || d.reSignOffer) return 0;
+  const W = weekWeight(d);
+  if(W.kind === "held" || W.why.some(x => !SOFT_LOAD.has(x.k))) return 0;
+  return Math.max(0, Math.min(weeksToSomething(d, 6), honourLeft(d)));
+}
+/* what the morning report says about it — built off the same `why` the gate sums */
+const runSays = d => {
+  const W = weekWeight(d); if(W.kind === "held") return null;
+  const n = runnable(d);
+  if(n >= 1){
+    const capped = W.why.some(x => x.k === "dead") && honourLeft(d) <= n;
+    return `Nothing here holds the house: the weeks can run on, up to ${n === 1 ? "one" : n}${n === 1 ? " week" : " weeks"}`
+      + (capped ? `, stopping while the dead can still be honoured` : "") + `.`;
+  }
+  const hard = W.why.filter(x => !SOFT_LOAD.has(x.k)).map(x => x.say);
+  if(!hard.length) return `The rites for the dead close this week, so the weeks cannot run on past them.`;
+  return `The weeks cannot run on while there is ${hard.join(" · ")}.`;
+};
 /* how far you can safely skip: to the next thing that wants you */
 function weeksToSomething(d, cap){
   const lim = cap || 6;
@@ -30828,7 +30899,7 @@ export default function App(){
   const [digest,setDigest] = useState(null);
   const advance = ()=> { setTab("ludus"); mut(d=>{ endWeek(d); if(d.lastWeek && d.lastWeek.notable && !d.over) setDigest(d.lastWeek); }); };
   const [skipped,setSkipped] = useState(null);
-  const runOn = () => mut(d=>{ const r = skipWeeks(d, weeksToSomething(d, 6)); setSkipped(r); });
+  const runOn = () => mut(d=>{ const r = skipWeeks(d, runnable(d)); setSkipped(r); });
 
   /* ---- ONE WAY OUT ----
      Twenty-five overlays had grown up with their own ideas about how to leave them:
@@ -32202,14 +32273,13 @@ export default function App(){
               </button>
             </div>
           </div>
-          <div className="flex items-center gap-2" style={{flexShrink:0,marginLeft:"auto"}}>
+          <div className="flex items-center gap-2" style={{flexShrink:0,marginLeft:"auto",maxWidth:"100%"}}>
             <button className="btn btn-ghost" aria-label="Settings" style={{padding:"10px 10px"}} onClick={()=>setShowSettings(true)}><Settings size={16} aria-hidden="true"/></button>
-            {(()=>{ const W = weekWeight(S);
+            {(()=>{ const n = runnable(S);   /* #308 — the same rule `runOn` runs, so the label is the run */
               const blocked = !!S.pendingEvent || !!S.doctoreOffer || !!S.romeOffer || !!S.reSignOffer || !!S.over;
-              if(W.kind==="quiet" && !blocked){
-                const n = weeksToSomething(S, 6);
+              if(n >= 1){
                 return (
-                  <span className="flex gap-2">
+                  <span className="flex gap-2" style={{flexWrap:"wrap",justifyContent:"flex-end"}}>
                     <button className="btn btn-ghost" onClick={advance}>{DUE_N ? `End week · ${DUE_N} unanswered` : "End week"}</button>
                     <button className="btn" onClick={runOn} style={{whiteSpace:"nowrap"}}>
                       Let it run · {n}w
@@ -34950,6 +35020,8 @@ export default function App(){
               return (<>
                 {/* the masthead, and NOT an agenda row — `report` counts the sheet's rows against
                     the agenda's length, so this says plainly that it is not one of them */}
+                {(()=>{ const t = runSays(S);   /* #308 — why the weeks can or cannot run on; see `runnable` */
+                  return t ? <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",margin:"-2px 2px 9px"}}>{t}</div> : null; })()}
                 <button className="optrow leadrow" style={{width:"100%",textAlign:"left",padding:"10px 11px",marginBottom:9,
                     borderLeft:"3px solid var(--line-3)"}}
                   onClick={()=>{ setReport(null); setDeskDoc({ doc:"lastWeek", label:"The week that was" }); }}>
@@ -36623,6 +36695,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* #298-#301 — the four lines this release adds are all written in the domain code, so they
        are reachable from a test the way `voice.mjs` asks. `sigLand` is the one the bout also
        rolls against, which is the whole point of it being one function. */
+    runnable, runSays, honourLeft, SOFT_LOAD,   /* #308 — the one rule the button and the run share */
     skySays, skyMods, sigLand, sigTech, legacyRows, legacyNow, legacyPrice, legacyRegard,
     LEGACIES, legacyEarned, isNamed,   /* #305 — the boon strings and the two locks a check has to read */
     /* #302 — an eighteen-rule system the player reads and NOTHING held: no check, no probe, not

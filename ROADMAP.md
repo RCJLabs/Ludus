@@ -30560,9 +30560,87 @@ baseline, so the new container computes exactly as the old one did. Worth noting
 fresh install pulls playwright 1.63, which wants Chromium 1243, and the image carries 1194 —
 `npm install --no-save playwright@1.56.1` matches it without touching `package.json`.
 
+
+
+### #308 — the fast-forward says why it is not there, and the dead no longer hide it
+**v3.301.0. Audit item 8, and the audit had the wrong reason.** It asked for "Let it run" to be
+loosened because "a fit man who has not fought this week" held it off, and gave six load terms.
+There are **eleven**, and that one fires only when games are **on the card** — measured, it held
+the run on its own on 42 weeks in 1,665, **2.5%**. Five of the audit's seven items now turn out to
+have been overstated or wrong in some part; this one was right that the button's absence was
+silent and wrong about why it was absent.
+
+**First, a refactor that changes nothing.** `weekWeight` returns `why` — every term that fired, its
+weight and the words that name it — and `load` is the sum of `why`. The sentence and the gate are
+one list and cannot drift. Checked the only way that counts: the old expression recomputed beside
+the new on every week of 12 houses x 400, **0 mismatches in 1,665**.
+
+**Then the measurement the design waited on**, with each term named:
+
+| | |
+|---|---|
+| weeks the run was open, before | 6.2% (104 of 1,665) |
+| held **only** by a man ready for his mastery, or a debt overdue | **0** and **1** weeks |
+| held **only** by the audit's idle men | 42 weeks |
+| held **only** by the dead — a man inside his six-week window | **93** weeks |
+
+My own hypothesis — that the standing +1s were quietly retiring the button — was **refuted**. What
+held it was the dead: in runs of six, the window's length, every time a man died, and on its own
+nearly as often as the run was open at all. It weighs on the week on purpose (`quiet` holds that:
+inside the window something can still be done), and skipping past it loses the chance for good.
+
+**So the dead are soft, and the run stops for them.** A new `runnable(d)` — read by the button's
+label AND by the run itself, so the number shown is the number of weeks that pass — opens the run
+when every term that fired is soft, and caps it at the last week the rites can still be held. That
+is exactly the shape `hurry` already guarantees for a named day. `weekWeight` is untouched, so the
+dead still weigh 1 and `quiet` holds; `weeksToSomething` is untouched, so `hurry` holds. Measured on
+the same walk: **the run is open on 96 weeks (7.8%) against 62 (5.0%) under the old rule — 55% more
+mornings.**
+
+**And the explanation lives in the morning report, not the masthead.** The run is shut on ~92% of
+mornings; a line in the fixed bar would stand nearly every week, which is #101's decoration. The
+report is where the week's business is read: *"The weeks cannot run on while there is a named day
+inside two weeks · a man refusing."* — or *"Nothing here holds the house: the weeks can run on, up to
+three weeks, stopping while the dead can still be honoured."*
+
+#### `runon.mjs`, and the sabotage that my own first cut let through
+
+Four arms over real play and a fifth that holds the list. On 1,230 weeks: the dead alone weighed
+51, the run was open on 34 and shut on the 17 when their rites closed that week; **34 runs driven on
+a clone, 0 carried past a window**; 1,117 weeks with a hard term, run open over **0**; 1,117 of
+1,117 shut weeks whose sentence names exactly what shut them.
+
+**Sabotage A** (drop the honour cap) went red at once: *"a run of 6 ended at 62, 7 weeks after a
+death the window gives 6."* **Sabotage B** (make near deadlines soft) **passed.** Arm 3 asked the
+game's own `SOFT_LOAD` what counted as hard, so when the game widened it the check widened in
+lockstep — a check reading the rule it guards to decide what to guard. It keeps its own list now,
+`MAY_BE_SOFT`, and arm 0 holds the game's set to it exactly; sabotage B then failed twice, on arm 0
+and on a run open over a deadline at week 13. Widening the loosening is now an edit to that line,
+with a reason, or it does not happen.
+
+#### Two things the loosening brought with it, found by looking at the screen
+
+1. **The masthead clipped the run off the edge.** A dead-only week carries the rites as an urgent
+   row, so *"End week · 1 unanswered"* now stands beside *"Let it run"* — a pair that never met
+   while the run needed a quiet week — and at 390px they did not fit. The button group may wrap
+   now; the bar's height is measured into `--hdr-h`, so a second row pushes the page down.
+2. **The rites row said "4 weeks now"** — its age — on the very row the run stops for, because it
+   printed a countdown without declaring `when`. It declares its clock now and reads *"next week"*.
+   And *"1 weeks to decide"* read that way on the last week but one.
+
+**Digest `43afc6ae`** before and after: the rope never presses the fast-forward, so the simulation
+cannot move. App grows by **one** line, the one that prints `runSays`; the button got a line shorter.
+
+**And the first gate went 208/209, on my new check.** `probe` caught `runon` opening its houses as
+`"capua"` — not a scenario; `newGameState` falls back to `clean` for anything it does not know, so
+the check measured clean houses under a label that said otherwise. I had not put `probe` in the
+pre-flight set. Its figures were identical after the fix, which confirms it; the scratchpad
+instruments behind the digests use the same string, so every figure in #305–#308 was taken on
+clean houses, consistently. The rerun went **209/209 in 34.2 min**.
+
 ---
 
-*Last updated: v3.300.0 — the morning report says how long each thing has been asking, and a check turns out to have guarded a panel removed 157 releases before it was written*
+*Last updated: v3.301.0 — the fast-forward says why it is shut, the dead no longer hide it, and it never runs past them*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
