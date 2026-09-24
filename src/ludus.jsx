@@ -19078,6 +19078,12 @@ const edictOwed = (d, k) => {
   const said = E && E.broke ? E.broke(d) : "The house is in breach of it.";
   return { short:said, long:said };
 };
+/* the reply to "Comply", lifted out of EVENTS beside what it reads, which is what `bulk` asks of the
+   table: `make` and a one-line `run` live there, and the words live with their machinery */
+const complyWord = (d, k) => { const owed = edictOwed(d, k);
+  return owed
+    ? `You send word that the house will comply, and the word is not the deed. ${owed.long} A house in breach is a house the aedile's man comes back to.`
+    : `You send word that the house will comply. It costs you nothing today and it will cost you something on a day you have not thought about yet.`; };
 const lawWord = d => { const h = lawOf(d).heat;
   return h>=70?"the magistrate has your name on a list" : h>=40?"you are being watched" : h>=15?"noticed once or twice" : "nobody is looking at you"; };
 /* an edict arrives, and it is aimed at houses like yours */
@@ -23452,9 +23458,7 @@ const EVENTS = {
         addRep(d, "craft", 4);
         patronsOf(d).forEach(p=>{ if(p.rank==="magistrate") p.favor = clamp(p.favor+9,0,100); }); recomputeFavor(d);
         lawOf(d).heat = clamp(lawOf(d).heat - 12, 0, 100);
-        const owed = edictOwed(d, ev.data && ev.data.k);
-        if(owed) return `You send word that the house will comply, and the word is not the deed. ${owed.long} A house in breach is a house the aedile's man comes back to.`;
-        return `You send word that the house will comply. It costs you nothing today and it will cost you something on a day you have not thought about yet.`;
+        return complyWord(d, ev.data && ev.data.k);
       }
       lawOf(d).heat = clamp(lawOf(d).heat + 14, 0, 100);
       addRep(d, "blood", 3);
