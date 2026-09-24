@@ -31097,6 +31097,9 @@ the time rather than 7%.
 - **`checks/comply.mjs`** holds the reply per edict (several men, one man, a woman, a condemned man and
   a condemned woman), "Comply"'s effects unchanged, the reminder and its going, and the reply on screen
   after a click. Sabotaged with `edictOwed` finding nothing, it fails.
+- **The first gate went 211/212, on `bulk`.** The reply's two new lines took `EVENTS` from 1098 to 1100.
+  The table holds `make` and a one-line `run`, so the words moved to `complyWord` beside `edictOwed`
+  and the table is back at 1098.
 
 ---
 
