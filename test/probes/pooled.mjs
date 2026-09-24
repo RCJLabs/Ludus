@@ -24,6 +24,8 @@
      tours   closed 68% ±7 · debt 3% ±2 · alive 15% ±6 · ruin 10% ±5 · 4.53 buried per 100 weeks lived
      stays   closed 18% ±6 · debt 12% ±5 · alive 48% ±8 · ruin 9% ±5 · banned 7% ±4 · 9.26 per 100 weeks
      fast-forward open on 8.4% of a staying house's weeks, and on 12.5% of a touring house's weeks at home
+   #313's careful player, '{"comply":true,"fines":"read"}': staying houses fail 19% (debt 2%, banned
+   3%, good ending 23%) against touring houses' 18%.
    and v3.303.0's, taken while the reference player answered the week's card LAST (#312), read staying
    houses' debt at 35% ±7 and their good ending at 10% ±5. Figures from before v3.304.0 overstate debt
    at home about threefold; compare like with like.

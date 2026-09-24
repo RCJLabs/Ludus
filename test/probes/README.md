@@ -127,6 +127,7 @@ judge a change before it is in the source, build it with `--out` and point the p
 
     node test/probes/pooled.mjs 40 420 WAGON,SEEDB,SEEDC,SEEDD '{"court":false}'   # #311; rope options as JSON
     LUDUS_STALE_OK=1 PAGE=dist/draft.html node test/probes/pooled.mjs          # a draft built with --out=
+    node test/probes/pooled.mjs 40 420 WAGON,SEEDB,SEEDC,SEEDD '{"comply":true,"fines":"read"}'   # #313's careful player
 
 `under` is the other half of that pair: every coin a house gains or loses booked to what moved it, and
 each house that dies of debt lined up on the week it went under, against the average house of its
