@@ -22,7 +22,13 @@
    THE FINE WAS HALF OF IT. The rope answered the week's card LAST, after its own sell step and just
    before `endWeek`, where the game's modal puts it first. Moved to where the game has it (#312), the
    staying houses' debt went 35% -> 12% with nothing else about the policy changed. The other half is
-   the card itself, which now counts the fine against the line (`checks/fine.mjs`). */
+   the card itself, which now counts the fine against the line (`checks/fine.mjs`).
+
+   AND WHAT IS LEFT, v3.304.0: 19 staying houses die of debt, not 56, and 18 of the 19 still paid a
+   fine in their last week (median 3,599) that they would have survived without. The sell step
+   runs now, and it sold what it could, but a two-man yard cannot raise a fine that size. The
+   reference player still answers every card with its first choice, so it pays. A player who reads
+   the card's count would let him write it down. That, and the ban it leads to, is the law's share. */
 import { serve, open, found, clearAll, installRope } from "../harness.mjs";
 const H = +(process.argv[2] || 40), W = +(process.argv[3] || 420);
 const SEEDS = (process.argv[4] || "WAGON,SEEDB,SEEDC,SEEDD").split(",");
