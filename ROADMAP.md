@@ -31062,9 +31062,48 @@ great games held to the festivals (#309), the poach that left before its offer (
 ordinary games measured and refused (#311), the reference player's answer order and the fine's count
 on the card (#312), and this: the gap it pointed at was the reference player's, not the game's.
 
+
+
+### #314 — "Comply" says what the edict still asks of the yard
+**v3.306.0. The item #313 left for players: an edict's "Comply" sends word and changes nothing in the
+yard, and nothing afterwards said so.**
+
+What a player saw, traced before anything was changed:
+
+- **The card** names the edict and, when the house is in breach, says so: *"You are keeping 8 where the
+  edict allows 5."* The numbers edict always finds the house in breach, because it sets its cap one to
+  three men below the roster it finds.
+- **"Comply"** gives craft +4, the magistrates' favour +9 and heat -12, and leaves the yard as it was.
+  Its reply was *"It costs you nothing today and it will cost you something on a day you have not
+  thought about yet"*, which reads as the matter settled.
+- **Every week after**, the reminder said *"The house is in breach of an edict · you are being
+  watched"*. The shortfall was one tap deep, in the villa's law panel.
+
+What not acting costs, from #313: a house that never leaves Capua and obeys the edicts is banned 1% of
+the time rather than 7%.
+
+**What changed, all of it text.** "Comply" does exactly what it did, and the digest stays `9ff10a9`.
+
+- **`edictOwed(d, k)`** says what an edict still asks, from the game's own counts. For the numbers edict
+  that is the cap, the roster and the men to stand down. For the women edict it is the women, named
+  when there is one. For the condemned edict it is the man and the sentence he has left, in his own
+  pronoun. It is null when the house is within the edict.
+- **The reply to "Comply"**, when the house is in breach: *"You send word that the house will comply,
+  and the word is not the deed. The edict allows 5 and you keep 8. Until 3 of them are off the roster,
+  sold or freed, the house is in breach of it. A house in breach is a house the aedile's man comes back
+  to."* Within the edict, or under an edict that cannot be broken, the old reply stands.
+- **The week's reminder names the shortfall**: *"8 men where 5 are allowed — 3 to stand down · you are
+  being watched"*. It goes once they are.
+- **`checks/comply.mjs`** holds the reply per edict (several men, one man, a woman, a condemned man and
+  a condemned woman), "Comply"'s effects unchanged, the reminder and its going, and the reply on screen
+  after a click. Sabotaged with `edictOwed` finding nothing, it fails.
+- **The first gate went 211/212, on `bulk`.** The reply's two new lines took `EVENTS` from 1098 to 1100.
+  The table holds `make` and a one-line `run`, so the words moved to `complyWord` beside `edictOwed`
+  and the table is back at 1098.
+
 ---
 
-*Last updated: v3.305.0 — a careful player at home escapes Capua's law, and the reference player can be told to be one*
+*Last updated: v3.306.0 — sending word you will comply says what the edict still asks of the yard*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a

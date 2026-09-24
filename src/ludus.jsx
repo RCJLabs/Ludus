@@ -3964,7 +3964,8 @@ function agenda(d){
   if(d.lanista && d.lanista.health < 30 && !d.heir) add(2, "ludus", "You are failing and have named nobody", "the house dies with you");
   { const br = inBreach(d);
     if(br.length) add(lawOf(d).heat>=45?3:2, "villa",
-      `The house is in breach of ${br.length===1?"an edict":br.length+" edicts"}`, lawWord(d)); }
+      `The house is in breach of ${br.length===1?"an edict":br.length+" edicts"}`,
+      [...br.map(k=>(edictOwed(d, k) || {}).short).filter(Boolean), lawWord(d)].join(" · ")); }
   /* THE SINK NOBODY WAS TOLD ABOUT.
      This line was gated on an unbuilt WORK, so it fell silent the moment the five
      works were finished — which is exactly the point a house is richest and the three
@@ -19054,6 +19055,35 @@ const lawOf = d => d.law || (d.law = { cap:99, tax:0, women:false, sineFee:0, da
    exists but predates `edicts` would take the whole screen down on a .filter */
 const hasEdict = (d,k) => (lawOf(d).edicts||[]).includes(k);
 const inBreach = d => (lawOf(d).edicts||[]).filter(k=>{ try { return EDICTS[k].check(d); } catch(e){ return false; } });
+/* ---- WHAT "COMPLY" STILL ASKS OF THE HOUSE — #314 ----
+   "Comply" on an edict's card sends word and changes nothing in the yard, and its reply ("it costs
+   you nothing today") read as the matter settled. It is not settled: the numbers edict sets its cap
+   one to three men BELOW the roster it finds, so a house that sends word and keeps its men is in
+   breach from that day, and breach raises the heat every week until the aedile's man comes. #313
+   measured what acting on it is worth to a house that never leaves Capua: banned 1% of the time
+   rather than 7%. So the reply, and the week's reminder, say what is left to do. */
+const edictOwed = (d, k) => {
+  const E = EDICTS[k];
+  let bad = false; try { bad = !!(E && E.check(d)); } catch(e){}
+  if(!bad) return null;
+  if(k === "numbers"){ const n = d.gladiators.filter(g=>!isGone(g)).length, cap = lawCap(d), over = n - cap;
+    return { short:`${n} men where ${cap} are allowed — ${over} to stand down`,
+      long:`The edict allows ${cap} and you keep ${n}. Until ${over === 1 ? "one of them is" : `${over} of them are`} off the roster, sold or freed, the house is in breach of it.` }; }
+  if(k === "women"){ const ws = activeG(d).filter(g=>isF(g)), w = ws.length;
+    return { short:`${w === 1 ? ws[0].name : `${w} women`} on the roster against it`,
+      long:`${w === 1 ? `${ws[0].name} is` : `The ${w} of them are`} still on the roster, and until ${w === 1 ? "she is" : "they are"} not, the house is in breach of it.` }; }
+  if(k === "damnati"){ const c = activeG(d).filter(g=>isDamn(g)), left = c.reduce((s,g)=>s + Math.max(0, damnLeft(g) || 0), 0);
+    return { short:`${c.length === 1 ? `${c[0].name}, condemned,` : `${c.length} condemned men`} still serving`,
+      long:`${c.length === 1 ? `${c[0].name} is` : `The ${c.length} condemned are`} still serving${left > 0 ? `, ${left} bout${left === 1 ? "" : "s"} of sentence ${c.length === 1 ? "left" : "between them"}` : ""}, and until ${c.length === 1 ? `${PR(c[0]).he} is` : "they are"} done the house is in breach of it.` }; }
+  const said = E && E.broke ? E.broke(d) : "The house is in breach of it.";
+  return { short:said, long:said };
+};
+/* the reply to "Comply", lifted out of EVENTS beside what it reads, which is what `bulk` asks of the
+   table: `make` and a one-line `run` live there, and the words live with their machinery */
+const complyWord = (d, k) => { const owed = edictOwed(d, k);
+  return owed
+    ? `You send word that the house will comply, and the word is not the deed. ${owed.long} A house in breach is a house the aedile's man comes back to.`
+    : `You send word that the house will comply. It costs you nothing today and it will cost you something on a day you have not thought about yet.`; };
 const lawWord = d => { const h = lawOf(d).heat;
   return h>=70?"the magistrate has your name on a list" : h>=40?"you are being watched" : h>=15?"noticed once or twice" : "nobody is looking at you"; };
 /* an edict arrives, and it is aimed at houses like yours */
@@ -23428,7 +23458,7 @@ const EVENTS = {
         addRep(d, "craft", 4);
         patronsOf(d).forEach(p=>{ if(p.rank==="magistrate") p.favor = clamp(p.favor+9,0,100); }); recomputeFavor(d);
         lawOf(d).heat = clamp(lawOf(d).heat - 12, 0, 100);
-        return `You send word that the house will comply. It costs you nothing today and it will cost you something on a day you have not thought about yet.`;
+        return complyWord(d, ev.data && ev.data.k);
       }
       lawOf(d).heat = clamp(lawOf(d).heat + 14, 0, 100);
       addRep(d, "blood", 3);
@@ -36790,6 +36820,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     runnable, runSays, honourLeft, SOFT_LOAD,   /* #308 — the one rule the button and the run share */
     cityTierTop, citySaysTier, CITY_ORDINARY,   /* #309 — the town's tier at the festivals (`cityTier` is exported below) */
     fineRead,                                   /* #312 — the inspector's card counts the fine against the box */
+    edictOwed,                                  /* #314 — what "Comply" still asks of the house */
     skySays, skyMods, sigLand, sigTech, legacyRows, legacyNow, legacyPrice, legacyRegard,
     LEGACIES, legacyEarned, isNamed,   /* #305 — the boon strings and the two locks a check has to read */
     /* #302 — an eighteen-rule system the player reads and NOTHING held: no check, no probe, not
