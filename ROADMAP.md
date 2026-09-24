@@ -30995,9 +30995,76 @@ eventually, the ban (7% of staying houses). That remainder is Capua's law, which
 design. The good-ending gap is mostly which houses finish (48% of staying houses are still running
 at week 420). `probes/under.mjs` and `probes/pooled.mjs` are the baselines for either.
 
+
+
+### #313 — a careful player at home escapes Capua's law, and the reference player can be told to be one
+**v3.305.0. No game code. The last question item 10 left: with the week's card answered when the game
+asks it (#312), is what remains of the gap the game's or the player's?** It is the player's.
+
+#### Declining the fine moves the death
+
+On v3.304.0's player, the inspector answered two careful ways, 160 houses an arm:
+
+| staying houses | as it plays | pay only if the box holds it | read the card (`fineRead`) |
+|---|---|---|---|
+| debt | 12% | **0%** | **1%** |
+| banned | 7% | **18%** | **16%** |
+| good ending | 18% | 15% | 18% |
+| all failures | 34% | 31% | 30% |
+
+An unpaid fine is "let him write it down": heat +18. A house still in breach walks on toward the
+ban at heat 90, so debt deaths become bans nearly one for one.
+
+#### Obeying the edicts is the lever
+
+The numbers edict sets its cap one to three men BELOW the roster it finds, and "Comply" on its card
+changes nothing in the yard. The game holds purchases at the cap (`cellsCap` reads the edict) but
+never forces a sale, so a house that keeps its men is in breach from the day the edict is read. This
+reference player never sold a man for the law.
+
+| staying houses, 160 each | as it plays | `fines:"read"` | `comply` | both |
+|---|---|---|---|---|
+| debt | 12% | 1% | 9% | **2%** |
+| banned | 7% | 16% | 1% | **3%** |
+| good ending | 18% | 18% | 19% | **23%** |
+| still running at week 420 | 48% | 52% | 54% | 57% |
+| all failures | 34% | 30% | 27% | **19%** |
+
+Touring houses fail 17% of the time as they play, and 18% with both levers. `comply` alone leaves
+debt at 9% because the rope's gambits keep heat above 45, and the inspector calls on a house above 45
+even when it breaks nothing; reading the card closes that.
+
+**So the whole failure gap between staying and touring was the reference player's handling of the
+law, and a careful player at home fails as rarely as one on the road.** What remains of the
+good-ending gap (69% against 23% with both levers) is which houses finish: `closed` wants an empty
+yard, and 57% of careful staying houses are still running at week 420.
+
+#### What shipped
+
+- **Two opt-in levers on the reference player**, like `sell` and `works`. `comply:true` sells down to
+  the numbers cap (cheapest first, never the last man it can sell) and sells the women under the
+  women edict; the condemned cannot be sold, so that breach stands. `fines:"read"` pays the inspector
+  only when `fineRead` says the house stands, and otherwise lets him write it down. The defaults are
+  untouched: the digest stays `9ff10a9`.
+- **`checks/law.mjs`.** On forged houses: the roster sold down to the cap and never past the last man
+  it can sell; the cells full at the cap, which is why the lever needs no rule for buying; the women;
+  the fine's answer past the line and inside it; and none of it with the levers off. Then the finding,
+  on 40 staying houses of WAGON: law endings (debt and banned) under both levers at most 4, and fewer
+  than as it plays. Measured per set of 40, careful 1-2 and as it plays 5-10. With both levers made
+  inert in a copy of the harness, it fails.
+- **A redundant rule, caught before it shipped.** The first cut of `comply` also held the buy step
+  under the cap. The game already does that for everybody, and taking the rule out changed no ending.
+
+#### Item 10, closed
+
+Audit item 10, "content for the road", was withdrawn as framed at #309. What it led to: the town's
+great games held to the festivals (#309), the poach that left before its offer (#310), Capua's
+ordinary games measured and refused (#311), the reference player's answer order and the fine's count
+on the card (#312), and this: the gap it pointed at was the reference player's, not the game's.
+
 ---
 
-*Last updated: v3.304.0 — the reference player answers the week's card when the game asks it, and the inspector's card says what the fine does to the box*
+*Last updated: v3.305.0 — a careful player at home escapes Capua's law, and the reference player can be told to be one*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a

@@ -491,6 +491,15 @@ export async function installRope(p){
            sight. The neutral answer is the third: he keeps his money, he stays, nothing is spent.
            An arm that wants the other doors passes its own `answer`, as the falsifier run does. */
         if(ev.id === "stash") i = 2;
+        /* ---- AND A FINE IT READS BEFORE IT PAYS — #313, OPT-IN ----
+           Choice 0 on the inspector is "Pay the fine", and #312 found 18 of the 19 staying houses that
+           still died of debt had paid one they could not sell out of. `fines:"read"` is the answer a
+           player gives who reads the card's own count: pay when it says the house stands, and let him
+           write it down when it says the fine goes past the creditors' line. On its own it mostly turns
+           debt into bans (12% -> 1% debt, 7% -> 16% banned, staying houses): the heat of an unpaid fine
+           finds a house still in breach. With `comply` it is the careful player. */
+        if(ev.id === "inspector" && o.fines === "read" && typeof A.fineRead === "function"){
+          const n = fin(A.fineRead,[d, ev]); i = n && n.ok ? 0 : 2; }
         /* ---- AND AN ARM THAT IS PURSUING ONE PARTICULAR ENDING ----
            #147 asked which of the twelve endings the source can set are unreachable and which are
            merely declined, and the only honest test of "declined" is an arm that declines the other
@@ -516,6 +525,35 @@ export async function installRope(p){
          policy changed. A card RAISED during the week — a booking ask, a spar — is still answered
          below, before the week ends, which is as soon as this rope can see it. */
       answerCard();
+      /* ---- AND IT OBEYS THE EDICTS WHEN TOLD TO — #313, OPT-IN ----
+         Edicts are read out only in Capua, up to three, and they never lapse. The numbers edict sets
+         its cap one to three men BELOW the roster it finds, and "Comply" on its card changes nothing
+         in the yard, so a house that keeps its men is in breach from the day it is read, and breach
+         is what brings the inspector and, at heat 90, the ban. This rope never shed a man for the law.
+         `comply:true` obeys the edicts the way the game checks them, after the week's card as a
+         player would: it sells down to the numbers cap (cheapest first, never the last man), and it
+         sells the women under the women edict. It needs no rule for buying: `cellsCap` already reads
+         the edict, so the cells are full at the cap for everybody. The condemned cannot be sold, so
+         that breach stands. Selling costs unrest, which is the game's own price for it.
+         OPT-IN, like `sell` and `works`: with `fines:"read"` it is #313's careful player, and a
+         staying house under it fails as rarely as a touring one. The default is untouched. */
+      if(o.comply && !d.over && typeof A.lawOf === "function"){
+        const L = A.lawOf(d), eds = L.edicts || [];
+        const alive = () => d.gladiators.filter(g=>!A.isGone(g));
+        if(eds.includes("numbers")){
+          const cap = L.cap || 99; let guard = 0;
+          while(alive().length > cap && guard++ < 12){
+            const men = A.activeG(d).filter(g=>!g.damnatus).sort((a,b)=>A.gladValue(a) - A.gladValue(b));
+            if(men.length <= 1) break;
+            if(!fin(A.sellMan,[d, men[0].id, null])) break;
+            bump("complied:numbers");
+          }
+        }
+        if(eds.includes("women")) for(const g of A.activeG(d).filter(g=>g.sex === "f")){
+          if(A.activeG(d).length <= 1) break;
+          if(fin(A.sellMan,[d, g.id, null])) bump("complied:women");
+        }
+      }
       /* ---- AND HE SELLS WHEN HE IS TOLD TO — #259, OPT-IN ----
          `men.sold` reads 0 across every measurement this project has ever taken — 518 men over 3,538
          weeks in `probes/survey.mjs` — and not because the reference player declines. THERE WAS NO
