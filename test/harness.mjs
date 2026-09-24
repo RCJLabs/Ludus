@@ -461,6 +461,61 @@ export async function installRope(p){
       const fin = (f, args) => { try { return f(...args); } catch(e){ bump("threw"); return null; } };
       if(d.over) return did;
       const spare = () => d.gold - LAN.reserve(d);
+      /* the week's question, answered the way a solvent player would — NOT always choice 0, which on
+         `uprising` is the only lethal branch and cost an earlier probe 129 weeks of median life */
+      const answerCard = () => {
+        const ev = d.pendingEvent;
+        if(!ev) return;
+        did.events = did.events || {};
+        did.events[ev.id] = (did.events[ev.id]||0)+1;
+        let i = 0;
+        if(ev.id === "uprising"){ const k=(ev.data&&ev.data.keys)||["fight"]; const gi=k.indexOf("guards"); if(gi>=0) i=gi; }
+        /* `road:false` is the STAY-AT-HOME control arm, and it has to decline the invitation as
+           well as skip the return — otherwise "does not tour" means "leaves once and is stuck",
+           which is the thing being controlled for. `bayCall`'s second door is "Write back that you
+           are needed here", and it is the only road out of Capua a player is ever offered. */
+        if(ev.id === "bayCall" && !on("road")) i = 1;
+        /* ---- #242: AND IT DOES NOT BUY A YARD BY DEFAULT ----
+           Choice 0 on the yard question is "Take the yard", and this rope answers events with
+           choice 0. A dark yard costs the men on it — a median of 7,567 denarii, p90 10,497 — and
+           it arrives once a run; a reference player that spent that whenever the box happened to be
+           full would put a one-off purchase the size of a season inside every figure this project
+           takes, which is exactly what the booking default was found doing in v3.236.0. Declined by
+           default and opt-in through `yard:true`, on `bayCall`'s precedent directly above. */
+        if(ev.id === "yard" && o.yard !== true) i = 1;
+        /* ---- AND IT DOES NOT FREE EVERY VETERAN WHO ASKS — #233 ----
+           `stash`'s first door frees the man. Taking it every time is not "the way a solvent
+           player would": it is a policy of losing your best man the moment he has saved the
+           state's twentieth of himself, and it measured as one — saga stage 3 fell from 67% to 32%
+           because the arcs are ABOUT long-career men and the rope was retiring each of them on
+           sight. The neutral answer is the third: he keeps his money, he stays, nothing is spent.
+           An arm that wants the other doors passes its own `answer`, as the falsifier run does. */
+        if(ev.id === "stash") i = 2;
+        /* ---- AND AN ARM THAT IS PURSUING ONE PARTICULAR ENDING ----
+           #147 asked which of the twelve endings the source can set are unreachable and which are
+           merely declined, and the only honest test of "declined" is an arm that declines the other
+           way. `triumph` is exactly one door on exactly one event (`romeReturn`, choice 1); a policy
+           that wants it does not want a different rope, it wants to answer that one question
+           differently. `answer(ev, d)` returns an index, or null to leave the default alone. */
+        if(typeof o.answer === "function"){
+          const j = o.answer(ev, d);
+          if(j != null && j >= 0) i = j;
+        }
+        fin(()=>A.EVENTS[ev.id].run(d, ev, i), []);
+        d.pendingEvent = null;
+      };
+      /* ---- AND IT IS ANSWERED FIRST, AS THE GAME PUTS IT — #312 ----
+         The card used to be answered LAST: after every step of the week, the sell step included, and
+         immediately before `endWeek`. The game does the opposite — the card is a modal the moment the
+         week turns, and a player answers it before anything else, with the whole week still ahead to
+         sell or borrow in. So every payment this rope could not afford went straight to the debt
+         check with its own sell step already spent: `probes/under.mjs` found 50 of the 56 staying
+         houses that died of debt had paid an inspector's fine in the very week they went under, and
+         every one of those weeks would have closed above the line without it. Answered first, on
+         160 houses an arm, the staying houses' debt went 35% -> 12% and nothing else about the
+         policy changed. A card RAISED during the week — a booking ask, a spar — is still answered
+         below, before the week ends, which is as soon as this rope can see it. */
+      answerCard();
       /* ---- AND HE SELLS WHEN HE IS TOLD TO — #259, OPT-IN ----
          `men.sold` reads 0 across every measurement this project has ever taken — 518 men over 3,538
          weeks in `probes/survey.mjs` — and not because the reference player declines. THERE WAS NO
@@ -1558,48 +1613,7 @@ export async function installRope(p){
         if(next && fin(A.setOut,[d, next])) bump("setOut");
       }
 
-      /* the week's question, answered the way a solvent player would — NOT always choice 0, which on
-         `uprising` is the only lethal branch and cost an earlier probe 129 weeks of median life */
-      const ev = d.pendingEvent;
-      if(ev){
-        did.events = did.events || {};
-        did.events[ev.id] = (did.events[ev.id]||0)+1;
-        let i = 0;
-        if(ev.id === "uprising"){ const k=(ev.data&&ev.data.keys)||["fight"]; const gi=k.indexOf("guards"); if(gi>=0) i=gi; }
-        /* `road:false` is the STAY-AT-HOME control arm, and it has to decline the invitation as
-           well as skip the return — otherwise "does not tour" means "leaves once and is stuck",
-           which is the thing being controlled for. `bayCall`'s second door is "Write back that you
-           are needed here", and it is the only road out of Capua a player is ever offered. */
-        if(ev.id === "bayCall" && !on("road")) i = 1;
-        /* ---- #242: AND IT DOES NOT BUY A YARD BY DEFAULT ----
-           Choice 0 on the yard question is "Take the yard", and this rope answers events with
-           choice 0. A dark yard costs the men on it — a median of 7,567 denarii, p90 10,497 — and
-           it arrives once a run; a reference player that spent that whenever the box happened to be
-           full would put a one-off purchase the size of a season inside every figure this project
-           takes, which is exactly what the booking default was found doing in v3.236.0. Declined by
-           default and opt-in through `yard:true`, on `bayCall`'s precedent directly above. */
-        if(ev.id === "yard" && o.yard !== true) i = 1;
-        /* ---- AND IT DOES NOT FREE EVERY VETERAN WHO ASKS — #233 ----
-           `stash`'s first door frees the man. Taking it every time is not "the way a solvent
-           player would": it is a policy of losing your best man the moment he has saved the
-           state's twentieth of himself, and it measured as one — saga stage 3 fell from 67% to 32%
-           because the arcs are ABOUT long-career men and the rope was retiring each of them on
-           sight. The neutral answer is the third: he keeps his money, he stays, nothing is spent.
-           An arm that wants the other doors passes its own `answer`, as the falsifier run does. */
-        if(ev.id === "stash") i = 2;
-        /* ---- AND AN ARM THAT IS PURSUING ONE PARTICULAR ENDING ----
-           #147 asked which of the twelve endings the source can set are unreachable and which are
-           merely declined, and the only honest test of "declined" is an arm that declines the other
-           way. `triumph` is exactly one door on exactly one event (`romeReturn`, choice 1); a policy
-           that wants it does not want a different rope, it wants to answer that one question
-           differently. `answer(ev, d)` returns an index, or null to leave the default alone. */
-        if(typeof o.answer === "function"){
-          const j = o.answer(ev, d);
-          if(j != null && j >= 0) i = j;
-        }
-        fin(()=>A.EVENTS[ev.id].run(d, ev, i), []);
-        d.pendingEvent = null;
-      }
+      answerCard();                /* a card the week's own steps raised */
       fin(A.endWeek,[d]);
       return did;
     };

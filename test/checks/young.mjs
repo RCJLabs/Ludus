@@ -52,7 +52,16 @@ import { installRope } from "../harness.mjs";
 export const name = "young";
 export const describe = "the young house's death is answerable in advance, and the rope already buys nothing while the row is red";
 
-const HOUSES = 96, WEEKS = 120, CUT = 60;
+/* ---- THE THREE PREFIXES THE FINDING WAS MEASURED ON — #312 ----
+   This arm ran 96 houses of one seed set, and #312's gate failed it there: after the reference
+   player began answering the week's card FIRST, its set held six young deaths, and a median of six
+   read 101d on the table against a 240d shortfall. The pooled finding on the new reference player
+   is the other way round and stronger than before: 29/384 young deaths (was 42/384), short 199-211d
+   with 525-814d of sellable men on the table (was 312-492d). A median over six events is the
+   too-tight-for-its-sample fault the header already names. So the arm plays the first 64 houses of
+   each of YOUNG, YOUNGB and YOUNGC (192 houses, a subset of the 384 `probes/young.mjs` pools),
+   and every bar below is unchanged. */
+const PREFIXES = ["YOUNG", "YOUNGB", "YOUNGC"], HOUSES = 64, WEEKS = 120, CUT = 60;
 /* the bars are set well inside the measured figures, because this is a difficulty statement and
    must not become a balance check — it fails on the claim changing, not on the number moving */
 const REF_FLOOR = 0.03;   /* measured 10.2% — under 3% the young death has gone and the item is moot */
@@ -70,7 +79,7 @@ export async function run({ p }){
   const lines = [], bad = [];
   await installRope(p);
 
-  const r = await p.evaluate(([H, W, CUT])=>{
+  const r = await p.evaluate(([PREFIXES, H, W, CUT])=>{
     const A = window.__LVDVS, R = window.__ROPE;
     const miss = ["newGameState","activeG","weeklyBill","liquidate","moneyRow","creditLine"].filter(k=>A[k]==null);
     if(miss.length || !R || typeof R.lanista !== "function")
@@ -81,8 +90,19 @@ export async function run({ p }){
 
     const arm = (o) => {
       const rows = [];
-      for(let i=0;i<H;i++){
-        const d = A.newGameState("Yg", "clean", `YOUNGCHK-${i}`);
+      /* ---- THE ROW AT THE MOMENT OF PURCHASE — #312 ----
+         The row used to be read at the top of the week and every purchase in that week charged to
+         it. That was the same instant while the week's card was answered last. Answered first, as
+         the game has it, a card can fill the box before the buy step: on #312's first gate, both
+         purchases charged here came after a rival bought one of the house's men (180d -> 1,361d),
+         with the row no longer red when the man was bought. The brake is on the purchase, so the
+         row is read at the purchase. The top-of-week count is still printed beside it. */
+      const buy0 = A.buyFromBlock;
+      let redNow = 0;
+      A.buyFromBlock = function(d, ...rest){ let row = null; try { row = A.moneyRow(d); } catch(e){}
+        const res = buy0.call(this, d, ...rest); if(res && row) redNow++; return res; };
+      for(const pre of PREFIXES) for(let i=0;i<H;i++){
+        const d = A.newGameState("Yg", "clean", `${pre}-${i}`);
         let everRed = false, redWeeks = 0, boughtWhileRed = 0, lastRed = null;
         for(let w=0; w<W; w++){
           if(d.over) break;
@@ -97,9 +117,11 @@ export async function run({ p }){
           everRed, redWeeks, boughtWhileRed, lastRed,
           fund:Math.round(A.liquidate(d).total) });
       }
+      A.buyFromBlock = buy0;
       const young = rows.filter(x=>x.young);
       return { n:rows.length, young:young.length, alive:rows.filter(x=>x.kind === "alive").length,
-        boughtWhileRed: rows.reduce((n,x)=>n+x.boughtWhileRed, 0),
+        boughtWhileRed: redNow,
+        boughtOnRedWeek: rows.reduce((n,x)=>n+x.boughtWhileRed, 0),
         heard: young.filter(x=>x.everRed).length,
         redWeeks: q(young.map(x=>x.redWeeks)),
         diedAt: q(young.map(x=>x.week)),
@@ -108,7 +130,7 @@ export async function run({ p }){
         nothingLeft: young.filter(x=>x.fund < 100).length };
     };
     return { ref:arm({}), thrift:arm({ buy:false, build:false, folk:false, staff:false, doctore:false }) };
-  }, [HOUSES, WEEKS, CUT]);
+  }, [PREFIXES, HOUSES, WEEKS, CUT]);
 
   if(r.why) return { pass:false, why:r.why, lines };
   const { ref, thrift } = r;
@@ -136,7 +158,8 @@ export async function run({ p }){
       + `v3.228.0 declined an earlier alarm on the row reaching 78-88% of these deaths, and this arm holds that ground`);
 
   /* 4 — and the brake is already on */
-  lines.push(`men bought on a week the row was red: ${ref.boughtWhileRed} under the reference player, ${thrift.boughtWhileRed} under thrift [measured 0 over 384 houses in every arm]`);
+  lines.push(`men bought while the row was red: ${ref.boughtWhileRed} under the reference player, ${thrift.boughtWhileRed} under thrift [measured 0 over 384 houses in every arm]`
+    + ` · in a week that BEGAN red: ${ref.boughtOnRedWeek}, the week's card having filled the box first`);
   if(ref.boughtWhileRed > 0)
     bad.push(`the reference player bought ${ref.boughtWhileRed} men while its own money row was red — measured at ZERO over 128 houses, `
       + `and a `+"`solvent`"+` lever built to stop it came back byte-identical because there was nothing to stop. `

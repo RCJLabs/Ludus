@@ -181,10 +181,21 @@ export async function run({ p, errors }){
       const house = A.masterOpen(d);
       return { tells:t.length, first:t[0], master:typeof house === "boolean", sigWins:A.SIG_GATE.wins }; })();
     /* and the signature has a button now */
-    let sig = 0; let sigWeeks = 0;
-    { const d = A.newGameState("FIRST-SIG", "clean", "FIRST-SIG");
+    let sig = 0; let sigWeeks = 0; const sigSeeds = [];
+    /* ---- FOUR HOUSES, AND EVERY CHANCE TAKEN — #312 ----
+       One house could not answer this. On #312's reference player (the week's card answered first)
+       FIRST-SIG was ruined at week 71 and spent the rest of its 190 weeks with nought or one man and
+       an empty box: no man came near six wins, so the button was never in reach, and the arm read
+       DARK for the reason the note below already names, a house that did not get there. Traced on
+       four seeds, every house that had a man able to learn one with the fee in reach taught him
+       (weeks 64, 75 and 72; on v3.303.0's player all four did). So the arm plays four houses and asks
+       two things: that the rope teaches at all, as before, and that it takes every chance it has.
+       "In reach" is the rope's own rule for this arm: `works` is off, so its reserve is exactly
+       max(700, twelve weeks of the bill). */
+    for(const seed of ["FIRST-SIG", "FIRST-SIG-2", "FIRST-SIG-3", "FIRST-SIG-4"]){
+      const d = A.newGameState("FIRST-SIG", "clean", seed);
       const seen = new Set();
-      let ran = 0;
+      let ran = 0, chance = null;
       /* ---- THE HOUSE HAS TO LAST LONG ENOUGH TO REACH SIX WINS ----
          This broke on `d.over` and kept whatever it had. The two arms above already clear the
          ending and cap the unrest for exactly this reason, and this one was written without it: on
@@ -194,15 +205,25 @@ export async function run({ p, errors }){
          subject is whether the rope can teach one at all; surviving is the other arms' subject. */
       for(let w = 0; w < 190; w++){
         for(const g of A.activeG(d)) if(g.signature || g.teaching) seen.add(g.id);
+        if(chance == null && A.canLearnSig && A.sigFee){
+          const fee = A.sigFee(d) || 0, spare = d.gold - Math.max(700, A.weeklyBill(d) * 12);
+          if(fee > 0 && fee <= spare && A.activeG(d).some(g=>A.canLearnSig(d, g))) chance = w;
+        }
         try { R.lanista(d, { signature:true }); } catch(e){ break; }
         ran = w + 1;
         if(d.over){ d.over = null; if(d.rebellion) d.rebellion = null; d.unrest = Math.min(d.unrest, 35); }
       }
-      sig = seen.size; sigWeeks = ran;
-      if(!sig) bad.push(`the rope taught no signature in ${ran} weeks with the lever on — the arc reads `
-        + `dark for want of a button, which is what #221's zeroes were`); }
+      for(const g of A.activeG(d)) if(g.signature || g.teaching) seen.add(g.id);
+      sigSeeds.push({ seed, taught:seen.size, chance, ran });
+      sig += seen.size; sigWeeks += ran;
+      if(chance != null && !seen.size)
+        bad.push(`${seed}: a man could learn a signature with the fee in reach from week ${chance}, and in ${ran} weeks `
+          + `the rope never taught him — the lever is on and did not take its chance`);
+    }
+    if(!sig) bad.push(`the rope taught no signature in ${sigWeeks} weeks over four houses with the lever on — the arc reads `
+      + `dark for want of a button, which is what #221's zeroes were`);
 
-    return { bad, reads, play, engines:[...engines], gates, sig, sigWeeks };
+    return { bad, reads, play, engines:[...engines], gates, sig, sigWeeks, sigSeeds };
   });
 
   if(r.miss) return { pass:false, why:`handle is missing ${r.miss.join(", ")}`, lines:[] };
@@ -233,6 +254,8 @@ export async function run({ p, errors }){
   lines.push(`a man with no bouts still gets ${r.gates.tells} reading — "${String(r.gates.first).slice(0, 60)}…"`);
   lines.push(`mastery is a house gate (a boolean off the armoury and acclaim: ${r.gates.master})`
     + ` · the signature wants ${r.gates.sigWins} wins, and the rope now teaches ${r.sig} of them`);
+  if(r.sigSeeds) lines.push(`the signature, house by house: ` + r.sigSeeds.map(x=>`${x.seed} `
+    + (x.chance == null ? "never in reach" : `in reach at week ${x.chance}`) + `, ${x.taught} taught`).join(" · "));
 
   return { pass: bad.length === 0 && !errors.length, why: bad.slice(0, 3).join("; ") || null, lines };
 }

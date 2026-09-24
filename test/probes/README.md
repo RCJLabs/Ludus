@@ -128,6 +128,12 @@ judge a change before it is in the source, build it with `--out` and point the p
     node test/probes/pooled.mjs 40 420 WAGON,SEEDB,SEEDC,SEEDD '{"court":false}'   # #311; rope options as JSON
     LUDUS_STALE_OK=1 PAGE=dist/draft.html node test/probes/pooled.mjs          # a draft built with --out=
 
+`under` is the other half of that pair: every coin a house gains or loses booked to what moved it, and
+each house that dies of debt lined up on the week it went under, against the average house of its
+age. It is how #312 found the inspector's fine in 50 of 56 staying houses' fatal weeks:
+
+    node test/probes/under.mjs 40 420 WAGON,SEEDB,SEEDC,SEEDD                 # #312; DUMP=out.json keeps the rows
+
 `keep`, `walk` and `fires` run in about 25 seconds at 72 houses, which is cheap enough that **they take
 a seed prefix and should always be run on three or four of them.** Two findings died this session for
 being read off 24 houses on one seed, and one of them was a MAXIMUM. If a figure moves between seeds it

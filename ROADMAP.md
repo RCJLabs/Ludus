@@ -30886,9 +30886,118 @@ not the Pits' toll (picking left 18 of 40 in debt against 13), and not Capua's e
   change to `index.html` and `sw.js`.
 - `lead.mjs`'s header and #309's paragraph carry the withdrawal where they make the claim.
 
+
+
+### #312 — the fine nobody could see coming, and a reference player that answered the week's card last
+**v3.304.0. Audit item 10's last question, answered: why 35% of the houses that never leave Capua died
+of debt against 7% of those that tour.** #311 left it as *"what pushes a staying house into debt is
+the open question"*. Most of the answer was in the instrument, and the rest is a card that now says
+what it costs.
+
+#### The cliff has a name
+
+`probes/under.mjs` books every coin a house gains or loses to what moved it (each rope call, each
+event, the bill's lines, the rest of the week's end; nothing unattributed over 82,449 house-weeks),
+then lines every debt death up on the week it went under. v3.303.0, 160 houses an arm:
+
+| in the week the house went under | staying houses (56 debt deaths) | touring houses (11) |
+|---|---|---|
+| paid an inspector's fine that week | **50** | 5 |
+| ...and would have closed above the line without it | **50 of 50** | 5 of 5 |
+| the fatal fine | median **3,077**, p75 5,403, max 9,848 | median 2,689 |
+| as a share of the twelve-week reserve | **three quarters** | three quarters |
+
+The gold is the cliff #247 described: 4,263 ten weeks out, 1,234 the week before, -1,516 the week
+of. All 11 touring houses that died of debt died at home. **The whole law is Capua's.** Edicts are
+read out only there (`awayFromCapua`), up to three, and they never lapse. The numbers edict sets its
+cap one to three men BELOW the roster it finds, so a house is in breach the day it is read. Breach
+raises heat, heat brings the aedile's man, and his fine is `(160 + fame*0.6)` for every edict broken.
+Paying it was never set against the box. The omen and the patron's funeral beside it both check
+`d.gold >= cost`; the inspector took the coin whatever was there.
+
+#### Refusing the fine moves the death, it does not stop it
+
+Two answer rules, 160 houses an arm, on v3.303.0's player:
+
+| staying houses | as it plays | pay only if the box holds it | pay only if the reserve survives it |
+|---|---|---|---|
+| debt | 35% | **3%** | **2%** |
+| banned | 2% | **15%** | **33%** |
+| still running at week 420 | 38% | 52% | 43% |
+
+A refused fine is "let him write it down": heat +18, and heat ends at the ban. The reference player
+stays in breach, so the law has the house either way.
+
+#### The instrument answered the card at the wrong time
+
+The game puts the week's card up as a modal the moment the week turns, so a player answers it first
+and has the whole week to sell or borrow in. `harness.mjs` answered it LAST, after every step of the
+week, the sell step included, immediately before `endWeek`. Every payment it could not afford went
+straight to the debt check with its own remedy already spent. Answered first, nothing else changed:
+
+| 160 houses an arm | answered last (v3.303.0) | answered first | answered first, no gambits |
+|---|---|---|---|
+| staying: debt | 35% | **12%** | 16% |
+| staying: `closed`, the good ending | 10% | **18%** | 19% |
+| staying: still running at week 420 | 38% | 48% | 46% |
+| staying: ruin | 14% | 9% | 11% |
+| staying: banned | 2% | 7% | 3% |
+| staying: weeks lived, all houses | 43,385 | **50,595** | 51,792 |
+| touring: debt | 7% | 3% | 4% |
+| touring: `closed` | 63% | 68% | 66% |
+
+Gambits are not the driver. Counted as failures of every kind, the gap between the two ways of
+playing narrows from **27% against 52%** to **17% against 34%**.
+
+#### What shipped
+
+- **The reference player answers the card first** (`answerCard`, called at the top of the week and
+  again before `endWeek` for a card the week's own steps raised). The change reproduces the probe's
+  answered-first run ending for ending. It re-phases every house the suite plays, and **the digest
+  moves `70f1a8a2` -> `9ff10a9`**. Every house-level figure before v3.304.0 overstates debt at home
+  about threefold.
+- **The inspector's card counts the fine** (`fineRead`). Under the card, in the doctore's place, it
+  says what paying leaves once this week's bill is met, against the creditors' line, how much must be
+  raised before the week ends when it is past it, and whether the tablet stays inside. It is read
+  while the card is up and changes nothing: the digest did not move for it alone. A count may now
+  carry its own heading; the doctore's keeps his. `checks/fine.mjs` holds the three verdicts against
+  `weeklyBill` and `creditLine`, a played week on three seeds that agrees with them, and the card on
+  screen in the danger colour.
+
+#### What the gate found: two checks whose samples could not carry the new trajectories
+
+The first gate went **208/210**, and neither red was the game.
+
+- **`young`, twice.** Its "bought while the row was red" read the row at the TOP of the week. Both
+  purchases it charged came after a rival bought one of the house's men (180 -> 1,361) with the row
+  no longer red when the man was bought: the card now comes first and can fill the box before the buy
+  step. The row is read at the purchase now, and a sabotaged arm that buys whenever it can pay while
+  red is caught 156 times. Its other red was a median over **six** young deaths: 101 on the table
+  against a 240 shortfall. Pooled on the three prefixes #247 measured (YOUNG, YOUNGB, YOUNGC, which
+  reproduce 42/384 exactly on v3.303.0's player), the finding holds and is stronger: **29/384 young
+  deaths, short 199-211 with 525-814 of sellable men on the table.** The arm now plays 64 houses of
+  each of those prefixes, with every bar unchanged. On v3.303.0's player the same arm FAILS, on
+  "every young death heard the row first": one of 19 went under without it ever speaking. That is
+  the answered-last cliff.
+- **`first`.** Its signature arm played one house, and on the new trajectories that house was ruined
+  at week 71 and never had a man who could learn one. It plays four houses now and asks for more than
+  before: that the rope teaches at all, and that every house with a qualifying man and the fee in
+  reach taught him. Three of the four had one in reach (from weeks 63, 73 and 56), and all three
+  taught him. With the lever off, it fails naming each missed chance.
+
+#### What is left of item 10
+
+**19** staying houses die of debt now, not 56, and **18** of them still paid a fine in their last week
+(median 3,599, the largest 13,410) that they would have survived without. The sell step runs, and it sold what it
+had, but a two-man yard cannot raise that. The reference player still answers every card with its
+first choice. A player who reads the new count would let him write it down, which buys heat and,
+eventually, the ban (7% of staying houses). That remainder is Capua's law, which is home-only by
+design. The good-ending gap is mostly which houses finish (48% of staying houses are still running
+at week 420). `probes/under.mjs` and `probes/pooled.mjs` are the baselines for either.
+
 ---
 
-*Last updated: v3.303.0 — two answers to the road's other half are measured on 160 houses and refused, and what is left of the gap is debt, not death*
+*Last updated: v3.304.0 — the reference player answers the week's card when the game asks it, and the inspector's card says what the fine does to the box*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a

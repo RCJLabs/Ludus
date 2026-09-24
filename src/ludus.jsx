@@ -16727,6 +16727,31 @@ function promiseRead(d, gid, due){
   return { ok:true, tight:(need-wait)<=1,
     word:`${g.name} is fit again in ${wait} week${wait===1?"":"s"} — ${need-wait} clear of the day.${rest}` };
 }
+/* ---- WHAT THE FINE DOES TO THE BOX — #312 ----
+   The inspector's fine is `(160 + fame*0.6)` for every edict the house is breaking, and paying it was
+   never set against the box. Measured over 160 houses that never leave Capua, 50 of the 56 that died of
+   debt had paid a fine in the week they went under (median 3,077 denarii, three quarters of a twelve-week
+   reserve), and every one of those weeks would have closed above the creditors' line without it.
+   The card is the first thing a player sees in the week, so there is a week to sell or borrow in, but
+   only if the player knows it is needed. So the card counts the fine the way the doctore counts a date:
+   what paying (and the tablet) leaves once this week's bill is met, against the creditors' line.
+   Nothing the week will earn is counted, so the figure errs toward caution. It is read while the card
+   is on screen and changes nothing. */
+function fineRead(d, ev){
+  if(!ev || ev.id !== "inspector" || !ev.data || !(ev.data.fine > 0)) return null;
+  const fine = ev.data.fine, tablet = rnd(fine * 0.55);
+  const bill = weeklyBill(d), line = creditLine(d);
+  const pay = rnd(d.gold - fine - bill), buy = rnd(d.gold - tablet - bill);
+  const head = "What the box can bear";
+  if(pay >= 0) return { ok:true, tight:pay < bill, head,
+    word:`The box can stand it. Paying leaves ${pay} denarii once this week's bill of ${rnd(bill)} is met${pay < bill ? ", which is less than another week's bill" : ""}.` };
+  if(pay >= line) return { ok:true, tight:true, head,
+    word:`Paying puts the box ${-pay} denarii under once this week's bill of ${rnd(bill)} is met. That is inside the creditors' line at ${-line} under: the house stands, and the trades will hear of it.` };
+  return { ok:false, head,
+    word:`Paying puts the box ${-pay} denarii under once this week's bill of ${rnd(bill)} is met, past the creditors' line at ${-line} under. `
+      + `Raise ${line - pay} before the week ends, by selling, borrowing or winning, or the creditors come. `
+      + (buy >= line ? `The tablet, at ${tablet}, stays inside the line.` : `The tablet, at ${tablet}, goes past it too.`) };
+}
 
 /* ---- THE YEAR AHEAD ----
    Nine or ten different systems each kept their own date and told you about it in
@@ -36517,12 +36542,12 @@ export default function App(){
             </>) : (<>
               <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,marginBottom:8}}>{S.pendingEvent.title.toUpperCase()}</div>
               <div style={{fontSize:"var(--fs-xl)",marginBottom:6}}>{S.pendingEvent.text}</div>
-              {/* when a date is being asked of a named man, the count before you answer */}
-              {S.pendingEvent.note && S.pendingEvent.note.word && (()=>{ const N = S.pendingEvent.note;
+              {/* the count before you answer: a date asked of a named man, or a fine against the box (#312) */}
+              {(()=>{ const N = S.pendingEvent.note || fineRead(S, S.pendingEvent); if(!N || !N.word) return null;
                 const col = !N.ok ? "var(--blood)" : N.tight ? "var(--gold)" : "var(--laurel)";
                 return (
                   <div className="panel" style={{padding:"9px 11px",marginTop:8,marginBottom:2,borderColor:col,background:"var(--panel)",borderLeft:`3px solid ${col}`}}>
-                    <div className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".08em",marginBottom:2}}>The doctore counts it out</div>
+                    <div className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".08em",marginBottom:2}}>{N.head || "The doctore counts it out"}</div>
                     <div style={{fontSize:"var(--fs-md)",lineHeight:1.4,color:col}}>{N.word}</div>
                   </div>
                 ); })()}
@@ -36764,6 +36789,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        rolls against, which is the whole point of it being one function. */
     runnable, runSays, honourLeft, SOFT_LOAD,   /* #308 — the one rule the button and the run share */
     cityTierTop, citySaysTier, CITY_ORDINARY,   /* #309 — the town's tier at the festivals (`cityTier` is exported below) */
+    fineRead,                                   /* #312 — the inspector's card counts the fine against the box */
     skySays, skyMods, sigLand, sigTech, legacyRows, legacyNow, legacyPrice, legacyRegard,
     LEGACIES, legacyEarned, isNamed,   /* #305 — the boon strings and the two locks a check has to read */
     /* #302 — an eighteen-rule system the player reads and NOTHING held: no check, no probe, not
