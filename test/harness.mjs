@@ -418,6 +418,10 @@ export async function installRope(p){
          free                                                                          (default FALSE —
            opt-in: freeing everyone eligible takes the house's fame from 2,232 to 1,270,
            and fame is the quantity most of this suite's reachability leans on. See the step's note)
+         stepDown      (default OFF, #318 — ask to step down the first week `canStepDown` opens.
+                        `"end"` lets it end with him, at `oldAge` marked early; `"heir"` hands on and
+                        the heir step takes up the house. Off by default on the same reasoning as
+                        `free`: a player who stops at the first honourable door plays less of the game)
          works         (default FALSE — opt-in, #138: commission the works and monuments, cheapest
                         open site first, one at a time, deposit from spare(). Flipping this default
                         re-bases what a long-lived house owns and is its own release. `works:true`)
@@ -857,6 +861,9 @@ export async function installRope(p){
           if(better && fin(A.nameHeir,[d, "son", better.cid])) bump("renamedHeir");
         }
       }
+      /* #318 — stepping down while the house stands, opt-in; see `stepDown` in the list above */
+      if(o.stepDown && !d.succession && fin(A.canStepDown,[d]) && fin(A.stepDownNow,[d])){ bump("steppedDown");
+        if(o.stepDown === "end" && fin(A.endTheLine,[d])) bump("endedTheLine"); }
       if(on("heir") && d.succession && fin(A.takeUpTheHouse,[d])) bump("tookUpHouse");
       /* ---- THE STEEL, WHICH NO POLICY OF MINE HAS EVER BOUGHT ----
          `gearUpkeep` measured 0.0 denarii in every era of a 2,555-week sweep, and the reason was here:

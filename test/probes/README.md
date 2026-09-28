@@ -135,6 +135,15 @@ age. It is how #312 found the inspector's fine in 50 of 56 staying houses' fatal
 
     node test/probes/under.mjs 40 420 WAGON,SEEDB,SEEDC,SEEDD                 # #312; DUMP=out.json keeps the rows
 
+`stepdown` set #318's gate before a number was written into the game. It reads, every week of 160
+houses an arm and never acts, when an early handover would open under each candidate pair of terms
+(years at the head, census rung), on top of a house clear of trouble; and, once the build has it, the
+game's own `canStepDown` as the row `game`. `pooled` with `stepDown` on is what the gate does to the
+endings:
+
+    node test/probes/stepdown.mjs 40 420 WAGON,SEEDB,SEEDC,SEEDD             # #318; rope options as JSON 5th
+    node test/probes/pooled.mjs 40 420 WAGON,SEEDB,SEEDC,SEEDD '{"comply":true,"fines":"read","stepDown":"end"}'
+
 `keep`, `walk` and `fires` run in about 25 seconds at 72 houses, which is cheap enough that **they take
 a seed prefix and should always be run on three or four of them.** Two findings died this session for
 being read off 24 houses on one seed, and one of them was a MAXIMUM. If a figure moves between seeds it
