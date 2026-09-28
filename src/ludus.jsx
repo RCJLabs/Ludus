@@ -7359,6 +7359,17 @@ const fameEdge = d => { const f = (d && d.fame) || 0;
 const fameOffers = d => ((d && d.fame) || 0) >= 3000 ? 1 : 0;
 const topRungOpen = d => (d.fame||0) >= TIERS[4].fame && (d.favor||0) >= 55;
 
+/* ---- THE EXCLUSIVE, AS IT IS PLAYED — #320 ----
+   The pact promised your men would appear at no other editor's games in Capua, and `makeGames` cut every
+   Capua card to its first offer instead, whoever's it was; the precise rule, `pactBlocks`, was written and
+   never called. MEASURED before choosing (`probes/pact.mjs`, 160 careful houses an arm, 420 weeks):
+     this cut                          staying: 203 of 205 kept · ruin  9% · closed 23%
+     `pactBlocks` as written           staying:  12 of 187 kept · ruin 17% · closed 12%
+     only the aedile's Ludi Romani     staying: 120 of 211 kept · ruin 17% · closed 19%
+   `pactBlocks` could not work as written: no offer carries an editor, so it closed every card in
+   Capua. The literal promise is keepable and harsh. The owner chose the cut, said plainly: the pact's
+   words now describe one bout on each Capua card, his, and `pactBlocks` is gone.
+   And your own munus is not another editor's games, so it keeps its whole card; the cut took it too. */
 function makeGames(d){
   if(d.rome && d.rome.travel<=0){
     if(d.rome.fought >= ROME_BOUTS){ d.games = null; return; }
@@ -7542,11 +7553,9 @@ function makeGames(d){
      the rolls on the other engines come up to meet it. */
   if(d.fame>=TIERS[2].fame && R()<0.55) add(2);
   offers.forEach(o=>{ if(!o.venue) o.venue = venueFor(d, o); if(!o.sky) o.sky = skyFor(d, o); });
-  { const p = pactOf(d);
-    if(p && PACTS[p.kind] && PACTS[p.kind].exclusive && offers.length > 1){
-      const keep = offers.slice(0, 1);
-      offers.length = 0; offers.push(...keep);
-    } }
+  /* #320 — the exclusive's cut, and your own games spared it: see the note over `makeGames` */
+  const cutForPact = !MC && !!(pactOf(d) && PACTS[pactOf(d).kind] && PACTS[pactOf(d).kind].exclusive);
+  if(cutForPact && offers.length > 1){ const keep = offers.slice(0, 1); offers.length = 0; offers.push(...keep); }
   /* your own munus: the card is yours, and the best bout on it is your headliner's */
   if(MC){
     offers.forEach(o=>{ o.mine = true; });
@@ -7556,8 +7565,7 @@ function makeGames(d){
       if(marquee){ marquee.bookedGid = MC.headliner; marquee.headline = true; }
     }
   }
-  d.games = { festival, offers, week:d.week, fest:F.key, mine:!!MC,
-    exclusive: !!(pactOf(d) && PACTS[pactOf(d).kind] && PACTS[pactOf(d).kind].exclusive) };
+  d.games = { festival, offers, week:d.week, fest:F.key, mine:!!MC, exclusive: cutForPact };
 }
 
 /* ---- THE MUNUS ----
@@ -18236,7 +18244,7 @@ const PACTS = {
     brokeRun:d=>{ d.fame = Math.max(0, d.fame-45); addRep(d, "blood", 6);
       patronsOf(d).forEach(p=>{ p.favor=clamp(p.favor-16,0,100); }); recomputeFavor(d); } },
   exclusive:{ name:"An exclusive with the aedile", weeks:24, need:4,
-    blurb:d=>`Four cards, and your men appear at no other editor's games in Capua for half a year. He is paying for the right to say your house is his.`,
+    blurb:d=>`Four cards inside half a year, and until they are given every card in Capua is cut to the one bout he puts your house on. Your own games and the road stay yours. He is paying for the right to say your house is his.`,
     pay:d=>rnd(320 + d.fame*0.9), bonus:d=>rnd(1600 + d.fame*3),
     kept:"He is re-elected largely on the back of afternoons your men gave him, and he knows it.",
     broke:"He does not need to do anything. The aedile's office simply stops answering.",
@@ -18262,9 +18270,8 @@ const pactOwed = d => { const p = pactOf(d); return p ? Math.max(0, p.need - p.d
 const pactPace = d => { const p = pactOf(d); if(!p) return null;
   const left = pactLeft(d), owed = pactOwed(d);
   return owed === 0 ? "kept" : left <= 0 ? "failed" : owed > left ? "impossible" : owed >= left*0.6 ? "behind" : "comfortable"; };
-const pactBlocks = (d, offer) => { const p = pactOf(d); if(!p) return false;
-  const P = PACTS[p.kind]; if(!P || !P.exclusive) return false;
-  return !!(offer && offer.festival && !offer.city && offer.editor !== p.editor); };
+/* what the exclusive does to a card, in the words the pact, the chronicle and the arena all use — #320 */
+const EXCL_SAYS = "Until it is done, every card in Capua is cut to his one bout. Your own games and the road stay yours.";
 function offerPact(d){
   if(d.pact || d.over || awayFromCapua(d) || d.pendingEvent) return;
   if(d.week < 20 || d.fame < 55) return;
@@ -18288,7 +18295,7 @@ function takePact(d, k){
   const P = PACTS[k]; if(!P) return;
   d.pact = { kind:k, need:P.need, done:0, until:d.week + P.weeks, began:d.week,
     editor:`the editor`, rate:P.pay(d), bonus:P.bonus(d) };
-  chron(d, `You give your word: ${P.need} cards inside ${P.weeks} weeks. ${P.exclusive ? "And nobody else's games until it is done." : "It is not a thing you can quietly stop doing."}`, "info");
+  chron(d, `You give your word: ${P.need} cards inside ${P.weeks} weeks. ${P.exclusive ? EXCL_SAYS : "It is not a thing you can quietly stop doing."}`, "info");
 }
 /* every card taken counts toward it */
 function pactBout(d, offer){
@@ -33285,7 +33292,7 @@ export default function App(){
                 <Bar v={p.done/p.need*100} label="" color={`linear-gradient(90deg,var(--line-3),${col})`}/>
                 <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3}}>
                   {p.done} of {p.need} given{p.rate ? `, ${p.rate}d a card` : ""}{p.bonus ? `, ${p.bonus}d at the end of it` : ""}.
-                  {P.exclusive ? " Nobody else's games in Capua until it is done." : ""}
+                  {P.exclusive ? ` ${EXCL_SAYS}` : ""}
                 </div>
                 {pace==="impossible" && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:3}}>
                   There are not enough weeks left. Whatever happens now, it will be remembered as broken.
@@ -33297,7 +33304,7 @@ export default function App(){
             <div className="dim" style={{fontSize:"var(--fs-md)",marginBottom:11}}>
               {(()=>{ const n=((S.games&&S.games.offers)||[]).length;
                 if(n && S.games.mine) return `Your own games are on — ${S.games.festival.toLowerCase()}, ${n} ${n===1?"bout":"bouts"} on your sand, and the city is watching to see what you put on it.`;
-                return `The pits are always open.${n? ` ${n} ${n===1?"card":"cards"} at the games this week.` : S.fame<TIERS[1].fame ? " Win to 25 fame in the pits and the editors will start sending cards." : " No games this week."}`; })()}
+                return `The pits are always open.${n? ` ${n} ${n===1?"card":"cards"} at the games this week${S.games.exclusive ? ", cut to his one bout while your word to the aedile stands" : ""}.` : S.fame<TIERS[1].fame ? " Win to 25 fame in the pits and the editors will start sending cards." : " No games this week."}`; })()}
             </div>
             <button className="btn btn-blood" style={{width:"100%"}}
               onClick={()=>{ setArenaPick(null); setArenaStep(0); setFGid(null); setPairSel([]); setArenaWiz(true); }}>
@@ -37063,6 +37070,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     careerRungs,   /* #317 — his career, on one strip */
     STEP_DOWN, stepDownNeed, canStepDown, stepDownNow, succSays,   /* #318 — stepping down while the house stands */
     PS_KEYS, boutWord, PROV, PR, AUCTOR_WHY,   /* #319 — a woman's page, in her words */
+    EXCL_SAYS,   /* #320 — the exclusive, said as it is played */
     skySays, skyMods, sigLand, sigTech, legacyRows, legacyNow, legacyPrice, legacyRegard,
     LEGACIES, legacyEarned, isNamed,   /* #305 — the boon strings and the two locks a check has to read */
     /* #302 — an eighteen-rule system the player reads and NOTHING held: no check, no probe, not

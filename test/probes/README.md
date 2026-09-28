@@ -150,6 +150,13 @@ found 71 distinct lines on four houses before the sweep; `checks/gladiatrix.mjs`
 
     node test/probes/pronoun.mjs PRON-1,PRON-2,PRON-3,PRON-4 300 14            # seeds, weeks, fighters a house
 
+`pact` follows every exclusive pact a careful house takes: kept or broken, the weeks inside it, the
+offers on each Capua card while it runs, and how the house ends. #320 ran it against draft builds of
+three rules before choosing one; the table is in its header.
+
+    node test/probes/pact.mjs 40 420 WAGON,SEEDB,SEEDC,SEEDD                 # #320; rope options as JSON 5th
+    LUDUS_STALE_OK=1 PAGE=dist/v2.html node test/probes/pact.mjs              # a candidate rule, built with --out=
+
 `keep`, `walk` and `fires` run in about 25 seconds at 72 houses, which is cheap enough that **they take
 a seed prefix and should always be run on three or four of them.** Two findings died this session for
 being read off 24 houses on one seed, and one of them was a MAXIMUM. If a figure moves between seeds it
