@@ -25235,6 +25235,66 @@ function LawDial({ S, X }){
     </div>
   );
 }
+
+/* ---- HIS CAREER, ON ONE STRIP — #317 ----
+   A man has three rungs the house can put him on, and they were three panels on two tabs that each
+   drew only once he stood on them. The signature panel under Training renders for a man who can
+   already be taught (`canLearnSig`), so a man with five wins was told nothing of the move he is one
+   win from; the rudis is a disabled button naming what he lacks; mastery said how far off he was
+   only from #315. This draws all three on his overview against the one axis they share, his wins
+   (6 for a move of his own, 10 for the wooden sword, fewer on a served sentence's paper, and 12 for
+   mastery), and under it each rung's other terms. Every state is read off what its button asks
+   (`sigTech`, `canLearnSig`, `rudisEligible`, `rudisStanding`, `masterOf`, `canMaster`,
+   `masterNeed`), so the strip cannot call a man ready whom the button would refuse. */
+const careerRungs = (d, g) => { if(!g || isGone(g)) return [];
+  const w = g.wins || 0, more = n => `${n} more win${n === 1 ? "" : "s"}`;
+  const T = sigTech(g), idle = !T && g.signature && TECHNIQUES[g.signature.key];
+  const sig = T ? { st:"done", say:`${T.name}, his own` }
+    : idle ? { st:"done", say:`${idle.name}, idle while he fights as a ${g.cls.toLowerCase()}` }
+    : g.teaching ? { st:"under", say:`at the far post, ${g.teaching.weeks} week${g.teaching.weeks === 1 ? "" : "s"} left` }
+    : w >= SIG_GATE.wins ? { st:"ready", say: canLearnSig(d, g) ? `earned: Training has the post, ${sigFee(d)}d`
+        : g.learning ? "earned, once his second trade is learned" : "earned, once he is fit and in the yard" }
+    : { st:"short", say:more(SIG_GATE.wins - w) };
+  const rs = rudisStanding(g), rb = rudisBar(g);
+  const rud = isAuctor(g) ? { st:"none", say:"nothing to him: he fights free, under contract" }
+    : rudisEligible(g) ? { st:"ready", say:`earned: grant it below, ${rudisCost(d, g)}d` }
+    : { st:"short", say:[rs.wins && more(rs.wins), rs.fame && `${Math.ceil(rs.fame)} more renown`].filter(Boolean).join(" and ")
+        + (rs.served ? `, on his paper's ${rb.wins} and ${rb.fame}` : "") };
+  const M = masterOf(g), need = masterNeed(d, g);
+  const mas = M ? { st:"done", say:`${MASTERY[M.cls].name}, master of the ${M.cls.toLowerCase()}` }
+    : !need ? { st:"ready", say: canMaster(d, g) ? "earned: name him on Training" : "earned, once he is fit and in the yard" }
+    : { st:"short", say: need.length > 1 ? `${need.slice(0, -1).join(", ")} and ${need[need.length - 1]}` : need[0] };
+  return [
+    { k:"sig", at:SIG_GATE.wins, name:"A move of his own", ...sig },
+    { k:"rudis", at:rb.wins, name:"The rudis", ...rud },
+    { k:"master", at:MASTERY_GATE.wins, name:"Mastery", ...mas },
+  ].map(r=>({ ...r, name:her(r.name, g), say:her(r.say, g) })); };
+function CareerLadder({ S, g }){
+  const rungs = careerRungs(S, g); if(!rungs.length) return null;
+  const top = MASTERY_GATE.wins, w = g.wins || 0, on = Math.min(w, top);
+  const dot = st => st === "done" ? "var(--gold)" : st === "short" || st === "none" ? "transparent" : "var(--gold-line)";
+  return (
+    <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)"}} data-ladder="1">
+      <div className="flex items-center justify-between" style={{marginBottom:5}}>
+        <span className="tag">{her("His career", g)}</span>
+        <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{w} win{w === 1 ? "" : "s"} · {rnd(g.pfame || 0)} renown</span>
+      </div>
+      <div style={{position:"relative",marginBottom:6}}>
+        <div className="track" role="progressbar" aria-label={her("his wins, toward mastery", g)} aria-valuenow={on} aria-valuemin={0} aria-valuemax={top}>
+          <div className="fill" style={{width:`${on / top * 100}%`,background:"var(--gold)"}}/>
+        </div>
+        {rungs.map(r=><div key={r.k} style={{position:"absolute",left:`calc(${r.at / top * 100}% - 1px)`,top:-3,bottom:-3,width:2,background:"var(--ink-dim)"}}/>)}
+      </div>
+      {rungs.map(r=>(
+        <div key={r.k} className="flex gap-2" style={{fontSize:"var(--fs-base)",marginTop:3,alignItems:"baseline"}} data-rung={r.k} data-st={r.st}>
+          <span style={{flex:"none",display:"inline-block",width:8,height:8,borderRadius:"50%",background:dot(r.st),
+            border:`1.5px solid ${r.st === "none" ? "var(--line-4)" : "var(--gold-line)"}`}}/>
+          <span className="dim" style={{flex:"none",minWidth:50}}>{r.at} wins</span>
+          <span><span style={{color:"var(--ink-hi)"}}>{r.name}</span> · <span className={r.st === "ready" ? "gold" : "dim"}>{r.say}</span></span>
+        </div>))}
+    </div>
+  );
+}
 function Bar({v, max=100, color, label}){
   return <div className="track" role="progressbar" aria-valuenow={Math.round(clamp(v,0,max))}
     aria-valuemin={0} aria-valuemax={max} aria-label={label||undefined}>
@@ -34284,6 +34344,7 @@ export default function App(){
               </div>
             </div>
             )}
+            {gView==="record" && <CareerLadder S={S} g={selG}/>}   {/* #317 — his three rungs on one strip; see the note over CareerLadder */}
             {gView==="record" && (()=>{
               const B = selG.bouts || [];
               if(!B.length) return null;
@@ -36931,6 +36992,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     fineRead,                                   /* #312 — the inspector's card counts the fine against the box */
     edictOwed,                                  /* #314 — what "Comply" still asks of the house */
     heatDrift, inspectOdds, gamHeat, gamHeatSay, standDown,   /* #316 — the law, on a dial */
+    careerRungs,   /* #317 — his career, on one strip */
     skySays, skyMods, sigLand, sigTech, legacyRows, legacyNow, legacyPrice, legacyRegard,
     LEGACIES, legacyEarned, isNamed,   /* #305 — the boon strings and the two locks a check has to read */
     /* #302 — an eighteen-rule system the player reads and NOTHING held: no check, no probe, not

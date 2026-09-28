@@ -31195,9 +31195,41 @@ What changed:
 **A correction to the list that proposed this:** it said the heat was never shown as a number. It was,
 in the settings' list of endings. It was not shown where the law is managed.
 
+
+### #317 — his career, on one strip
+**v3.309.0. The third item of the list after #315.** A man has three rungs the house can put him on:
+a move of his own at 6 wins, the rudis at 10 wins and 180 renown, and mastery at 12 wins, 55 renown
+and a man as good as him beaten in the square. They were three panels on two tabs, and each drew only
+once he stood on it. The signature panel under Training renders for a man who can already be taught
+(`canLearnSig`), so a man with five wins was told nothing of the move he is one win from. The rudis
+was a disabled button naming what he lacks. Mastery said how far off he was only from #315.
+
+- **His overview opens on a strip.** One bar of his wins, 0 to 12, with a tick at each rung: 6, 10
+  (or the shorter bar a served sentence's paper sets) and 12. Under it, one line a rung: *"A move of
+  his own · 2 more wins"*, *"The rudis · 6 more wins and 140 more renown"*, *"Mastery · 8 more wins,
+  15 more renown and a man beaten in the square who is as good as he is"*.
+- **Each line says what the rung is now:** earned and where to take it, with the fee (*"earned:
+  Training has the post, 910d"*, *"earned: grant it below, 587d"*, *"earned: name him on Training"*);
+  under way (*"at the far post, 2 weeks left"*); had (*"the Snare, his own"*, *"The Wall, master of
+  the murmillo"*, or idle while he fights another style); or not his (a free man under contract has no
+  rudis). An injured or absent man who has earned a rung is told it waits until he is fit and in the
+  yard, not pointed at a door the button would shut.
+- **`careerRungs` reads every state off what its button asks**: `sigTech`, `canLearnSig`,
+  `rudisEligible`, `rudisStanding`, `masterOf`, `canMaster`, `masterNeed`. No gate's number is
+  restated. A woman's rungs are in her words.
+- App is allowed one line more, 5,883 to 5,884, for the line placing `<CareerLadder>`. The component
+  and `careerRungs` live at module scope beside `LawDial`. The three panels it summarises are the doors
+  to each rung and stay where they are.
+- **`checks/climb.mjs`** holds the source to reading the gates; every state of every rung on hand-built
+  men, a woman's included; a sweep of 600 men of every status, sentence, contract and stage, where a
+  rung must read ready exactly when its button would take him (0 disagreements on each of the three);
+  and on screen, a man's page opening on the strip with his wins on the bar. Sabotaged, it fails both
+  ways: a rudis rung that ignored renown disagreed with the gate on 145 of 600 men, and a page without
+  the strip failed the source and the screen.
+
 ---
 
-*Last updated: v3.308.0 — the law, on a dial, and the men to stand down*
+*Last updated: v3.309.0 — his career, on one strip*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
