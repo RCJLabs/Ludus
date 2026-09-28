@@ -31185,6 +31185,12 @@ What changed:
   and who never is, the sheet opening in a house's first week, and on screen the dial's words and bar
   and a man stood down with the list shrinking by him. Sabotaged with the dial removed and the guard
   reverted, it fails.
+- **The first gate went 213/214, and `promise` was right to fail.** Its census counts reads by property
+  name. `standDown` asked `EDICTS.women.check(d)` directly, and that `.women` looked like a read of
+  `d.law.women`, a field that is still written once and read nowhere. `standDown` now reads the house's
+  breaches through `inBreach(d)` as the rest of the law does. That list already runs each edict's check
+  (and survives one that throws), so no edict is called by name twice. The KNOWN entry and the bar stay
+  as they were.
 
 **A correction to the list that proposed this:** it said the heat was never shown as a number. It was,
 in the settings' list of endings. It was not shown where the law is managed.

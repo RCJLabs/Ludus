@@ -19116,13 +19116,13 @@ const edictOwed = (d, k) => {
    not 7%. Obeying the numbers edict meant finding the cheapest men one page at a time. This lists
    them, cheapest first by the game's own price and never the last man, for the law panel to offer
    through the roster's own sale. The women edict lists the women. The condemned cannot be sold. */
-const standDown = d => { const L = lawOf(d), eds = L.edicts || [], out = [];
+const standDown = d => { const br = inBreach(d), out = [];
   const can = activeG(d).filter(g=>!isDamn(g));
-  if(eds.includes("numbers") && EDICTS.numbers.check(d)){
+  if(br.includes("numbers")){
     const over = d.gladiators.filter(g=>!isGone(g)).length - lawCap(d);
     const men = can.slice().sort((a,b)=>gladValue(a) - gladValue(b)).slice(0, Math.max(0, Math.min(over, can.length - 1)));
     out.push({ k:"numbers", over, men }); }
-  if(eds.includes("women") && EDICTS.women.check(d)){
+  if(br.includes("women")){
     const women = can.filter(g=>isF(g));
     out.push({ k:"women", over:women.length, men: women.length < can.length ? women : women.slice(0, Math.max(0, women.length - 1)) }); }
   return out; };
