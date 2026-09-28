@@ -17601,6 +17601,10 @@ const GAMBITS = {
     heat:5 },
 };
 const GAM_KEYS = Object.keys(GAMBITS);
+/* what a trick puts on the house, won or lost: the card quotes it and `runGambit` adds it — #316 */
+const gamHeat = (d, k) => { const G = GAMBITS[k]; return { won: G.heat * 0.4, lost: G.heat }; };
+const gamHeatSay = (d, k) => { const x = gamHeat(d, k), f = v => String(Math.round(v * 10) / 10);
+  return `+${f(x.won)} heat if it works, +${f(x.lost)} if not, and the law stands at ${Math.round(lawOf(d).heat || 0)}`; };
 const gambitDone = (d,k) => (d.gambits||{})[k] || 0;
 /* ---- AND THE TOWN FORGETS ----
    Every throw of the same trick costs seven points of the odds and it never came
@@ -17721,7 +17725,7 @@ function runGambit(d, k, houseName){
   d.gambits = Object.assign({}, d.gambits||{}, { [k]: worn + 1 });
   d.gamWhen = Object.assign({}, d.gamWhen||{}, { [k]: d.week });
   const won = R() < p;
-  lawOf(d).heat = clamp(lawOf(d).heat + (won ? G.heat*0.4 : G.heat), 0, 100);
+  lawOf(d).heat = clamp(lawOf(d).heat + (won ? gamHeat(d, k).won : gamHeat(d, k).lost), 0, 100);
   addRep(d, "blood", won ? 2 : 5);
   /* a trick landed on your declared rival is a blow struck in the feud */
   if(won && d.nemHouse && d.nemHouse.house===houseName){
@@ -19107,6 +19111,21 @@ const edictOwed = (d, k) => {
   const said = E && E.broke ? E.broke(d) : "The house is in breach of it.";
   return { short:said, long:said };
 };
+/* ---- AND WHO WOULD GO — #316 ----
+   #313 measured it: a house that never leaves Capua and obeys the edicts is banned 1% of the time,
+   not 7%. Obeying the numbers edict meant finding the cheapest men one page at a time. This lists
+   them, cheapest first by the game's own price and never the last man, for the law panel to offer
+   through the roster's own sale. The women edict lists the women. The condemned cannot be sold. */
+const standDown = d => { const br = inBreach(d), out = [];
+  const can = activeG(d).filter(g=>!isDamn(g));
+  if(br.includes("numbers")){
+    const over = d.gladiators.filter(g=>!isGone(g)).length - lawCap(d);
+    const men = can.slice().sort((a,b)=>gladValue(a) - gladValue(b)).slice(0, Math.max(0, Math.min(over, can.length - 1)));
+    out.push({ k:"numbers", over, men }); }
+  if(br.includes("women")){
+    const women = can.filter(g=>isF(g));
+    out.push({ k:"women", over:women.length, men: women.length < can.length ? women : women.slice(0, Math.max(0, women.length - 1)) }); }
+  return out; };
 /* the reply to "Comply", lifted out of EVENTS beside what it reads, which is what `bulk` asks of the
    table: `make` and a one-line `run` live there, and the words live with their machinery */
 const complyWord = (d, k) => { const owed = edictOwed(d, k);
@@ -19136,6 +19155,18 @@ function edictWeek(d){
     choices:["Comply", "Carry on and hope"], data:{ k } };
 }
 /* the inspector, who does not send word */
+/* ---- ONE EXPRESSION FOR THE WEEK AND FOR THE DIAL — #316, #150's rule ----
+   The heat had one reader a player could see (`END_DOORS`, in the settings' list of ways to end) and
+   none where the law is managed. #316 puts it on a dial in the law panel, and a number a panel
+   quotes has to be the number the engine rolls, so the week's drift and the inspector's chance are
+   lifted out of `lawWeek` unchanged and both read them. Same arithmetic, same order, no new roll. */
+const lawKin = d => (famTie(d, "magistrate") || { full:0 }).full;   /* #243 phase 2 — half for a widower */
+const heatDrift = d => inBreach(d).length ? inBreach(d).length*1.6
+  : -((0.9 - Math.min(lawOf(d).heat, 90) * 0.006) * (1 + (WIFE_LAW - 1) * lawKin(d)));   /* 0.9 at nothing, 0.36 at ninety */
+const inspectOdds = d => { const h = lawOf(d).heat;
+  return (inBreach(d).length ? 0.03 + h*0.0012
+    : (h >= 45 ? (h - 45) * 0.0016 : 0))       /* about once in eleven weeks at 100 */
+    * (1 - (1 - WIFE_EYE) * lawKin(d)); };
 function lawWeek(d){
   const L = lawOf(d);
   if(d.over || awayFromCapua(d)) return;
@@ -19152,13 +19183,9 @@ function lawWeek(d){
   /* #243 phase 1 — the office forgets a house it is related to faster, and sends its man round
      less often. Measured before building: `inspector` fires a median of ONE to THREE times a house
      and heat sits at p50 0 across weeks, so the tie is two multipliers rather than a system. */
-  const kinLaw = (famTie(d, "magistrate") || { full:0 }).full;   /* #243 phase 2 — half for a widower */
-  const cool = (0.9 - Math.min(L.heat, 90) * 0.006) * (1 + (WIFE_LAW - 1) * kinLaw);   /* 0.9 at nothing, 0.36 at ninety */
-  L.heat = clamp(L.heat + (breach.length ? breach.length*1.6 : -cool), 0, 100);
+  L.heat = clamp(L.heat + heatDrift(d), 0, 100);
   if(d.pendingEvent) return;
-  const known = (breach.length ? 0.03 + L.heat*0.0012
-    : (L.heat >= 45 ? (L.heat - 45) * 0.0016 : 0))       /* about once in eleven weeks at 100 */
-    * (1 - (1 - WIFE_EYE) * kinLaw);
+  const known = inspectOdds(d);
   if(known <= 0 || R() > known) return;
   const fine = rnd((160 + d.fame*0.6) * Math.max(1, breach.length));
   d.pendingEvent = { id:"inspector", title:"He Did Not Send Word",
@@ -25155,6 +25182,59 @@ function GearStats({ it, id, cls, g, slot }){
   );
 }
 
+/* ---- THE LAW, ON A DIAL — #316 ----
+   #312 and #313 found the law is what ends a house that never leaves Capua: the inspector's fine in
+   50 of 56 debt deaths, and the ban behind it. The heat that drives both was a word in the panel
+   ("you are being watched") and a number in the settings' list of endings, and the two lines that
+   matter were written nowhere a player manages the law: 45, past which the aedile's man calls with
+   nothing to count, and 90, the ban's. This draws them, says which way the week will move it and how
+   often he will call, reads the ban's three terms, and lists the men to stand down to meet the
+   numbers edict through the roster's own sale. `heatDrift` and `inspectOdds` are the week's own. */
+function LawDial({ S, X }){
+  const L = lawOf(S), h = clamp(L.heat || 0, 0, 100), br = inBreach(S), away = awayFromCapua(S);
+  const drift = heatDrift(S), odds = inspectOdds(S), every = odds > 0 ? Math.max(1, Math.round(1 / odds)) : null;
+  const f1 = v => String(Math.round(v * 10) / 10), col = h >= 90 ? "var(--blood)" : h >= 45 ? "var(--gold)" : "var(--laurel)";
+  const pend = ruinPending(S), ban = pend && pend.kind === "banned" ? pend : null;
+  const terms = [L.heat >= 90, br.length >= 2, (L.fines || 0) > 0], held = terms.filter(Boolean).length;
+  const tick = at => <div style={{position:"absolute",left:`${at}%`,top:-3,bottom:-3,width:2,background:"var(--ink-dim)"}}/>;
+  const ask = (g, k) => { const v = sellPrice(g);
+    X.setAsk({ title:her("Stand Him Down", g), danger:true, confirm:`Take ${v} denarii`,
+      text:her(`A buyer offers ${v} denarii for ${fullName(g)}, and the house is one ${k === "women" ? "woman" : "man"} nearer the edict. The other men will see him led out through the gate, and draw their own conclusions.`, g),
+      run:()=>X.mut(d=>{ sellMan(d, g.id, v); }) }); };
+  return (
+    <div style={{marginBottom:4}} data-lawdial="1">
+      <div className="flex items-center justify-between" style={{marginBottom:3}}>
+        <span className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".08em"}}>The heat on the house</span>
+        <span className="rowval" style={{color:col}}>{Math.round(h)} of 100</span>
+      </div>
+      <div style={{position:"relative"}}>
+        <div className="track" role="progressbar" aria-label="the heat on the house" aria-valuenow={Math.round(h)} aria-valuemin={0} aria-valuemax={100}>
+          <div className="fill" style={{width:`${h}%`,background:col}}/>
+        </div>
+        {tick(45)}{tick(90)}
+      </div>
+      <div className="dim" style={{fontSize:"var(--fs-micro)",marginTop:3}}>45: the aedile's man calls with nothing to count · 90: the ban's line</div>
+      <div style={{fontSize:"var(--fs-base)",marginTop:5}}>
+        {away ? "Away from Capua the law neither cools nor climbs."
+          : br.length ? `Breaking ${br.length === 1 ? "an edict" : `${br.length} edicts`}, it climbs ${f1(drift)} a week.`
+          : h > 0 ? `Within every edict it cools ${f1(-drift)} a week.` : "Nobody at the aedile's office is looking at this house."}
+        {!away && (every ? ` His man calls about one week in ${every}.` : " Under 45 and within every edict, he has no reason to call.")}
+      </div>
+      {ban ? <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:4}}>The aedile's office is asking who else has dealt with the house: {ban.weeks} week{ban.weeks === 1 ? "" : "s"} to cool it or mend the breaches, or the house is struck from the roll.</div>
+        : (h >= 45 || br.length > 0) && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:4}}>The ban wants heat 90, two edicts broken and a fine already paid: {held} of the three hold{held === 1 ? "s" : ""}.</div>}
+      {(L.fines || 0) > 0 && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:4}}>Paid in fines: {L.fines}d</div>}
+      {standDown(S).map(x=>(
+        <div key={x.k} style={{marginTop:7}} data-standdown={x.k}>
+          <div className="tag tag-blood" style={{marginBottom:4}}>{x.k === "numbers" ? `Stand down ${x.over} to meet the numbers edict` : "The women edict wants them off the roster"}</div>
+          {x.men.map(g=>(
+            <button key={g.id} className="optrow" style={{width:"100%",marginBottom:4}} onClick={()=>ask(g, x.k)}>
+              {g.name} · {g.cls} · {sellPrice(g)}d
+            </button>))}
+          {x.k === "numbers" && x.men.length < x.over && <div className="dim" style={{fontSize:"var(--fs-sm)"}}>The rest cannot be sold: the condemned serve out their sentences, and the last man stays.</div>}
+        </div>))}
+    </div>
+  );
+}
 function Bar({v, max=100, color, label}){
   return <div className="track" role="progressbar" aria-valuenow={Math.round(clamp(v,0,max))}
     aria-valuemin={0} aria-valuemax={max} aria-label={label||undefined}>
@@ -28309,7 +28389,7 @@ const SECT = {
                );
   },
   lastWeek: (S, X, forceOpen) => {
-    const D=S.lastWeek; const dl=D.dl||{};
+    const D=S.lastWeek; if(!D) return null; const dl=D.dl||{};   /* #316: a house's first week has no last week, and this blanked the page */
                const bits=[]; if(dl.gold) bits.push(`${dl.gold>0?"+":""}${dl.gold}d`);
                if(dl.fame) bits.push(`${dl.fame>0?"+":""}${dl.fame} fame`);
                if(dl.unrest) bits.push(`${dl.unrest>0?"+":""}${dl.unrest} unrest`);
@@ -28664,6 +28744,7 @@ const SECT = {
   law: (S, X, forceOpen) => {
     return (
     <Sect title="What the law says" note={lawWord(S)} open={forceOpen}>
+      <LawDial S={S} X={X}/>
       {lawOf(S).edicts.map(k=>{ const E = EDICTS[k], bad = (()=>{ try{ return E.check(S); }catch(e){ return false; } })();
         return (
           <div key={k} style={{borderTop:"1px dotted var(--line)",paddingTop:7,marginTop:7}}>
@@ -28680,7 +28761,6 @@ const SECT = {
             </div>
           </div>
         ); })}
-      {lawOf(S).fines>0 && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:6}}>Paid in fines: {lawOf(S).fines}d</div>}
     </Sect>
     ); },
   party: (S, X) => { const { host } = X;
@@ -29039,7 +29119,7 @@ const SECT = {
     return (
     <Sect title="The house — records & annals" note={isFirstHouse(S) ? "✦ First House · lanista, houses, book…" : "lanista, the houses, the book, the roll…"}>
     <div className="grid grid-cols-2 gap-2">
-      {[["stand","Where Things Stand", `last week, the year, the houses${S.week>20?", the long view":""}`],
+      {[["stand","Where Things Stand", `last week, the year, the houses${S.week>20?", the long view":""}${(lawOf(S).edicts||[]).length || lawOf(S).heat >= 1 ? `, the law at ${Math.round(lawOf(S).heat)}` : ""}`],
         ["lanista","The Lanista", S.lanista? `${S.lanista.age}, ${healthWord(S.lanista.health)}` : "—"],
         ["standings","The Houses", isFirstHouse(S) ? "✦ First House of Capua" : (()=>{ const t=leagueTable(S);
           return `${ordN(t.findIndex(r=>r.you)+1)} of ${t.length} in Capua`; })()],
@@ -33119,12 +33199,12 @@ export default function App(){
                     single time, by a median 7 points and up to 14. */}
                 {GAM_KEYS.map(k=>{ const G = GAMBITS[k], cost = G.cost(S), worn = gambitStale(S,k), p = gambitOdds(S,k);
                   return <QuietRow key={k} S={S} k={k} name={G.name} cost={cost} blurb={G.blurb} odds={p} rivals={rivals} tone="blood" danger
-                    note={worn>0 ? ` · you have tried this ${worn} time${worn>1?"s":""} that anybody still remembers`
-                        : gambitDone(S,k)>0 ? " · you have used this before, and Capua has stopped counting it" : ""}
+                    note={(worn>0 ? ` · you have tried this ${worn} time${worn>1?"s":""} that anybody still remembers`
+                        : gambitDone(S,k)>0 ? " · you have used this before, and Capua has stopped counting it" : "") + ` · ${gamHeatSay(S,k)}`}
                     why={!ready ? `Not for ${6 - (S.week - (S.flags.gambitWeek||0))} weeks.`
                        : S.gold < cost ? `${rnd(cost - S.gold)}d short of the asking price. Nothing is spent on a refusal.` : null}
                     ask={(h,pp)=>setAsk({ title:G.name, danger:true, confirm:`Against ${h.name} · ${cost}d`,
-                      text:`${G.blurb} About ${Math.round(pp*100)} in a hundred it works. If it does not, it will be known that you tried, and the magistrate is ${lawWord(S)}.`,
+                      text:`${G.blurb} About ${Math.round(pp*100)} in a hundred it works. If it does not, it will be known that you tried. It puts heat on the house either way: ${gamHeatSay(S,k)}, and past 45 the aedile's man calls with nothing to count.`,
                       run:()=>mut(d=>{ runGambit(d, k, h.name); }) })} />; })}
               </div>
             ); })()}
@@ -36850,6 +36930,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     cityTierTop, citySaysTier, CITY_ORDINARY,   /* #309 — the town's tier at the festivals (`cityTier` is exported below) */
     fineRead,                                   /* #312 — the inspector's card counts the fine against the box */
     edictOwed,                                  /* #314 — what "Comply" still asks of the house */
+    heatDrift, inspectOdds, gamHeat, gamHeatSay, standDown,   /* #316 — the law, on a dial */
     skySays, skyMods, sigLand, sigTech, legacyRows, legacyNow, legacyPrice, legacyRegard,
     LEGACIES, legacyEarned, isNamed,   /* #305 — the boon strings and the two locks a check has to read */
     /* #302 — an eighteen-rule system the player reads and NOTHING held: no check, no probe, not

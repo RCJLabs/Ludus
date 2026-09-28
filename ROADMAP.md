@@ -31141,9 +31141,63 @@ What changed:
 **Also found, and not fixed here:** on a woman's Training view, the season panel's button reads *"PUT
 HIM ON A SEASON"*.
 
+
+
+### #316 — the law, on a dial, and the men to stand down
+**v3.308.0. The first two items of the list after #315.** #312 and #313 found that the law is what ends
+a house that never leaves Capua (an inspector's fine in 50 of 56 debt deaths, and the ban behind it),
+and that obeying the edicts cut bans from 7% to 1%. A player could see almost none of it.
+
+What a player had, traced before anything was changed:
+
+- **The law panel** (in *Where Things Stand*, behind a tile whose line never mentioned the law) listed
+  the edicts, marked the ones in breach, and gave the fines paid. **The heat was a word** ("you are
+  being watched"). Its number appeared only in the settings' list of endings (*"heat 40 of 90 · 1 of 2
+  edicts · 1 of 2 in breach"*). The line at 45, past which the aedile's man calls with nothing to count,
+  appeared nowhere, and the ban's third term, a fine already paid, only in the code.
+- **Obeying the numbers edict** meant finding the cheapest men one page at a time.
+- **A gambit's card** named its odds, its price and the magistrate's mood, but not the heat it adds: all
+  of it on a failure, 40% on a success (9, 12, 16 and 5 across the four).
+- **Found on the way:** opening *Where Things Stand* in a house's first week **blanked the whole page**.
+  `SECT.lastWeek` read last week's deltas before there was a last week. It reproduces on v3.307.0's
+  build, and no check had opened that sheet before a week had ended.
+
+What changed:
+
+- **One expression for the week and the dial.** `heatDrift` and `inspectOdds` come out of `lawWeek`,
+  and `gamHeat` out of `runGambit`, with the same arithmetic in the same order and no new roll. The
+  digest stays `9ff10a9`.
+- **`LawDial`, at the top of the law panel.** It draws the heat as a bar with ticks at 45 and 90. It says
+  which way the week moves it and by how much, and how often the aedile's man calls (*"about one week
+  in 11"*, which is 3% plus 0.12% a point of heat while in breach). It gives the ban's three terms and
+  how many hold, or the ban's countdown once the office is asking, then the fines and the men to stand
+  down.
+- **`standDown`** lists the cheapest men by the game's own price, as many as the edict is over, and never
+  the last man that can be sold. The condemned are never listed. The women edict lists the women. Each
+  is stood down through the roster's own confirm and sale (*"Take 261 denarii"*).
+- **The tile** reads *"…, the law at 52"* whenever there is heat or an edict.
+- **The gambit card and its confirm name the heat**: *"+3.6 heat if it works, +9 if not, and the law
+  stands at 38"*.
+- **`SECT.lastWeek` returns nothing before a house's first week has ended.**
+- App and `SECT` stay at their caps of 5,883 and 1,517 lines. The dial lives at module scope and took
+  the fines line with it.
+- **`checks/dial.mjs`** holds one expression by the source, the documented drift and odds, who is listed
+  and who never is, the sheet opening in a house's first week, and on screen the dial's words and bar
+  and a man stood down with the list shrinking by him. Sabotaged with the dial removed and the guard
+  reverted, it fails.
+- **The first gate went 213/214, and `promise` was right to fail.** Its census counts reads by property
+  name. `standDown` asked `EDICTS.women.check(d)` directly, and that `.women` looked like a read of
+  `d.law.women`, a field that is still written once and read nowhere. `standDown` now reads the house's
+  breaches through `inBreach(d)` as the rest of the law does. That list already runs each edict's check
+  (and survives one that throws), so no edict is called by name twice. The KNOWN entry and the bar stay
+  as they were.
+
+**A correction to the list that proposed this:** it said the heat was never shown as a number. It was,
+in the settings' list of endings. It was not shown where the law is managed.
+
 ---
 
-*Last updated: v3.307.0 — a man's page says how far he is from his mastery, and whom to beat in the square*
+*Last updated: v3.308.0 — the law, on a dial, and the men to stand down*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
