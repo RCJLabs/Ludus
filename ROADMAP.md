@@ -31345,9 +31345,51 @@ can never draw: it sits inside the branch for a move that matches his current st
   (the bout's reading, refusals, a brother's word, form, the bout word, the steel, the doctore's square).
   Sabotaged, it fails both ways: *"PUT HIM ON A SEASON"* put back, and the bout's reading left unturned.
 
+
+### #320 — the exclusive, said as it is played
+**v3.312.0. The eighth item of the list after #315.** The aedile's exclusive promised *"your men appear
+at no other editor's games in Capua for half a year"*, and the chronicle *"nobody else's games until it
+is done"*. `makeGames` did something else: while the pact ran, every Capua card was cut to its first
+offer, whoever's that was. `pactBlocks` was written as the precise rule and nothing called it; `claims`
+kept it on its list as *"a rule enforced some other way"*. The list that proposed this said the correct
+rule was already written and only needed switching on. **It was not correct.** It compares each offer's
+editor with the pact's, and no offer carries an editor, while the pact's is the placeholder *"the
+editor"*. Switched on, it would have closed every card in Capua.
+
+**Measured before choosing** (`probes/pact.mjs`, 160 careful houses an arm, 420 weeks, each rule built as
+a draft page):
+
+| the exclusive's rule | staying: kept / taken | staying: ruin | staying: closed | touring: kept / taken |
+|---|---|---|---|---|
+| the cut, as it was | 203 / 205 | 9% | 23% | 97 / 99 |
+| `pactBlocks`, as written | 12 / 187 | 17% | 12% | 23 / 85 |
+| only the aedile's own games, the Ludi Romani | 120 / 211 | 17% | 19% | 56 / 92 |
+
+Inside a pact the cut left 1.00 offers a Capua card, against 5.52 outside one, for about nine weeks a
+pact. The literal promise is keepable and harsh: each festival belongs to one editor (`EDITORS.owns`),
+the aedile's is the Ludi Romani once a year, and four cards must come off it or the road. Put to the
+owner, **the choice was the cut, said plainly.**
+
+- **The cut stays, and your own games are spared it.** A munus the house puts on is not another editor's
+  games, and the cut used to take it down to one bout as well. The card's `exclusive` flag, which nothing
+  read, now says whether it was cut.
+- **Every word says what the pact does.** The offer: *"Four cards inside half a year, and until they are
+  given every card in Capua is cut to the one bout he puts your house on. Your own games and the road stay
+  yours."* The chronicle and the arena's pact panel share `EXCL_SAYS`. The arena's card line reads
+  *"1 card at the games this week, cut to his one bout while your word to the aedile stands"*, so a player
+  looking at one bout knows why.
+- **`pactBlocks` is gone**, and `claims`' first section, *a sentence the player would want and never sees*,
+  is empty: `masterNeed` got its line in #315, and this one was decided the other way.
+- The digest is unchanged: `9ff10a9`.
+- **`checks/exclusive.mjs`** holds the cut (the card keeps exactly the offer it led with, on the same draw),
+  that nothing else cuts (no pact, a season with one editor, your own munus under the exclusive), the words
+  (the pact, the chronicle and the arena describe the cut, and no string in the source still promises the
+  old rule), and on screen the pact panel and the card line. Sabotaged, it fails both ways: the cut taking
+  your own munus again (4 bouts to 1), and the old promise put back in the pact's words.
+
 ---
 
-*Last updated: v3.311.0 — a woman's page, in her words*
+*Last updated: v3.312.0 — the exclusive, said as it is played*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a

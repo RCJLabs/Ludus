@@ -50,8 +50,10 @@ export const describe = "nothing is written, promised to the player, and called 
    Ranked by what it costs the player. This is a work list, not a silence: an entry earns its place
    by saying what would have to happen for it to leave. */
 const KNOWN = {
-  /* a sentence the player would want and never sees */
-  pactBlocks:    "the PRECISE exclusivity rule (a festival, in Capua, another editor's). The live filter at `weekGames` truncates the week's offers to the first one instead, whoever's it is — so \"nobody else's games in Capua\" is enforced as \"one card a week\"",
+  /* a sentence the player would want and never sees: EMPTY since #320. `masterNeed` was given its
+     line on a man's page in #315, and `pactBlocks` was retired, not wired: it could not tell one
+     editor from another, and the owner chose the cut `makeGames` makes over the promise it was
+     written for. See the note over that cut. */
 
   /* an instrument, kept on purpose: the game does not call these, the suite does, through the
      handle. #306 listed them as "a whole feature wired to no panel" off their definitions alone;
@@ -137,10 +139,8 @@ export async function run({ p }){
   lines.push(`top-level definitions the game defines: ${defs.length} · never called: ${dead.length}`
     + ` · all of them accounted for: ${fresh.length === 0 && stale.length === 0 ? "yes" : "no"}`);
   if(!fresh.length && !stale.length){
-    const claims = ["masterNeed","pactBlocks"].filter(k => KNOWN[k]).length;
     const kept = ["agAge","agendaRanked","agendaTop"].filter(k => KNOWN[k]).length;
-    lines.push(`   of those, ${claims} would be a sentence the player never gets or a rule enforced `
-      + `some other way, ${kept} are an instrument kept for the suite on purpose, and the rest are `
+    lines.push(`   of those, ${kept} are an instrument kept for the suite on purpose, and the rest are `
       + `duplications and plain dead helpers. See the list in this file.`);
   }
 
