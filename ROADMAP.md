@@ -31295,9 +31295,59 @@ median week 164 and three reached a third generation, with nothing thrown.
 **A correction to the list that proposed this:** its tenth item, a text-size setting, already exists as
 *Large text* in the settings. It is withdrawn.
 
+
+### #319 — a woman's page, in her words
+**v3.311.0. The seventh item of the list after #315.** A woman's Training view said *"PUT HIM ON A
+SEASON"*. The list that proposed this said the `hers` check never looked at that view. That was wrong
+twice over: `hers` is about the lanista's wife, and no check had ever opened a woman fighter's page at
+all. The game turns its prose for a gladiatrix through `her()` and `PR()`, and the man's page used them
+on sixteen of its lines.
+
+**Measured first, without a list of phrases** (`probes/pronoun.mjs`). A house the reference player has
+played is drawn twice, once with every fighter a man and once with every fighter a woman, identical in
+everything else. A line about her must change between the two, so every line of her page that says
+he, him, his or himself and reads the same as his forgot her. Four played houses gave **71 distinct
+lines, on all five views**: the season panel and its five seasons, the drills, the class's own
+description (*"Keeps his distance"*), the traits, how she fights, the steel, the oath, the regard and
+wants panels, the Standing view's headings, the bout history and more.
+
+- **Fixed where each is drawn**, so every row of a table turns at once: every class, trait, drill,
+  season, lasting wound, care, crime and contract reason. About 90 lines of the page and the panels it
+  draws, most through `her()` and the rest through `PR()` where a line names somebody else too.
+- **Where a blanket swap would be wrong, the line takes her pronoun directly.** *"He has him this
+  week"* is the doctore and her; *"the sand that took him"* is the dead man; a brother *"would die for
+  him"* when he is a man; *"won, and killed him"* is the man she killed; the dead man's steel stays his.
+- **`PR` gains `hers`** for the standalone possessive: *"They call it hers"*, *"the oath is hers to
+  say"*, *"until it is hers and no one else's"*. `her()` alone would have written *"They call it her"*.
+- **The bout's reading turns where it is written** (`readBout`), before and after a bout, so it reads
+  right on the fight screen and in her bout history too. Four of its lines were reworded first so the
+  turn is safe: *"a man with 12 behind him"* (him was the opponent), *"The style match was his"*,
+  *"a man who thinks little of you does not spend himself"*, and *"not the same man"*.
+- **Nouns the turn cannot reach were reworded to read for either sex**: two contract reasons (*"as a
+  boy"*, *"a wife's funeral"*), *"not a tier 3 man yet"* (now *"fighter"*), *"the better man on the
+  day"*. *"The second man's place"* on the square stays: it is the other man, and `square` asks for it.
+- `formWord`, `boutWord`, `tieWord`, `squareWord`, `rudisWord`, the steel's provenance and the refusal
+  reasons now take the fighter; `StandingStyle`, `SittingSoon`, `CareRow`, and the bout's own style row
+  use her pronouns.
+- App comes down 5,881 to 5,879: two texts that ran over two lines are one `her()` call each.
+
+**Found, and not fixed here:** the ask that grants a fighter leave into the town reads *"There is a woman
+in the town"* for a woman too, and her partner is drawn from women's names. That is a content decision,
+not a pronoun. And the signature panel's *"He fights another style now, so it is idle in his hands"*
+can never draw: it sits inside the branch for a move that matches his current style.
+
+- **`checks/gladiatrix.mjs`** draws the same played house, 160 weeks with seven fighters planted into
+  the states a house rarely shows (the unsworn, a contract, the condemned, a refusal, a season, a watcher
+  at the wall, lasting wounds, the far post both ways, a master in two trades, named steel, the champion's
+  road), as men and as women, and diffs all 35 views. **0 lines** speak of her as a man; the one allowed
+  is *"won, and killed him"*, with its reason. It asserts all 16 planted panels drew, so a fixture that
+  stops rendering fails instead of passing on less. It also reads the lines written away from the page
+  (the bout's reading, refusals, a brother's word, form, the bout word, the steel, the doctore's square).
+  Sabotaged, it fails both ways: *"PUT HIM ON A SEASON"* put back, and the bout's reading left unturned.
+
 ---
 
-*Last updated: v3.310.0 — stepping down while the house stands*
+*Last updated: v3.311.0 — a woman's page, in her words*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a
