@@ -144,6 +144,12 @@ endings:
     node test/probes/stepdown.mjs 40 420 WAGON,SEEDB,SEEDC,SEEDD             # #318; rope options as JSON 5th
     node test/probes/pooled.mjs 40 420 WAGON,SEEDB,SEEDC,SEEDD '{"comply":true,"fines":"read","stepDown":"end"}'
 
+`pronoun` is #319's measurement: a played house's every fighter drawn on all five views as a man and
+again as a woman, and each line of her page that says he, him or his and reads the same as his. It
+found 71 distinct lines on four houses before the sweep; `checks/gladiatrix.mjs` holds the result.
+
+    node test/probes/pronoun.mjs PRON-1,PRON-2,PRON-3,PRON-4 300 14            # seeds, weeks, fighters a house
+
 `keep`, `walk` and `fires` run in about 25 seconds at 72 houses, which is cheap enough that **they take
 a seed prefix and should always be run on three or four of them.** Two findings died this session for
 being read off 24 houses on one seed, and one of them was a MAXIMUM. If a figure moves between seeds it

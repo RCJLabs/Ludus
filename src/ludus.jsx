@@ -351,8 +351,8 @@ const FNAMES = {
 };
 /* Pronouns, so the chronicle is not talking about the wrong person. */
 const PR = g => (g && g.sex==="f")
-  ? { he:"she", him:"her", his:"her", He:"She", Him:"Her", His:"Her", man:"woman", Man:"Woman" }
-  : { he:"he", him:"him", his:"his", He:"He", Him:"Him", His:"His", man:"man", Man:"Man" };
+  ? { he:"she", him:"her", his:"her", hers:"hers", He:"She", Him:"Her", His:"Her", man:"woman", Man:"Woman" }
+  : { he:"he", him:"him", his:"his", hers:"his", He:"He", Him:"Him", His:"His", man:"man", Man:"Man" };
 const isF = g => !!g && g.sex==="f";
 /* ---- AND THE PATRONS HAVE A SEX TOO, WHICH THEIR OWN PROSE DID NOT KNOW ----
    `makePatron` builds a noble as a woman — `RANKS.noble` is called "Noblewoman", her blurb says
@@ -1010,7 +1010,7 @@ function rackWeek(d){
    by the slot rather than the item, so it survives the man who earned it. */
 const PROV = {
   forged:  { colour:"var(--gold-line)", crowd:5, morale:8, dread:0,
-    line:p=>`Made for him by your own smith, week ${p.week}.` },
+    line:(p, g)=>`Made for ${PR(g).him} by your own smith, week ${p.week}.` },
   spoils:  { colour:"var(--gold)", crowd:7, morale:6, dread:0,
     line:p=>`Taken off ${p.from}${p.house?` of House ${p.house}`:""} on the sand, after.` },
   gift:    { colour:"var(--violet)", crowd:6, morale:5, dread:0,
@@ -1018,7 +1018,7 @@ const PROV = {
   imperial:{ colour:"var(--ink-hi)", crowd:11, morale:10, dread:0,
     line:p=>`Carried onto the imperial sand at Rome and carried off it again.` },
   primacy: { colour:"var(--ink-hi)", crowd:8, morale:7, dread:0,
-    line:p=>`He held the primacy of Capua in this.` },
+    line:(p, g)=>`${PR(g).He} held the primacy of Capua in this.` },
   dead:    { colour:"var(--blood-edge)", crowd:4, morale:-7, dread:1,
     line:p=>`${p.from} was wearing this when he died in it. The cells know which piece it is.` },
 };
@@ -1785,8 +1785,8 @@ const AUCTOR_WHY = [
   "A farm gone to a senator's surveyor and four mouths still at home.",
   "Discharged from the legions with nothing but the walk south.",
   "He killed a man in Neapolis and this is the cleaner version of what came next.",
-  "He watched the games as a boy and has wanted nothing else since, which is worse.",
-  "A wife's funeral to pay for, and no family left to shame.",
+  "He watched the games as a child and has wanted nothing else since, which is worse.",
+  "A funeral to pay for, the last one owed, and no family left to shame.",
 ];
 function makeAuctoratus(d, quality){
   const g = genGladiator(d, quality);
@@ -4864,8 +4864,9 @@ const tiesOf = (d,id) => tieList(d).filter(t=>t.a===id || t.b===id);
 const tieOther = (t,id) => t.a===id ? t.b : t.a;
 const tieBetween = (d,a,b) => tieList(d).find(t=>(t.a===a&&t.b===b)||(t.a===b&&t.b===a));
 const kinOf = (d,id,kind) => tiesOf(d,id).filter(t=>t.kind===kind).map(t=>tieOther(t,id));
-const tieWord = t => t.kind==="brother"
-  ? (t.strength>=70 ? "would die for him" : t.strength>=40 ? "close" : "friendly")
+/* `o` is the one on the other end, the one the brother would die for; left out, he is a man */
+const tieWord = (t, o) => t.kind==="brother"
+  ? (t.strength>=70 ? `would die for ${PR(o).him}` : t.strength>=40 ? "close" : "friendly")
   : (t.strength>=70 ? "hatred" : t.strength>=40 ? "bad blood" : "friction");
 
 function addTie(d, a, b, kind, strength){
@@ -5460,11 +5461,11 @@ const squareMen = d => [docPupil(d), docSecond(d)].filter(Boolean);
 /* the word on the button, which is the only thing the man's page has room to say */
 const squareWord = (d, g) => !d.doctore ? null
   : d.doctore.retrainTo ? (docPupil(d) === g.id ? "Being remade" : null)
-  : docPupil(d) === g.id ? "He has him this week"
+  : docPupil(d) === g.id ? `He has ${PR(g).him} this week`
   : docSecond(d) === g.id ? "On the square with " + ((d.gladiators.find(x=>x.id===docPupil(d))||{}).name || "another")
-  : squareMen(d).length >= 2 ? "Put him on the square \u2014 takes the second man's place"
-  : squareMen(d).length === 1 ? "Put him on the square beside " + ((d.gladiators.find(x=>x.id===docPupil(d))||{}).name || "him")
-  : "Put the doctore on him";
+  : squareMen(d).length >= 2 ? `Put ${PR(g).him} on the square \u2014 takes the second man's place`
+  : squareMen(d).length === 1 ? `Put ${PR(g).him} on the square beside ` + ((d.gladiators.find(x=>x.id===docPupil(d))||{}).name || "the other")
+  : `Put the doctore on ${PR(g).him}`;
 /* who took the week. The better man ON THE DAY, so a green one can have it off a made one. */
 function squareTook(a, b){
   const av = g => STATS.reduce((s,k)=>s+(g[k]||0),0)/6;
@@ -5810,7 +5811,7 @@ const formOf = g => clamp(g.form || 0, -100, 100);
 /* the edge at which the game starts SAYING anything about a man's form — the lesson that
    explains form and the tag on his row both read it, and both used to carry a bare 24 */
 const FORM_TELL = 14;
-const formWord = v => v>=34?"in form" : v>=FORM_TELL?"sharp" : v>-FORM_TELL?"level" : v>-34?"off his stride" : "shaken";
+const formWord = (v, g) => v>=34?"in form" : v>=FORM_TELL?"sharp" : v>-FORM_TELL?"level" : v>-34?`off ${PR(g).his} stride` : "shaken";
 const formColour = v => cbc(v>=FORM_TELL?"var(--laurel)" : v>-FORM_TELL?"var(--ink-dim)" : "var(--blood)");
 const formPower = g => 1 + formOf(g)/100 * 0.036;      // ±3.6% at the extremes
 const formStam  = g => 1 - formOf(g)/100 * 0.04;       // and he tires a shade slower on a run
@@ -6890,7 +6891,7 @@ const rudisWord = g => {
     const bits = [];
     if(st.wins) bits.push(`${st.wins} more win${st.wins===1?"":"s"}`);
     if(st.fame) bits.push(`${st.fame} more renown`);
-    return `Rudis, on his paper: ${bits.join(", ")} (${st.bar.wins}/${st.bar.fame}, not ${RUDIS_WINS}/${RUDIS_FAME})`;
+    return `Rudis, on ${PR(g).his} paper: ${bits.join(", ")} (${st.bar.wins}/${st.bar.fame}, not ${RUDIS_WINS}/${RUDIS_FAME})`;
   }
   if(st.served && st.clear) return "Rudis: earned, on the sentence he served";
   const bits = [];
@@ -8876,17 +8877,17 @@ function leagueWeek(d){
    down, on a Tuesday — was missing. */
 const REFUSE_REASONS = {
   used:    { when:(d,g)=>g.memory && g.memory.some(m=>m.kind==="hurt"),
-    say:g=>`You sent him out on a wound that had not closed, and he has decided that was the last time.` },
+    say:g=>`You sent ${PR(g).him} out on a wound that had not closed, and ${PR(g).he} has decided that was the last time.` },
   kin:     { when:(d,g)=>g.memory && g.memory.some(m=>m.kind==="soldKin" || m.kind==="duel"),
-    say:g=>`Whatever happened to the man he called brother, he has stopped being able to put it down.` },
+    say:g=>`Whatever happened to the man ${PR(g).he} called brother, ${PR(g).he} has stopped being able to put it down.` },
   word:    { when:(d,g)=>g.memory && g.memory.some(m=>m.kind==="broke" || m.kind==="refused"),
-    say:g=>`He asked you for one thing. He is not asking for anything now.` },
+    say:g=>`${PR(g).He} asked you for one thing. ${PR(g).He} is not asking for anything now.` },
   blood:   { when:(d,g)=>g.memory && g.memory.some(m=>m.kind==="sine"),
-    say:g=>`He has been put on too many cards with no mercy in them and he has done the arithmetic.` },
+    say:g=>`${PR(g).He} has been put on too many cards with no mercy in them and ${PR(g).he} has done the arithmetic.` },
   grief:   { when:(d,g)=>!!griefOf(g, d.week, 16),
-    say:g=>{ const m=griefOf(g); return `He has not put ${m?m.forName:"the dead man"} down. He will not go out onto the sand that took him — not yet.`; } },
+    say:g=>{ const m=griefOf(g); return `${PR(g).He} has not put ${m?m.forName:"the dead man"} down. ${PR(g).He} will not go out onto the sand that took him — not yet.`; } },
   plain:   { when:()=>true,
-    say:g=>`There is no particular reason he will give. He has simply had enough, and today is the day.` },
+    say:g=>`There is no particular reason ${PR(g).he} will give. ${PR(g).He} has simply had enough, and today is the day.` },
 };
 const REF_KEYS = Object.keys(REFUSE_REASONS).filter(k=>k!=="plain");
 const refusing = g => !!(g && g.refusing);
@@ -16489,7 +16490,7 @@ const WHY_NAMES = {
   tired:"sent out tired", strain:"deep strain from the yard", lasting:"an old wound past the sixth",
   form:"his form", regard:"what he thinks of this house", overmatched:"matched above himself",
   outclassed_him:"the harder man on the card", over_tier:"a card above his name",
-  counter:"the wrong style put against him", counter_his:"the style match his",
+  counter:"the wrong style put against him", counter_his:"the style match in his favour",
   plan:"the plan you gave him", cold_room:"a cold room", crowd:"the crowd with him",
   sine:"no mercy on the card", nothing:"nothing in the ledger",
 };
@@ -16509,7 +16510,7 @@ function boutPattern(g){
     .sort((a,b)=> b.n - a.n || b.lost - a.lost).slice(0, 3);
   return rows.length ? { rows, of:B.length } : null;
 }
-const boutWord = a => a.died ? "he did not come back"
+const boutWord = (a, g) => a.died ? `${PR(g).he} did not come back`
   : a.win ? (a.killed ? "won, and killed him" : "won")
   : a.spared ? "beaten, and spared" : "beaten";
 const boutColour = a => a.died ? "var(--blood)" : a.win ? "var(--laurel)" : "var(--blood-hi)";
@@ -18965,11 +18966,11 @@ const PRE_SAY = {
     ? `He is at ${Math.round(g.fatigue)} fatigue, which is most of a man's edge before anything else happens.`
     : `He is not fresh.`,
   strain:      ()     => `He is carrying deep strain from the yard, and it does not rest off in a week.`,
-  lasting:     (g)    => `${LASTING[lastingOf(g)[0]].name.replace(/^a /,"His ").replace(/^the /,"His ")} — past the sixth round he is not the same man.`,
+  lasting:     (g)    => `${LASTING[lastingOf(g)[0]].name.replace(/^a /,"His ").replace(/^the /,"His ")} — past the sixth round he is not what he was.`,
   form:        ()     => `He has been off his stride for weeks and it has not turned round on its own.`,
-  regard:      ()     => `He thinks very little of this house, and a man who thinks little of you does not spend himself for you.`,
-  overmatched: (g, o) => `He is matched against a man with ${(o.opp||{}).wins} behind him and ${g.wins===0?"none":g.wins} of his own.`,
-  over_tier:   (g, o) => `That is a tier ${o.tier} card and he is not a tier ${o.tier} man yet.`,
+  regard:      ()     => `He thinks very little of this house, and he will not spend himself for it.`,
+  overmatched: (g, o) => `He is matched against ${(o.opp||{}).wins} wins with ${g.wins===0?"none":g.wins} of his own.`,
+  over_tier:   (g, o) => `That is a tier ${o.tier} card and he is not a tier ${o.tier} fighter yet.`,
   counter:     (g, o) => `The ${((o.opp||{}).cls||"").toLowerCase()} is the wrong match for a ${g.cls.toLowerCase()}, and everyone at the editor's table knows it.`,
   sine:        ()     => `There is no mercy on this card. There will be no decision to lean on.`,
 };
@@ -18982,9 +18983,9 @@ function readBout(d, g, offer, res, ctx){
   const pre = !res;
   res = res || {};
   const push = (w, k, s) => {
-    if(!pre) return R2.push({ w, k, s });
+    if(!pre) return R2.push({ w, k, s: her(s, g) });
     const f = PRE_SAY[k]; if(!f) return;
-    R2.push({ w, k, s: f(g, offer, d) });
+    R2.push({ w, k, s: her(f(g, offer, d), g) });
   };
   const won = !!res.win;
 
@@ -19010,20 +19011,20 @@ function readBout(d, g, offer, res, ctx){
   if(g.fatigue >= 55) push(9, "tired", `He went out at ${Math.round(g.fatigue)} fatigue, which is most of a man's edge before anything else happens.`);
   else if(g.fatigue >= 38) push(4, "tired", `He was not fresh.`);
   if(strainOf(g) > 55) push(6, "strain", `He is carrying deep strain from the yard and it does not rest off in a week.`);
-  if(lastingOf(g).length) push(7, "lasting", `${LASTING[lastingOf(g)[0]].name.replace(/^a /,"His ").replace(/^the /,"His ")} — past the sixth round he is not the same man.`);
+  if(lastingOf(g).length) push(7, "lasting", `${LASTING[lastingOf(g)[0]].name.replace(/^a /,"His ").replace(/^the /,"His ")} — past the sixth round he is not what he was.`);
   if(formOf(g) <= -30) push(5, "form", `He has been off his stride for weeks and it has not turned round on its own.`);
   else if(formOf(g) >= 40 && won) push(3, "form", `He has been in form and it carried.`);
-  if(regardOf(g) <= 22) push(6, "regard", `He thinks very little of this house, and a man who thinks little of you does not spend himself for you.`);
+  if(regardOf(g) <= 22) push(6, "regard", `He thinks very little of this house, and he did not spend himself for it.`);
 
   /* the matching */
   const gap = (opp.wins||0) - (g.wins||0);
-  if(gap >= 6) push(8, "overmatched", `He was matched against a man with ${opp.wins} behind him and ${g.wins===0?"none":g.wins} of his own.`);
+  if(gap >= 6) push(8, "overmatched", `He was matched against ${opp.wins} wins with ${g.wins===0?"none":g.wins} of his own.`);
   else if(gap <= -6 && won) push(3, "outclassed_him", `He was the harder man on that card and it went the way it should.`);
-  if(offer.tier >= 3 && (g.pfame||0) < 60) push(6, "over_tier", `That was a tier ${offer.tier} card and he is not a tier ${offer.tier} man yet.`);
+  if(offer.tier >= 3 && (g.pfame||0) < 60) push(6, "over_tier", `That was a tier ${offer.tier} card and he is not a tier ${offer.tier} fighter yet.`);
   const cnt = COUNTERS[opp.cls] === g.cls;
   const has2 = COUNTERS[g.cls] === opp.cls;
   if(cnt) push(9.5, "counter", `The ${opp.cls.toLowerCase()} is the wrong match for a ${g.cls.toLowerCase()} and everyone at the editor's table knew it.`);
-  else if(has2 && won) push(4, "counter_his", `The style match was his, and against a ${opp.cls.toLowerCase()} that is worth a good deal.`);
+  else if(has2 && won) push(4, "counter_his", `The style match favoured him, and against a ${opp.cls.toLowerCase()} that is worth a good deal.`);
 
   /* what you told him to do */
   if(ctx && ctx.plan && ctx.plan.right === false) push(7, "plan", `The plan was wrong for him. You had him ${ctx.plan.label || "fighting to a plan"} and that was not what the man in front of him needed.`);
@@ -19052,8 +19053,8 @@ function readBout(d, g, offer, res, ctx){
      and the panel shows nothing at all, which is what "no warnings" should look like. */
   if(pre) return top;
   if(!top.length) top.push({ k:"nothing", s: won
-    ? `Nothing decided it but the two of them. He was the better man on the day.`
-    : `Nothing was wrong with any of it. Some afternoons the other man is simply better and there is nothing in the ledger to blame.` });
+    ? her(`Nothing decided it but the two of them. He was the better of the two on the day.`, g)
+    : `Nothing was wrong with any of it. Some afternoons the other one is simply better and there is nothing in the ledger to blame.` });
   return top;
 }
 
@@ -20617,8 +20618,8 @@ function CareRow({ d, g, onPick }){
       </div>
       {(()=>{ const why = careWhy(d, g, "surgeon");
         return why ? <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:5,fontStyle:"italic"}}>{why}</div> : null; })()}
-      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:6}}>{C.desc}</div>
-      <div style={{fontSize:"var(--fs-base)",marginTop:3,color:C.hard?"var(--blood)":"var(--laurel)"}}>{C.worth}</div>
+      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:6}}>{her(C.desc, g)}</div>
+      <div style={{fontSize:"var(--fs-base)",marginTop:3,color:C.hard?"var(--blood)":"var(--laurel)"}}>{her(C.worth, g)}</div>
     </div>
   );
 }
@@ -20627,11 +20628,11 @@ function SittingSoon({ d, g }){
   if(!r || !r.g || !g || r.g.id !== g.id) return null;
   return (
     <div className="panel" style={{padding:9,marginTop:11,background:"var(--panel)",borderColor:"var(--blood-edge)"}}>
-      <div className="tag" style={{color:"var(--blood)",marginBottom:3}}>He is close to sitting down</div>
-      <div style={{fontSize:"var(--fs-base)",lineHeight:1.35}}>{her(REFUSE_REASONS[r.key].say(g), g)}</div>
+      <div className="tag" style={{color:"var(--blood)",marginBottom:3}}>{PR(g).He} is close to sitting down</div>
+      <div style={{fontSize:"var(--fs-base)",lineHeight:1.35}}>{REFUSE_REASONS[r.key].say(g)}</div>
       <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:4}}>
         About {Math.round(r.chance*100)} in a hundred nobody can make {PR(g).him} put {PR(g).his} hands up this week.
-        A man who sits down stays down for months, and the rest of the cells watch him do it.
+        If {PR(g).he} sits down {PR(g).he} stays down for months, and the rest of the cells watch {PR(g).him} do it.
       </div>
     </div>
   );
@@ -20642,8 +20643,8 @@ function StandingStyle({ g, onPick }){
   return (
     <div style={{marginTop:12}}>
       <div className="flex items-center justify-between" style={{marginBottom:5}}>
-        <span className="tag">How he fights when you do not say</span>
-        <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{g.style ? "you set this" : "his own temper"}</span>
+        <span className="tag">How {PR(g).he} fights when you do not say</span>
+        <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{g.style ? "you set this" : `${PR(g).his} own temper`}</span>
       </div>
       <div className="flex gap-2" style={{flexWrap:"wrap"}}>
         {STYLE_KEYS.map(k=>(
@@ -20653,7 +20654,7 @@ function StandingStyle({ g, onPick }){
         ))}
       </div>
       <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5,lineHeight:1.35}}>
-        He {styleWord(g)}. The arena starts here every time, and anything you change there is for that afternoon only.
+        {PR(g).He} {styleWord(g)}. The arena starts here every time, and anything you change there is for that afternoon only.
       </div>
     </div>
   );
@@ -20663,9 +20664,9 @@ function StyleRow({ man, now, over, kind, onPick }){
   return (
     <div style={{marginTop:11}}>
       <div className="flex items-center justify-between" style={{marginBottom:6}}>
-        <span className="tag">How he fights</span>
+        <span className="tag">How {PR(man).he} fights</span>
         {man && <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
-          {over && over !== styleOf(man) ? `just this afternoon — he usually ${styleWord(man)}` : `his own way: he ${styleWord(man)}`}</span>}
+          {over && over !== styleOf(man) ? `just this afternoon — ${PR(man).he} usually ${styleWord(man)}` : `${PR(man).his} own way: ${PR(man).he} ${styleWord(man)}`}</span>}
       </div>
       <div className="flex gap-2" style={{flexWrap:"wrap"}}>
         {[["aggressive","Aggressive"],["measured","Measured"],["defensive","Defensive"],["showboat","Showboat"]].map(([k,l])=>(
@@ -27796,7 +27797,7 @@ function SquareBox({ S, go }){
 const SECT = {
   wants: (S, X) => { const { selG } = X;
     return (
-    <Sect title="What he wants" note={selG.ambition.met?"granted":selG.ambition.broken?"broken":selG.ambition.promised?"your word given":""}>
+    <Sect title={her("What he wants", selG)} note={selG.ambition.met?"granted":selG.ambition.broken?"broken":selG.ambition.promised?"your word given":""}>
       <div style={{fontSize:"var(--fs-lg)"}}>{ambWord(selG)}</div>
       {(()=>{ const st = ambState(selG);
         const line = {
@@ -27807,7 +27808,7 @@ const SECT = {
           met:     ["laurel","He has it. He will not forget who gave it to him."],
           broken:  ["blood","You did the one thing. He has stopped expecting anything."],
         }[st] || ["dim",""];
-        return <div className={line[0]} style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{line[1]}</div>;
+        return <div className={line[0]} style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{her(line[1], selG)}</div>;
       })()}
       {/* THE NUMBER HE ASKED FOR — #190. See the note over `rudisStanding`. */}
       {(()=>{ const a = selG.ambition;
@@ -27815,18 +27816,18 @@ const SECT = {
         const st = rudisStanding(selG); if(!st) return null;
         const bits = [];
         if(st.wins) bits.push(`${st.wins} more win${st.wins===1?"":"s"}`);
-        if(st.fame) bits.push(`${st.fame} more renown of his own`);
+        if(st.fame) bits.push(`${st.fame} more renown of ${PR(selG).his} own`);
         if(st.auctor) bits.push(`an oath that has to run out first`);
         return (
           <div style={{marginTop:6,paddingTop:5,borderTop:"1px solid var(--line-3)"}}>
-            <div className="dim" style={{fontSize:"var(--fs-sm)",textTransform:"uppercase",letterSpacing:".06em"}}>What stands between him and it</div>
+            <div className="dim" style={{fontSize:"var(--fs-sm)",textTransform:"uppercase",letterSpacing:".06em"}}>What stands between {PR(selG).him} and it</div>
             <div style={{fontSize:"var(--fs-md)",marginTop:2,color: st.clear ? "var(--laurel)" : "var(--ink-2)"}}>
-              {st.clear ? `Nothing. He has earned it — ${RUDIS_WINS} wins and a name in the town — and it costs ${rudisCost(S, selG)}d to write.`
+              {st.clear ? her(`Nothing. He has earned it — ${RUDIS_WINS} wins and a name in the town — and it costs ${rudisCost(S, selG)}d to write.`, selG)
                         : bits.join(" · ")}
             </div>
             {st.late && (
               <div className="blood" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>
-                He is {selG.age}. He asked for it before he was {RUDIS_AGE}, and that part of it is not coming back.
+                {her(`He is ${selG.age}. He asked for it before he was ${RUDIS_AGE}, and that part of it is not coming back.`, selG)}
               </div>
             )}
           </div>
@@ -27837,19 +27838,19 @@ const SECT = {
   regard: (S, X) => { const { selG } = X;
     const v = regardOf(selG), mem = (selG.memory||[]).slice().reverse();
                  return (
-                   <Sect title="What he makes of you" note={regardWord(v)}>
+                   <Sect title={her("What he makes of you", selG)} note={her(regardWord(v), selG)}>
                      <Bar v={v} label="regard" color={`linear-gradient(90deg,var(--line-3),${regardColour(v)})`}/>
                      {mem.length===0
                        ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:4}}>
-                           Nothing has passed between you yet that he would count either way.
+                           {her("Nothing has passed between you yet that he would count either way.", selG)}
                          </div>
                        : <div style={{marginTop:5}}>
                            {mem.slice(0,5).map((m,i)=>{
                              const isGrief = m.kind==="grief";
                              const bad = isGrief ? !m.settled : REGARD[m.kind].bad;
-                             const txt = isGrief
+                             const txt = her(isGrief
                                ? (m.settled ? `He carried ${m.forName} onto the sand, and left the grief there.` : `He is still carrying ${m.forName}, who died beside him.`)
-                               : her(REGARD[m.kind].say, selG);
+                               : REGARD[m.kind].say, selG);
                              return (
                              <div key={i} style={{fontSize:"var(--fs-md)",padding:"2px 0",color:bad?"var(--blood-hi)":"var(--ink-2)"}}>
                                {txt}{!isGrief && m.again>1 && <span className="dim"> ({m.again} times)</span>}
@@ -27859,9 +27860,9 @@ const SECT = {
                      {/* the grant has to be legible while he is alive, or the death line names a
                          stranger. It is the only thing on this card that is not about you. */}
                      {selG.family && <div style={{fontSize:"var(--fs-base)",marginTop:5,color:"var(--ink-2)"}}>
-                       He has leave into the town on the quiet days. Her name is {selG.family.name}.</div>}
-                     {regardLoyal(selG) && <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:5}}>No other house's coin will move him.</div>}
-                     {regardRefuse(selG) && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:5}}>He does what he is told and not one thing more.</div>}
+                       {PR(selG).He} has leave into the town on the quiet days. Her name is {selG.family.name}.</div>}
+                     {regardLoyal(selG) && <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:5}}>No other house's coin will move {PR(selG).him}.</div>}
+                     {regardRefuse(selG) && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:5}}>{PR(selG).He} does what {PR(selG).he} is told and not one thing more.</div>}
                      {/* ---- AND THE CONVERSATION YOU START — #196 ----
                          `askWeek` is the only conversation in the game and it is his: he asks once
                          in his life, on a 6% roll, and 47.3% of men reach that point while 9.5%
@@ -32944,7 +32945,7 @@ export default function App(){
                 {isAuctor(g) && <span className="tag" style={{borderColor:"var(--azure-edge)",color:"var(--azure)"}}>Auctoratus · {auctorLeft(g)} left</span>}
                 {(()=>{ const bad = SLOTS.filter(s=>wears(GEAR[g.kit&&g.kit[s]]) && wearOf(g,s)<35).length;
                   return bad ? <span className="tag tag-blood">Kit failing</span> : null; })()}
-                {Math.abs(formOf(g))>=FORM_TELL && <span className="tag" style={{borderColor:formColour(formOf(g)),color:formColour(formOf(g))}}>{formWord(formOf(g))}</span>}
+                {Math.abs(formOf(g))>=FORM_TELL && <span className="tag" style={{borderColor:formColour(formOf(g)),color:formColour(formOf(g))}}>{formWord(formOf(g), g)}</span>}
                 {refusing(g) && <span className="tag tag-blood">Will not go out · {g.refusing.weeks}w</span>}
                 {holdsPrimus(S,g) && <span className="tag tag-gold">✦ Primus of Capua</span>}
                 {g.named && <span className="tag tag-gold">{g.named.title}</span>}
@@ -33035,7 +33036,7 @@ export default function App(){
                         {!canFight(g) ? (g.injury ? "hurt" : "not fit") : g.lastFought >= S.week ? "fought this week" : "ready"}
                       </span>
                       <span className="dim">·</span>
-                      <span style={{color:formColour(formOf(g))}}>{formWord(formOf(g))}</span>
+                      <span style={{color:formColour(formOf(g))}}>{formWord(formOf(g), g)}</span>
                       <span className="dim">·</span>
                       <span style={{color:regardColour(regardOf(g))}}>{regardWord(regardOf(g))}</span>
                       {g.ambition && !g.ambition.met && !g.ambition.broken && (
@@ -34050,7 +34051,7 @@ export default function App(){
               <div className="disp" style={{fontSize:"var(--fs-xl)",fontWeight:900}}>{selG.name}{selG.nick?<span style={{color:"var(--gold-hi)"}}>, {selG.nick}</span>:null}</div>
               <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setSelId(null)}><X size={14}/></button>
             </div>
-            <div className="dim" style={{fontSize:"var(--fs-md)",marginBottom:8}}>{selG.cls} — {CLASSES[selG.cls].desc} {ORIGINS[selG.origin].blurb.charAt(0).toUpperCase()+ORIGINS[selG.origin].blurb.slice(1)}.</div>
+            <div className="dim" style={{fontSize:"var(--fs-md)",marginBottom:8}}>{selG.cls} — {her(CLASSES[selG.cls].desc, selG)} {ORIGINS[selG.origin].blurb.charAt(0).toUpperCase()+ORIGINS[selG.origin].blurb.slice(1)}.</div>
             <div className="flex gap-3" style={{fontSize:"var(--fs-md)",flexWrap:"wrap",marginBottom:8}}>
               <span>Record <b>{selG.wins}–{selG.losses}</b></span>
               <span>Kills <b>{selG.kills}</b></span>
@@ -34063,16 +34064,16 @@ export default function App(){
               const here = S.city ? manFollow(selG, S.city) : null;
               return (
                 <div style={{fontSize:"var(--fs-sm)",color:"var(--gold-line)",marginBottom:8}}>
-                  {CITIES[b.town].name} knows him on his own account — {Math.round(b.n)} of {MAN_FOLLOW_CAP}
+                  {CITIES[b.town].name} knows {PR(selG).him} on {PR(selG).his} own account — {Math.round(b.n)} of {MAN_FOLLOW_CAP}
                   {S.city && S.city !== b.town
                     ? `, and ${CITIES[S.city].name}, where you are standing, ${here >= 6 ? `${Math.round(here)}` : "barely at all"}.`
-                    : `. It bleeds ${BAY_DECAY.toFixed(2)} a week wherever he is not fighting.`}
+                    : `. It bleeds ${BAY_DECAY.toFixed(2)} a week wherever ${PR(selG).he} is not fighting.`}
                 </div>
               ); })()}
             <div style={{fontSize:"var(--fs-lg)",fontStyle:"italic",marginBottom:8,color:selG.legend?"var(--gold-hi)":"var(--ink-2)"}}>
               The doctore's eye: {selG.read ? `potential ${rnd(selG.potential)}, heart ${rnd(selG.heart)}` : potentialWord(selG.potential, selG)}. Bearing: {demeanor(selG.defiance).toLowerCase()}{selG.read? ` (${rnd(selG.defiance)})`:""}. At {selG.age} {PR(selG).he} is {ageWord(selG.age, selG)}.{yearBurden(selG) > 0 && (()=>{ const y = selG.yearCap || {};
                 const worst = Object.entries(y).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${(STAT_NAMES[k]||k).toLowerCase()} ${v}`).join(", ");
-                return <span className="blood"> The years have taken {worst} off what he can ever be again, and no amount of the post gives it back.</span>; })()}
+                return <span className="blood"> The years have taken {worst} off what {PR(selG).he} can ever be again, and no amount of the post gives it back.</span>; })()}
             </div>
             {(()=>{ const hurt = !!selG.injury, worn = bodyWear(selG)>=0.44;
               const views = [["record","Record"],["body", hurt?"Body ·":"Body"],["train","Training"],["kit","Kit"],["standing","Standing"]];
@@ -34099,7 +34100,7 @@ export default function App(){
                 </div>
                 <Bar v={fansOf(selG)} label="following" color="linear-gradient(90deg,var(--gold-edge),var(--gold-hi))"/>
                 {isFavourite(selG) && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>
-                  The seats fill for his name — a fatter purse when he fights, and a mob that will not forgive you for benching, selling, or burying him.
+                  {her("The seats fill for his name — a fatter purse when he fights, and a mob that will not forgive you for benching, selling, or burying him.", selG)}
                 </div>}
               </div>
             )}
@@ -34114,10 +34115,10 @@ export default function App(){
                     <div className="fill" style={{width:`${Math.round(w/0.85*100)}%`, background:`linear-gradient(90deg,var(--line-3),${wornColour(w)})`}}/>
                   </div>
                   <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:6}}>
-                    {w<0.26 ? `${PR(selG).He} has taken his knocks and carries them well.`
+                    {her(w<0.26 ? `He has taken his knocks and carries them well.`
                      : w<0.44 ? `The years and the wounds are on him. He goes down harder to mend when he goes down, and the cold finds his old hurts.`
                      : w<0.64 ? `A worn body. Send him out knowing a felling costs him more than it once did, and that some of it may not come back.`
-                     : `He is held together with linen and habit. Every card is a gamble with what is left of him.`}
+                     : `He is held together with linen and habit. Every card is a gamble with what is left of him.`, selG)}
                   </div>
                 </div>
               );
@@ -34159,7 +34160,7 @@ export default function App(){
                         <div key={k.id} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted var(--line)",padding:"5px 0"}}>
                           <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{k.name}</span>
                           <span className="flex gap-1">
-                            <button className="btn btn-ghost" style={{padding:"10px 9px",fontSize:"var(--fs-sm)"}} onClick={()=>useKit(selG.id,k.id)}>Put it on him</button>
+                            <button className="btn btn-ghost" style={{padding:"10px 9px",fontSize:"var(--fs-sm)"}} onClick={()=>useKit(selG.id,k.id)}>Put it on {PR(selG).him}</button>
                             <button className="btn btn-ghost" style={{padding:"10px 8px",fontSize:"var(--fs-sm)"}} onClick={()=>forgetKit(k.id)}>×</button>
                           </span>
                         </div>
@@ -34173,9 +34174,9 @@ export default function App(){
                   <span className="rowval dim" style={{fontSize:"var(--fs-base)"}}>{selG.auctor.wage}d / week</span>
                 </div>
                 <div style={{fontSize:"var(--fs-lg)"}}>{auctorLeft(selG)} of {selG.auctor.bouts} bouts still owed.</div>
-                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>{selG.auctor.why}</div>
+                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>{her(selG.auctor.why, selG)}</div>
                 <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>
-                  A free man. He cannot be sold, the rudis means nothing to him, and he will not be in the yard when the cells rise.
+                  {her(`A free ${PR(selG).man}. He cannot be sold, the rudis means nothing to him, and he will not be in the yard when the cells rise.`, selG)}
                 </div>
               </div>
             )}
@@ -34189,7 +34190,7 @@ export default function App(){
                 <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)",borderColor:formColour(v)}}>
                   <div className="flex items-center justify-between">
                     <span className="tag">Form</span>
-                    <span className="rowval" style={{fontSize:"var(--fs-base)",color:formColour(v)}}>{formWord(v)}</span>
+                    <span className="rowval" style={{fontSize:"var(--fs-base)",color:formColour(v)}}>{formWord(v, selG)}</span>
                   </div>
                   {(selG.formLog||[]).length>0 && (
                     <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3}}>
@@ -34197,8 +34198,8 @@ export default function App(){
                     </div>
                   )}
                   <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:2}}>
-                    {v>=24 ? "He is walking out expecting to win, and it is worth something."
-                     : "He has not been right since. A few quiet weeks will settle it."}
+                    {her(v>=24 ? "He is walking out expecting to win, and it is worth something."
+                     : "He has not been right since. A few quiet weeks will settle it.", selG)}
                   </div>
                 </div>
               ); })()}
@@ -34209,11 +34210,11 @@ export default function App(){
                 <div className="panel" style={{padding:11,marginBottom:9,background:"var(--panel-2)",borderColor:"var(--gold-edge)"}}>
                   <div className="tag" style={{marginBottom:4,borderColor:"var(--gold-edge)",color:"var(--gold)"}}>Not yet sworn</div>
                   <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
-                    {free
-                      ? `The oath is his to say — ${OATH}, and he says it knowing what it signs away.`
+                    {her(free
+                      ? `The oath is ${PR(selG).hers} to say — ${OATH}, and he says it knowing what it signs away.`
                       : cond
                       ? `He is condemned, so the words are said over him rather than by him.`
-                      : `${OATH} — ${OATH_EN}. Said over him, as the house has always done it.`}
+                      : `${OATH} — ${OATH_EN}. Said over him, as the house has always done it.`, selG)}
                   </div>
                   <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:9,marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>Have the oath said</div>
                   {SW_KEYS.map(k=>{ const S2 = SWEARING[k], afford = S.gold >= S2.cost;
@@ -34224,7 +34225,7 @@ export default function App(){
                           <span className="disp" style={{fontSize:"var(--fs-sm)",color:"var(--ink-hi)"}}>{S2.name}</span>
                           <span className="rowval gold" style={{fontSize:"var(--fs-sm)"}}>{S2.cost? `${S2.cost}d` : "free"}</span>
                         </div>
-                        <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2,lineHeight:1.35}}>{S2.desc}</div>
+                        <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2,lineHeight:1.35}}>{her(S2.desc, selG)}</div>
                       </button>
                     );
                   })}
@@ -34235,9 +34236,9 @@ export default function App(){
               <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)",borderColor:"var(--line-4)"}}>
                 <div className="tag" style={{marginBottom:3}}>Sworn in</div>
                 <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
-                  {selG.sworn.free
-                    ? `He said it himself: ${OATH}. A free man agreeing ${OATH_EN}.`
-                    : `${OATH} — ${OATH_EN}. Said over him in week ${selG.sworn.week}, ${SWEARING[selG.sworn.how].name.toLowerCase()}.`}
+                  {her(selG.sworn.free
+                    ? `He said it himself: ${OATH}. A free ${PR(selG).man} agreeing ${OATH_EN}.`
+                    : `${OATH} — ${OATH_EN}. Said over him in week ${selG.sworn.week}, ${SWEARING[selG.sworn.how].name.toLowerCase()}.`, selG)}
                 </div>
               </div>
             )}
@@ -34249,19 +34250,19 @@ export default function App(){
                   {has ? (<>
                     <div className="flex items-center justify-between" style={{marginBottom:3}}>
                       <span className="tag tag-gold">{has.name}</span>
-                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>his own move</span>
+                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{PR(selG).his} own move</span>
                     </div>
-                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>They call it his — {has.say}. It comes oftener than the plain move, lands harder, and the crowd knows to wait for it.</div>
-                    {selG.signature.cls!==selG.cls && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:3}}>He fights another style now, so it is idle in his hands.</div>}
+                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{her(`They call it ${PR(selG).hers} — ${has.say}. It comes oftener than the plain move, lands harder, and the crowd knows to wait for it.`, selG)}</div>
+                    {selG.signature.cls!==selG.cls && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:3}}>{her("He fights another style now, so it is idle in his hands.", selG)}</div>}
                   </>) : selG.teaching ? (<>
                     <div className="tag tag-gold" style={{marginBottom:3}}>At the far post</div>
                     <div style={{fontSize:"var(--fs-lg)"}}>Drilling {TECHNIQUES[selG.teaching.key]?TECHNIQUES[selG.teaching.key].name:"a move"} — {selG.teaching.weeks} week{selG.teaching.weeks===1?"":"s"} left.</div>
-                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>The same move, over and over, until it is his and no one else's.</div>
+                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>The same move, over and over, until it is {PR(selG).hers} and no one else's.</div>
                   </>) : (<>
-                    <div className="tag" style={{marginBottom:4}}>Teach him a move of his own</div>
+                    <div className="tag" style={{marginBottom:4}}>{her("Teach him a move of his own", selG)}</div>
                     <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:6}}>{S.doctore
-                      ? <>Your doctore can drill one technique into a proven man until Capua knows it by his name. {SIG_WEEKS} weeks, {sigFee(S)}d, and he still takes the card while he learns.</>
-                      : <>You keep no doctore, so a master comes down from the school for the month and charges like it — {sigFee(S)}d, no wage, one man, one move, and then he goes home. {SIG_WEEKS} weeks, and your man still takes the card while he learns.</>}</div>
+                      ? her(`Your doctore can drill one technique into a proven ${PR(selG).man} until Capua knows it by his name. ${SIG_WEEKS} weeks, ${sigFee(S)}d, and he still takes the card while he learns.`, selG)
+                      : `You keep no doctore, so a master comes down from the school for the month and charges like it — ${sigFee(S)}d, no wage, one ${PR(selG).man}, one move, and then he goes home. ${SIG_WEEKS} weeks, and ${PR(selG).he} still takes the card while ${PR(selG).he} learns.`}</div>
                     <div className="grid grid-cols-2 gap-2">
                       {techsFor(selG.cls).map(k=>{ const T = TECHNIQUES[k];
                         return (
@@ -34282,19 +34283,19 @@ export default function App(){
                 {selG.learning ? (<>
                   <div className="tag tag-gold" style={{marginBottom:3}}>At the far post</div>
                   <div style={{fontSize:"var(--fs-lg)"}}>Being taught the {selG.learning.to.toLowerCase()}'s trade — {selG.learning.weeks} week{selG.learning.weeks===1?"":"s"} left.</div>
-                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>He is on no card until it is finished, and he is a beginner again while it lasts.</div>
+                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>{her("He is on no card until it is finished, and he is a beginner again while it lasts.", selG)}</div>
                 </>) : (<>
                   {masterOf(selG) && (<>
                     <div className="flex items-center justify-between" style={{marginBottom:3}}>
                       <span className="tag tag-gold">{MASTERY[selG.mastery.cls].name}</span>
                       <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>master of the {selG.mastery.cls.toLowerCase()}</span>
                     </div>
-                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{MASTERY[selG.mastery.cls].say}</div>
-                    {selG.mastery.cls!==selG.cls && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:3}}>He is fighting as a {selG.cls.toLowerCase()} at present, so none of it counts.</div>}
+                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{her(MASTERY[selG.mastery.cls].say, selG)}</div>
+                    {selG.mastery.cls!==selG.cls && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:3}}>{PR(selG).He} is fighting as a {selG.cls.toLowerCase()} at present, so none of it counts.</div>}
                   </>)}
                   {canMaster(S,selG) && (
                     <button className="btn" style={{width:"100%",marginTop:6}} onClick={()=>doMaster(selG.id)}>
-                      Name him a master of the {selG.cls.toLowerCase()}
+                      Name {PR(selG).him} a master of the {selG.cls.toLowerCase()}
                     </button>
                   )}
                   {selG.second && (
@@ -34305,7 +34306,7 @@ export default function App(){
                           <button key={c} className={`focusbtn ${selG.cls===c?"on":""}`}
                             disabled={selG.lastFought>=S.week} onClick={()=>useStyle(selG.id,c)}>
                             {c.toUpperCase()}
-                            <span className="sub">{selG.cls===c?"in his hands":"put him in it"}</span>
+                            <span className="sub">{her(selG.cls===c?"in his hands":"put him in it", selG)}</span>
                           </button>
                         ))}
                       </div>
@@ -34315,7 +34316,7 @@ export default function App(){
                     <div style={{marginTop:8}}>
                       <div className="tag" style={{marginBottom:3}}>A second trade · {secondFee(S,selG)}d · {SECOND_WEEKS} weeks off every card</div>
                       <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:5}}>
-                        There are not five men in Campania who can fight two styles. It costs him two months as a beginner.
+                        There are not five men in Campania who can fight two styles. It costs {PR(selG).him} two months as a beginner.
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         {Object.keys(CLASSES).filter(c=>c!==selG.cls).map(c=>(
@@ -34339,11 +34340,11 @@ export default function App(){
                   <span className="tag tag-blood">Condemned to the school</span>
                   <span className="rowval" style={{fontSize:"var(--fs-base)",color:"var(--blood-hi)"}}>{damnLeft(selG)} of {selG.damnatus.bouts} left</span>
                 </div>
-                <div style={{fontSize:"var(--fs-lg)"}}>Sentenced for {selG.damnatus.what}.</div>
-                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>{selG.damnatus.note}</div>
+                <div style={{fontSize:"var(--fs-lg)"}}>Sentenced for {her(selG.damnatus.what, selG)}.</div>
+                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>{her(selG.damnatus.note, selG)}</div>
                 <Bar v={100 - damnLeft(selG)/selG.damnatus.bouts*100} label="sentence" color="linear-gradient(90deg,var(--blood-edge),var(--blood-hi))"/>
                 <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:4}}>
-                  He cannot be sold — he belongs to the sentence until it is served. Fight it out and he becomes a gladiator of this house like any other.
+                  {her("He cannot be sold — he belongs to the sentence until it is served. Fight it out and he becomes a gladiator of this house like any other.", selG)}
                 </div>
               </div>
             )}
@@ -34354,27 +34355,27 @@ export default function App(){
                 if(msg) setAsk({ title, confirm:"So it goes", text:msg, run:()=>{} }); };
               return (
                 <div className="panel" style={{padding:11,marginBottom:9,background:"var(--blood-edge)",borderColor:"var(--blood-edge)"}}>
-                  <div className="tag tag-blood" style={{marginBottom:4}}>He will not go out</div>
+                  <div className="tag tag-blood" style={{marginBottom:4}}>{PR(selG).He} will not go out</div>
                   <div style={{fontSize:"var(--fs-lg)"}}>{REFUSE_REASONS[selG.refusing.reason].say(selG)}</div>
                   <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:4}}>
-                    {selG.refusing.weeks===0
+                    {her(selG.refusing.weeks===0
                       ? "It began this week. He cannot be put on any card until it is settled — do it here."
-                      : `${selG.refusing.weeks} week${selG.refusing.weeks===1?"":"s"} now, and he still cannot be carded. Settle it here. Every week he sits, the rest of the block adds it up.`}
+                      : `${selG.refusing.weeks} week${selG.refusing.weeks===1?"":"s"} now, and he still cannot be carded. Settle it here. Every week he sits, the rest of the block adds it up.`, selG)}
                   </div>
-                  <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:9,marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>Get him on his feet</div>
-                  <button className="optrow" style={{display:"block",marginBottom:6}} onClick={()=>bring("talk","You Talk to Him")}>
-                    <div className="disp" style={{fontSize:"var(--fs-sm)",color:"var(--ink-hi)"}}>Talk to him</div>
-                    <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2,lineHeight:1.35}}>Costs nothing and may fail — it turns on what you have been to him. The better he regards you, the likelier he rises.</div>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:9,marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>{her("Get him on his feet", selG)}</div>
+                  <button className="optrow" style={{display:"block",marginBottom:6}} onClick={()=>bring("talk",her("You Talk to Him", selG))}>
+                    <div className="disp" style={{fontSize:"var(--fs-sm)",color:"var(--ink-hi)"}}>Talk to {PR(selG).him}</div>
+                    <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2,lineHeight:1.35}}>{her("Costs nothing and may fail — it turns on what you have been to him. The better he regards you, the likelier he rises.", selG)}</div>
                   </button>
                   {canGive && (
-                    <button className="optrow" style={{display:"block",marginBottom:6}} onClick={()=>bring("give","You Give Him What He Wants")}>
-                      <div className="disp" style={{fontSize:"var(--fs-sm)",color:"var(--ink-hi)"}}>Give him what he wants</div>
-                      <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2,lineHeight:1.35}}>Grant the thing he stopped asking for. He is on his feet at once — and the whole block sees it.</div>
+                    <button className="optrow" style={{display:"block",marginBottom:6}} onClick={()=>bring("give",her("You Give Him What He Wants", selG))}>
+                      <div className="disp" style={{fontSize:"var(--fs-sm)",color:"var(--ink-hi)"}}>{her("Give him what he wants", selG)}</div>
+                      <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2,lineHeight:1.35}}>{her("Grant the thing he stopped asking for. He is on his feet at once — and the whole block sees it.", selG)}</div>
                     </button>
                   )}
                   <button className="optrow" style={{display:"block",borderColor:"var(--blood-edge)"}} onClick={()=>bring("whip","The Whip")}>
                     <div className="blood" style={{fontSize:"var(--fs-sm)",fontWeight:700}}>The whip</div>
-                    <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2,lineHeight:1.35}}>He goes out for certain, but breaks something in him — and every other man loses heart and hardens against you.</div>
+                    <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2,lineHeight:1.35}}>{her("He goes out for certain, but breaks something in him — and every other man loses heart and hardens against you.", selG)}</div>
                   </button>
                 </div>
               );
@@ -34384,15 +34385,14 @@ export default function App(){
               SECT.wants(S, SX)
             )}
             {gView==="record" && selG.traits.length>0 && <div style={{marginBottom:8}}>
-              {selG.traits.map(t=><div key={t} style={{fontSize:"var(--fs-md)"}}><span className="tag tag-gold" style={{marginRight:6}}>{t}</span><span className="dim">{TRAITS[t]}</span></div>)}
+              {selG.traits.map(t=><div key={t} style={{fontSize:"var(--fs-md)"}}><span className="tag tag-gold" style={{marginRight:6}}>{t}</span><span className="dim">{her(TRAITS[t], selG)}</span></div>)}
             </div>}
             {gView==="body" && selG.injury && <CareRow d={S} g={selG} onPick={c=>setCare(selG.id, c)} />}
             {gView==="record" && isMade(selG) && (
               <div className="panel" style={{padding:9,marginBottom:9,background:"var(--panel)",borderColor:"var(--gold-line)"}}>
                 <span className="tag" style={{color:"var(--gold-hi)",borderColor:"var(--line-4)"}}>Made</span>
                 <div style={{fontSize:"var(--fs-md)",marginTop:3}}>
-                  He is finished. Every one of them is at his ceiling and the palus has nothing further to give him —
-                  what is left is the sand, and whatever he can put into the younger men.
+                  {her("He is finished. Every one of them is at his ceiling and the palus has nothing further to give him — what is left is the sand, and whatever he can put into the younger men.", selG)}
                 </div>
               </div>
             )}
@@ -34408,7 +34408,7 @@ export default function App(){
                 </div>
               ))}
               <div>
-                <div className="flex justify-between" style={{fontSize:"var(--fs-base)"}}><span className="dim">{termLabel("morale")}</span><span>{rnd(selG.morale)}</span></div>
+                <div className="flex justify-between" style={{fontSize:"var(--fs-base)"}}><span className="dim">{her(termLabel("morale"), selG)}</span><span>{rnd(selG.morale)}</span></div>
                 <Bar v={selG.morale} color={LAUREL}/>
               </div>
               <div>
@@ -34425,7 +34425,7 @@ export default function App(){
                 <div className="panel" style={{padding:10,marginBottom:10,background:"var(--panel)"}}>
                   <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
                     <span className="tag">How it went</span>
-                    <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>his last {B.length} {B.length===1?"bout":"bouts"}</span>
+                    <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{PR(selG).his} last {B.length} {B.length===1?"bout":"bouts"}</span>
                   </div>
                   {(()=>{ const P = boutPattern(selG); if(!P) return null;
                     const mine = P.rows.filter(r=>WHY_YOURS[r.k]);
@@ -34438,14 +34438,14 @@ export default function App(){
                         {P.rows.map((r,i)=>(
                           <div key={i} className="flex items-center justify-between gap-2" style={{padding:"2px 0"}}>
                             <span style={{fontSize:"var(--fs-base)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
-                              color: WHY_YOURS[r.k] ? "var(--ink-2)" : "var(--ink-dim)"}}>{WHY_NAMES[r.k] || r.k}</span>
+                              color: WHY_YOURS[r.k] ? "var(--ink-2)" : "var(--ink-dim)"}}>{her(WHY_NAMES[r.k] || r.k, selG)}</span>
                             <span className="rowval dim" style={{fontSize:"var(--fs-sm)",flexShrink:0}}>{r.n} of {P.of}</span>
                           </div>
                         ))}
                         <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:5,lineHeight:1.35}}>
                           {mine.length
                             ? `${mine.length===1 ? "That first one is" : "Those are"} yours to fix, not the day's.`
-                            : "None of that is anything you set. He has had the afternoons he has had."}
+                            : her("None of that is anything you set. He has had the afternoons he has had.", selG)}
                         </div>
                       </div>
                     ); })()}
@@ -34456,7 +34456,7 @@ export default function App(){
                           <span style={{fontSize:"var(--fs-md)",color:"var(--ink-2)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                             {a.foe}{a.foeHouse? <span className="dim" style={{fontSize:"var(--fs-sm)"}}> · House {a.foeHouse}</span> : null}
                           </span>
-                          <span className="rowval" style={{fontSize:"var(--fs-sm)",color:boutColour(a),flexShrink:0}}>{boutWord(a)}</span>
+                          <span className="rowval" style={{fontSize:"var(--fs-sm)",color:boutColour(a),flexShrink:0}}>{boutWord(a, selG)}</span>
                         </span>
                         <span className="dim" style={{fontSize:"var(--fs-sm)",display:"block",marginTop:1}}>
                           {a.where} · week {((a.week-1)%YEAR_WEEKS)+1} of year {Math.floor((a.week-1)/YEAR_WEEKS)+1}
@@ -34488,7 +34488,7 @@ export default function App(){
               return (
                 <div className="panel" style={{padding:10,marginBottom:10,background:"var(--panel)"}}>
                   <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
-                    <span className="tag">Who he has met</span>
+                    <span className="tag">Who {PR(selG).he} has met</span>
                     <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{F.length} named {F.length===1?"man":"men"}</span>
                   </div>
                   {F.slice(0, 8).map((e,i)=>(
@@ -34501,13 +34501,13 @@ export default function App(){
                       </div>
                       <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:1}}>
                         {[e.cls, e.house? `House ${e.house}` : null].filter(Boolean).join(" · ")}
-                        {e.killed? <span className="blood"> · he put him in the ground</span> : null}
+                        {e.killed? <span className="blood"> · {PR(selG).he} put him in the ground</span> : null}
                         {e.last!=null && <span> · last met week {((e.last-1)%YEAR_WEEKS)+1} of year {Math.floor((e.last-1)/YEAR_WEEKS)+1}</span>}
                       </div>
                     </div>
                   ))}
                   {F.length>8 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:5,fontStyle:"italic"}}>
-                    …and {F.length-8} more he has stood in front of.
+                    …and {F.length-8} more {PR(selG).he} has stood in front of.
                   </div>}
                 </div>
               );
@@ -34529,7 +34529,7 @@ export default function App(){
                     <button className="optrow" style={{width:"100%",marginBottom:5,padding:8}} disabled={!r} onClick={()=>r&&setSelId(r.id)}>
                       <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-md)"}}>
                         <span><span style={{color:"var(--ink-hi)"}}>Bringing on</span><span className="dim"> · </span>{r?r.name:(selG.protegeName||"—")}</span>
-                        <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>{r?`toward his fifth · ${clamp(r.wins,0,5)}/5`:"his protégé"}</span>
+                        <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>{r?`toward ${PR(r).his} fifth · ${clamp(r.wins,0,5)}/5`:`${PR(selG).his} protégé`}</span>
                       </div>
                     </button>
                   ); })()}
@@ -34544,19 +34544,19 @@ export default function App(){
                           <span style={{color: bro?"var(--laurel-hi)":"var(--blood-hi)"}}>{bro? "Brother":"Bad blood"}</span>
                           <span className="dim"> · </span>{o.name}
                         </span>
-                        <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>{tieWord(t)}</span>
+                        <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>{tieWord(t, o)}</span>
                       </div>
                     </button>
                   );
                 })}
                 <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>
-                  {selG.protege
+                  {her(selG.protege
                     ? `He is teaching ${selG.protegeName||"a green one"} what he knows — lose either of them and the other feels it.`
                     : selG.mentor
                     ? `${selG.mentorName||"An old hand"} is bringing him on. He learns faster for it, and would not take that loss well.`
                     : kinOf(S,selG.id,"brother").length
                     ? `What happens to them happens to ${PR(selG).him} — and they would follow ${PR(selG).him} out of the gate.`
-                    : "Spite sharpens a fighter, and costs them sleep."}
+                    : "Spite sharpens a fighter, and costs them sleep.", selG)}
                 </div>
               </div>
             )}
@@ -34571,7 +34571,7 @@ export default function App(){
                     <span className="tag tag-gold">The Champion's Road</span>
                     <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"var(--gold-hi)"}}>Act {Math.min(s.stage,4)} of 4</span>
                   </div>
-                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:6}}>{word}.</div>
+                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:6}}>{her(word, selG)}.</div>
                   <Bar v={s.renown} label="renown" color="linear-gradient(90deg,var(--gold-edge),var(--gold-hi))"/>
                 </div>
               ); })()}
@@ -34580,12 +34580,12 @@ export default function App(){
               <div style={{position:"absolute",left:"50%",bottom:10,transform:"translateX(-50%)"}}>
                 <Fighter col={S.crest} fem={isF(selG)} kit={selG.kit || defaultKit(selG.cls)} scars={selG.scars} pose="idle" wounds={[]} bore={boreOf(selG)}/>
               </div>
-              <div className="dim" style={{position:"absolute",bottom:5,left:9,fontSize:"var(--fs-micro)",fontStyle:"italic"}}>as he takes the sand</div>
+              <div className="dim" style={{position:"absolute",bottom:5,left:9,fontSize:"var(--fs-micro)",fontStyle:"italic"}}>as {PR(selG).he} takes the sand</div>
             </div>
             <div className="flex items-center justify-between" style={{marginBottom:6}}>
               <span className="tag tag-gold">Kit</span>
               <button className="btn btn-ghost" style={{padding:"10px 10px",fontSize:"var(--fs-sm)"}} onClick={()=>armHim(selG.id)}>
-                Arm him from the rack
+                Arm {PR(selG).him} from the rack
               </button>
             </div>
             </>)}
@@ -34595,11 +34595,11 @@ export default function App(){
                 {lastingOf(selG).map(k=>(
                   <div key={k} style={{borderTop:"1px dotted var(--line)",paddingTop:5,marginTop:5}}>
                     <div style={{fontSize:"var(--fs-md)",color:"var(--blood-hi)"}}>{LASTING[k].name}</div>
-                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:1}}>{LASTING[k].say}</div>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:1}}>{her(LASTING[k].say, selG)}</div>
                   </div>
                 ))}
                 <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:5}}>
-                  Past the sixth round he is at ×{lastNum(selG,"latePow").toFixed(2)}, and he spends wind {Math.round((lastNum(selG,"stam")-1)*100)}% faster all the way through.
+                  Past the sixth round {PR(selG).he} is at ×{lastNum(selG,"latePow").toFixed(2)}, and {PR(selG).he} spends wind {Math.round((lastNum(selG,"stam")-1)*100)}% faster all the way through.
                 </div>
               </div>
             )}
@@ -34642,10 +34642,10 @@ export default function App(){
               if(!rows.length) return null;
               return (
                 <div className="panel" style={{padding:11,marginBottom:9,background:"var(--ground)",borderColor:"var(--line-4)"}}>
-                  <div className="tag tag-gold" style={{marginBottom:4}}>What he is known for</div>
+                  <div className="tag tag-gold" style={{marginBottom:4}}>What {PR(selG).he} is known for</div>
                   {rows.map(([t,say],i)=>(
                     <div key={t} style={{borderTop:i?"1px dotted var(--line)":"none",paddingTop:i?6:0,marginTop:i?6:0}}>
-                      <div className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>{t}</div>
+                      <div className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>{her(t, selG)}</div>
                       <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:1,lineHeight:1.4}}>{her(say, selG)}</div>
                     </div>
                   ))}
@@ -34656,25 +34656,25 @@ export default function App(){
               return (
                 <div className="panel" style={{padding:11,marginBottom:9,background:"var(--panel)",borderColor:favColour(v)}}>
                   <div className="flex items-center justify-between" style={{marginBottom:3}}>
-                    <span className="tag">What Capua makes of him</span>
+                    <span className="tag">What Capua makes of {PR(selG).him}</span>
                     <span className="rowval" style={{fontSize:"var(--fs-base)",color:favColour(v)}}>{favWord(v)}</span>
                   </div>
                   <Bar v={v} label="" color="linear-gradient(90deg,var(--line-3),var(--ink-hi))"/>
                   <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:4}}>
-                    Purses ×{favPurse(selG).toFixed(2)} when he is on the card{v>=25 ? `, and they are ${Math.round(favMissio(selG))} less willing to watch him die.` : "."}
+                    Purses ×{favPurse(selG).toFixed(2)} when {PR(selG).he} is on the card{v>=25 ? `, and they are ${Math.round(favMissio(selG))} less willing to watch ${PR(selG).him} die.` : "."}
                   </div>
                   {v>=40 && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>
-                    Selling him or burying him is not a private arrangement any more.
+                    {her("Selling him or burying him is not a private arrangement any more.", selG)}
                   </div>}
                 </div>
               ); })()}
             {gView==="kit" && provCrowd(selG)>0 && (
               <div className="panel" style={{padding:9,marginBottom:7,background:"var(--panel)",borderColor:"var(--gold-edge)"}}>
                 <div className="laurel" style={{fontSize:"var(--fs-base)"}}>
-                  The crowd knows his steel when he walks out — {provCrowd(selG)} to them.
+                  The crowd knows {PR(selG).his} steel when {PR(selG).he} walks out — {provCrowd(selG)} to them.
                 </div>
                 {provDread(selG) && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:2}}>
-                  And the cells know which piece he is wearing.
+                  And the cells know which piece {PR(selG).he} is wearing.
                 </div>}
               </div>
             )}
@@ -34685,9 +34685,9 @@ export default function App(){
                   borderColor: faults.some(f=>f.why!=="better on the rack") ? "var(--blood-edge)" : "var(--gold-edge)"}}>
                   {faults.map((f,i)=>(
                     <div key={i} style={{fontSize:"var(--fs-base)",color:f.why==="unfamiliar"?"var(--blood-hi)":f.why==="failing"?"var(--blood)":"var(--gold)"}}>
-                      {f.why==="unfamiliar" ? `${f.name} is not his style — he carries it clumsily.`
+                      {her(f.why==="unfamiliar" ? `${f.name} is not his style — he carries it clumsily.`
                         : f.why==="failing" ? `${f.name} is close to going.`
-                        : `There is better on the rack for him.`}
+                        : `There is better on the rack for him.`, selG)}
                     </div>
                   ))}
                 </div>
@@ -34705,7 +34705,7 @@ export default function App(){
                       {provOf(selG,slot) && (
                         <div style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginBottom:3,
                           color:PROV[provOf(selG,slot).kind].colour}}>
-                          {PROV[provOf(selG,slot).kind].line(provOf(selG,slot))}
+                          {PROV[provOf(selG,slot).kind].line(provOf(selG,slot), selG)}
                         </div>
                       )}
                       <button className="selbtn" onClick={()=>setGearPick({gid:selG.id, slot})}>
@@ -34733,7 +34733,7 @@ export default function App(){
                     <span style={{color:m.spd>=0?"var(--laurel)":"var(--blood-str)"}}>Speed {pct(m.spd)}</span>
                     <span style={{color:m.sho>=0?"var(--laurel)":"var(--blood-str)"}}>Crowd {pct(m.sho)}</span>
                   </div>
-                  {m.clumsy.length>0 && <div className="blood" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>Ill-suited to his style: {m.clumsy.join(", ")}.</div>}
+                  {m.clumsy.length>0 && <div className="blood" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>Ill-suited to {PR(selG).his} style: {m.clumsy.join(", ")}.</div>}
                 </div>
                 {(()=>{ const fee = repairFee(S, selG);
                   if(fee<=0) return null;
@@ -34748,7 +34748,7 @@ export default function App(){
                     <div className="grid grid-cols-2 gap-2">
                       {SLOTS.filter(s=>wears(GEAR[kit[s]])).map(s=>(
                         <button key={s} className="btn" disabled={S.gold<FORGE_FEE} onClick={()=>forgeFor(selG.id, s)}>
-                          Forge his {SLOT_NAME[s].toLowerCase()} · {FORGE_FEE}d
+                          Forge {PR(selG).his} {SLOT_NAME[s].toLowerCase()} · {FORGE_FEE}d
                         </button>
                       ))}
                     </div>
@@ -34758,7 +34758,7 @@ export default function App(){
                   <div className="panel" style={{padding:9,marginTop:7,background:"var(--panel)",borderColor:"var(--gold-line)"}}>
                     <div className="disp gold" style={{fontSize:"var(--fs-md)"}}>{selG.named.title}</div>
                     <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:2}}>
-                      Made for him in year {Math.floor((selG.named.made-1)/YEAR_WEEKS)+1}. It wears half as fast, it cannot be taken off him, and it will not break — only bend.
+                      Made for {PR(selG).him} in year {Math.floor((selG.named.made-1)/YEAR_WEEKS)+1}. It wears half as fast, it cannot be taken off {PR(selG).him}, and it will not break — only bend.
                     </div>
                   </div>
                 )}
@@ -34781,11 +34781,11 @@ export default function App(){
                   </button>
                   <button className="btn btn-ghost" style={{width:"100%",marginTop:6}} disabled={S.gold<RETRAIN_FEE}
                     onClick={()=>setRetrainFor(retrainFor===selG.id?null:selG.id)}>
-                    {S.gold<RETRAIN_FEE ? `Remake his style · ${RETRAIN_FEE}d — not enough coin` : `Remake his style · ${RETRAIN_FEE}d`}
+                    {S.gold<RETRAIN_FEE ? `Remake ${PR(selG).his} style · ${RETRAIN_FEE}d — not enough coin` : `Remake ${PR(selG).his} style · ${RETRAIN_FEE}d`}
                   </button>
                   {retrainFor===selG.id && (
                     <div style={{marginTop:7}}>
-                      <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:5}}>{RETRAIN_WEEKS} weeks off the sand. He keeps everything he is and learns to carry it differently.</div>
+                      <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:5}}>{RETRAIN_WEEKS} weeks off the sand. {PR(selG).He} keeps everything {PR(selG).he} is and learns to carry it differently.</div>
                       <div className="grid grid-cols-2 gap-2">
                         {Object.keys(CLASSES).filter(c=>c!==selG.cls).map(c=>(
                           <button key={c} className="focusbtn" onClick={()=>{ startRetrain(selG.id,c); setRetrainFor(null); }}>
@@ -34807,25 +34807,25 @@ export default function App(){
                       <span className="tag tag-gold">On a season</span>
                       <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"var(--gold-hi)"}}>{planWeeksLeft(selG)} weeks left</span>
                     </div>
-                    <div className="disp" style={{fontSize:"var(--fs-md)",color:"var(--ink-hi)"}}>{P.name}</div>
+                    <div className="disp" style={{fontSize:"var(--fs-md)",color:"var(--ink-hi)"}}>{her(P.name, selG)}</div>
                     <Bar v={planPct(selG)} label="" color="linear-gradient(90deg,var(--line-3),var(--gold-line))"/>
                     <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3}}>
                       This week: {REGIMENS[planDrill(selG)] ? REGIMENS[planDrill(selG)].name : "the post"}. It pays{" "}
                       {Object.entries(P.pays).map(([k,v])=>`+${v} ${STAT_NAMES[k].toLowerCase()}`).join(", ")}
-                      {P.trait ? ` and makes him ${P.trait}` : ""}, and only when it is finished.
+                      {P.trait ? ` and makes ${PR(selG).him} ${P.trait}` : ""}, and only when it is finished.
                     </div>
                     <button className="btn btn-ghost" style={{width:"100%",marginTop:7}}
-                      onClick={()=>setAsk({ title:"Come Off The Season", danger:true, confirm:"Take him off it",
-                        text:`He is ${planPct(selG)} in the hundred through. Coming off now keeps what he has gained week by week and loses the whole of what finishing would have paid.`,
-                        run:()=>mut(d=>{ const g=d.gladiators.find(x=>x.id===selG.id); if(g) breakPlan(d, g, "You wanted him back on the card."); }) })}>
-                      Take him off it
+                      onClick={()=>setAsk({ title:"Come Off The Season", danger:true, confirm:her("Take him off it", selG),
+                        text:her(`He is ${planPct(selG)} in the hundred through. Coming off now keeps what he has gained week by week and loses the whole of what finishing would have paid.`, selG),
+                        run:()=>mut(d=>{ const g=d.gladiators.find(x=>x.id===selG.id); if(g) breakPlan(d, g, her("You wanted him back on the card.", g)); }) })}>
+                      Take {PR(selG).him} off it
                     </button>
                   </div>
                 ); }
               if(selG.status !== "active") return null;
               return (
                 <div className="panel" style={{padding:11,marginBottom:9}}>
-                  <div className="tag tag-gold" style={{marginBottom:4}}>Put him on a season</div>
+                  <div className="tag tag-gold" style={{marginBottom:4}}>Put {PR(selG).him} on a season</div>
                   <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:6}}>
                     Months of one thing, drilled in order, worth nothing until it is done and a great deal more than a week of picking when it is.
                   </div>
@@ -34834,10 +34834,10 @@ export default function App(){
                       <button key={k} className="optrow" style={{padding:10,marginBottom:6}}
                         onClick={()=>mut(d=>{ const g=d.gladiators.find(x=>x.id===selG.id); if(g) startPlan(d, g, k); })}>
                         <div className="flex items-center justify-between gap-2">
-                          <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>{P.name}</span>
+                          <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>{her(P.name, selG)}</span>
                           <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{P.weeks} weeks</span>
                         </div>
-                        <div className="dim" style={{fontSize:"var(--fs-base)",textAlign:"left",marginTop:2}}>{P.blurb}</div>
+                        <div className="dim" style={{fontSize:"var(--fs-base)",textAlign:"left",marginTop:2}}>{her(P.blurb, selG)}</div>
                         <div style={{fontSize:"var(--fs-sm)",textAlign:"left",marginTop:2,color:"var(--laurel)"}}>
                           {Object.entries(P.pays).map(([s,v])=>`+${v} ${STAT_NAMES[s].toLowerCase()}`).join(" · ")}
                           {P.trait ? ` · ${P.trait}` : ""}
@@ -34852,12 +34852,11 @@ export default function App(){
               return (
                 <div className="panel" style={{padding:11,marginBottom:9,borderColor:"var(--blood-edge)",background:"var(--panel)"}}>
                   <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
-                    <span className="tag tag-blood">Somebody is watching him</span>
+                    <span className="tag tag-blood">Somebody is watching {PR(selG).him}</span>
                     <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{left>0? `${left} more week${left===1?"":"s"}` : "going cold"}</span>
                   </div>
                   <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:7,lineHeight:1.35}}>
-                    House {w.house} has had somebody at the wall while he works. Whoever they put across from him
-                    will already know what he does. It goes stale on its own, or he can spend a week showing them nothing.
+                    {her(`House ${w.house} has had somebody at the wall while he works. Whoever they put across from him will already know what he does. It goes stale on its own, or he can spend a week showing them nothing.`, selG)}
                   </div>
                   <button className="btn btn-ghost" style={{width:"100%"}}
                     onClick={()=>mut(d=>{ const g=d.gladiators.find(x=>x.id===selG.id); if(g) clearWatch(d, g); })}>
@@ -34867,7 +34866,7 @@ export default function App(){
               ); })()}
             {gView==="train" && (selG.shiftWeeks>0) && (
               <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:9,lineHeight:1.35}}>
-                He is working badly on purpose this week. It buys him almost nothing of his own.
+                {her("He is working badly on purpose this week. It buys him almost nothing of his own.", selG)}
               </div>
             )}
             {gView==="train" && (()=>{ const pr = prepOf(selG); if(!pr) return null;
@@ -34886,17 +34885,17 @@ export default function App(){
                   </div>
                   <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:7,lineHeight:1.35}}>
                     {live
-                      ? "His own work pays about three-fifths while this runs. Put him in front of that man and he will know which plan fits, and carry the weeks into it."
+                      ? her("His own work pays about three-fifths while this runs. Put him in front of that man and he will know which plan fits, and carry the weeks into it.", selG)
                       : <span className="blood">The reading has gone off. Have that man watched again or this is drilling against a memory.</span>}
                   </div>
-                  <button className="btn btn-ghost" style={{width:"100%"}} onClick={()=>doStopDrill(selG.id)}>Back to his own work</button>
+                  <button className="btn btn-ghost" style={{width:"100%"}} onClick={()=>doStopDrill(selG.id)}>Back to {PR(selG).his} own work</button>
                 </div>
               ); })()}
             {gView==="train" && (<>
             {!seasonOfMan(selG) && <div className="tag" style={{marginBottom:6}}>This week</div>}
             <div className="grid grid-cols-2 gap-2" style={{marginBottom:6, display: seasonOfMan(selG) ? "none" : undefined}}>
               {REG_KEYS.map(k=>{ const r = REGIMENS[k], on = (selG.regimen||"palus")===k;
-                const what = r.focus ? "your pick" : r.learn ? "his partner's best"
+                const what = r.focus ? "your pick" : r.learn ? `${PR(selG).his} partner's best`
                   : r.gains ? Object.keys(r.gains).map(s=>STAT_NAMES[s].slice(0,4)).join("+")
                   : "mends";
                 return (
@@ -34908,7 +34907,7 @@ export default function App(){
                 ); })}
             </div>
             <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
-              {REGIMENS[selG.regimen||"palus"].desc}
+              {her(REGIMENS[selG.regimen||"palus"].desc, selG)}
             </div>
             {(()=>{ const s = strainOf(selG); if(s<8) return null;
               return (
@@ -34920,12 +34919,12 @@ export default function App(){
                   </div>
                   <Bar v={s} label="strain" color={s>55?"var(--blood)":s>30?"var(--gold)":"var(--line-4)"}/>
                   <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>
-                    Deep tiredness that a night does not touch. It eats what he gains and it is how men tear things. Only rest takes it off.
+                    Deep tiredness that a night does not touch. It eats what {PR(selG).he} gains and it is how bodies tear. Only rest takes it off.
                   </div>
                 </div>
               ); })()}
             <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:8}}>
-              {REGIMENS[selG.regimen||"palus"].desc}
+              {her(REGIMENS[selG.regimen||"palus"].desc, selG)}
               {(()=>{ const p = sparPartner(S, selG); if(!p) return null;
                 const t = tieBetween(S, selG.id, p.id);
                 return <span> Paired with <span style={{color:"var(--gold-hi)"}}>{p.name}</span>
@@ -34933,11 +34932,11 @@ export default function App(){
                    : t && t.kind==="rival" ? <span className="blood"> — there is bad blood here. They will go too hard.</span>
                    : "."}</span>;
               })()}
-              {selG.regimen==="spar" && !sparPartner(S,selG) && <span className="blood"> No partner set — he works the post instead.</span>}
+              {selG.regimen==="spar" && !sparPartner(S,selG) && <span className="blood"> No partner set — {PR(selG).he} works the post instead.</span>}
             </div>
             {(REGIMENS[selG.regimen||"palus"].focus || selG.regimen==="spar") && (<>
               <div className="tag" style={{marginBottom:6}}>
-                {selG.regimen==="spar" ? "Drilling — his fallback if no partner is set" : "Drilling"}
+                {selG.regimen==="spar" ? `Drilling — ${PR(selG).his} fallback if no partner is set` : "Drilling"}
               </div>
               <div className="grid grid-cols-2 gap-2" style={{marginBottom:12}}>
                 {/* ---- SIX IDENTICAL BUTTONS AND NOTHING TO CHOOSE BETWEEN THEM ----
@@ -34960,7 +34959,7 @@ export default function App(){
                     {STAT_NAMES[k].toUpperCase()}
                     <span className="sub">
                       {rnd(selG[k])}{statCap(selG,k)<99 && <span className="blood"> / {statCap(selG,k)}</span>}
-                      {trade && <span className="laurel"> · his trade</span>}
+                      {trade && <span className="laurel"> · {PR(selG).his} trade</span>}
                     </span>
                   </button>
                 );})}
@@ -34981,9 +34980,9 @@ export default function App(){
                       {boy && <span className="dim"> · {Math.max(0, 5-(boy.wins||0))} more wins and the boy is made</span>}
                     </div>
                     <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>
-                      The boy gains on {STAT_NAMES[bestStatKey(selG)].toLowerCase()} every week he works — the more of it {PR(selG).he} has over him, the faster. {PR(selG).He} pays for it out of his own week, and neither of them would take the other's death well.
+                      The boy gains on {STAT_NAMES[bestStatKey(selG)].toLowerCase()} every week he works — the more of it {PR(selG).he} has over him, the faster. {PR(selG).He} pays for it out of {PR(selG).his} own week, and neither of them would take the other's death well.
                     </div>
-                    <button className="btn btn-ghost" style={{width:"100%"}} onClick={()=>stopTeach(selG.id)}>Back to his own work</button>
+                    <button className="btn btn-ghost" style={{width:"100%"}} onClick={()=>stopTeach(selG.id)}>Back to {PR(selG).his} own work</button>
                   </>) : (<>
                     <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>
                       {isMade(selG)
@@ -34993,7 +34992,7 @@ export default function App(){
                     {pool.length===0
                       ? <div className="dim" style={{fontSize:"var(--fs-md)"}}>No one green enough to teach — a boy wants two wins or fewer, and to be young enough to change.</div>
                       : <button className="btn" style={{width:"100%",borderColor:"var(--gold-line)",color:"var(--ink-hi)"}}
-                          onClick={()=>setTeachPick(selG.id)}>Put him to teaching</button>}
+                          onClick={()=>setTeachPick(selG.id)}>Put {PR(selG).him} to teaching</button>}
                   </>)}
                 </div>
               ); })()}
@@ -35009,7 +35008,7 @@ export default function App(){
                 : rudisEligible(selG)
                 ? <button className="btn" style={{borderColor:"var(--gold-line)",color:"var(--ink-hi)"}} onClick={()=>freeG(selG.id)}>Grant the rudis</button>
                 : retireEligible(selG)
-                ? <button className="btn" onClick={()=>retire(selG.id)}>Release him</button>
+                ? <button className="btn" onClick={()=>retire(selG.id)}>Release {PR(selG).him}</button>
                 : <button className="btn btn-ghost" disabled>{rudisWord(selG)}</button>}
             </div>
           </div>
@@ -37063,6 +37062,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     heatDrift, inspectOdds, gamHeat, gamHeatSay, standDown,   /* #316 — the law, on a dial */
     careerRungs,   /* #317 — his career, on one strip */
     STEP_DOWN, stepDownNeed, canStepDown, stepDownNow, succSays,   /* #318 — stepping down while the house stands */
+    PS_KEYS, boutWord, PROV, PR, AUCTOR_WHY,   /* #319 — a woman's page, in her words */
     skySays, skyMods, sigLand, sigTech, legacyRows, legacyNow, legacyPrice, legacyRegard,
     LEGACIES, legacyEarned, isNamed,   /* #305 — the boon strings and the two locks a check has to read */
     /* #302 — an eighteen-rule system the player reads and NOTHING held: no check, no probe, not
