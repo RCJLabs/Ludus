@@ -31227,9 +31227,77 @@ was a disabled button naming what he lacks. Mastery said how far off he was only
   ways: a rudis rung that ignored renown disagreed with the gate on 145 of 600 men, and a page without
   the strip failed the source and the screen.
 
+
+### #318 — stepping down while the house stands
+**v3.310.0. The fourth item of the list after #315, first half.** A house that stays in Capua and
+prospers had no way to finish. `closed` wants an empty yard. Rome wants a thousand fame and the road.
+The handover that ends at `oldAge` opened only at 62, well, with an heir of age, and a lanista starts
+at 34-46 with an eighteen-week year, so it opened 290-500 weeks in. #313's careful staying houses were
+still running at week 420 57% of the time, and the long tenure had not appeared in any run this
+session. Of three shapes put to the owner (step down early, a civic honour, sell the house whole),
+the choice was **the first now and the civic honour later**, as a rarer summit for the house that
+stays home.
+
+**The gate was measured before it was written.** `probes/stepdown.mjs` read 160 careful staying houses
+of 420 weeks every week, without acting, against pairs of terms on top of a house clear of trouble
+(an heir of age, the box at or above nothing, no lender's paper, every edict kept, no ruin warned, at
+home), which such a house is on a median 64% of its weeks:
+
+| gate | houses running at week 420 it opens for | houses that later failed, passed first | opens at, median week |
+|---|---|---|---|
+| 6 years | 92 of 92 | 12 of 31 | 91 |
+| 8 years and the rank of Eques | 92 of 92 | 5 of 31 | 127 |
+| **10 years and the rank of Eques** | **91 of 92** | **5 of 31** | **163** |
+| 12 years and the rank of Eques | 91 of 92 | 5 of 31 | 199 |
+
+The years decide when. The rung barely binds on these houses, which climb it anyway; it is the gate's
+meaning, and it holds back a house that has lasted without rising. Six years opened in year six, a
+door rather than an ending. A house that passed it and failed later could have stopped while ahead,
+which is the choice working. Touring houses seldom pass it (3 of 22 still running), being seldom home
+and clear; they have Rome.
+
+- **The door is on the lanista's sheet**, under *After you*, beside the heir it would go to. Short of
+  it, the panel says what it wants in the gate's own terms (*"it wants 3 more years at its head and the
+  rank of Eques"*). Open, it is a button and a confirm. The lanista's tile under the villa's records
+  reads *"51, hale, free to step down"*. The first week it opens, the chronicle says so once and the
+  week's list carries it for a month.
+- **Asking raises the 62-year handover, marked early**, so both of its doors follow: the heir takes the
+  chair and the house goes on (fame and patrons fall as they always did on a handover), or *"Let it end
+  with him"* ends it at `oldAge`, told as a man who chose his morning: **THE HOUSE HANDED ON**. The long
+  tenure and a death read exactly as before; their words moved out of App into `succSays` with the new
+  one.
+- **Found by its own screenshot before it shipped:** the button left the lanista's sheet open, so the
+  ending fired behind it and the player saw the sheet. It closes the sheet now, and `handon` holds it.
+- App comes down 5,884 to 5,881: the three handover texts moving out paid for the line placing
+  `<StepDown>` and three more.
+- **The reference player has an opt-in `stepDown` lever**, off by default like `free`: `"end"` takes the
+  door the first week it opens and ends there, `"heir"` hands on.
+
+**What it does to the endings** (`pooled`, 160 houses an arm, #313's careful player with `stepDown:"end"`):
+
+| staying houses | careful, before | careful, stepping down |
+|---|---|---|
+| a good ending | 23% | **83%** (79% stepped down, 4% closed) |
+| still running at week 420 | 57% | 1% |
+| failures (debt, ruin, emptied, banned) | 19% | 16% |
+
+Touring houses reach a good ending 71% of the time on the same player (63% closed, 8% stepped down), so
+staying home is no longer the poorer road. Driven with `"heir"` over twelve houses, ten handed on at a
+median week 164 and three reached a third generation, with nothing thrown.
+
+- **`checks/handon.mjs`**: the gate open on a clear house and shut by each of its ten terms alone, each
+  named in its own words; asking, then either door; the long tenure and a death unchanged; the week's one
+  chronicle line and a month on the list; the lever both ways; and on screen, the tile, the door, the
+  confirm, the handover and the ending with nothing left open over it. Sabotaged, it fails both ways: a
+  gate without the rank term let a house a rung short through, and a button that left the sheet open
+  failed on the screen.
+
+**A correction to the list that proposed this:** its tenth item, a text-size setting, already exists as
+*Large text* in the settings. It is withdrawn.
+
 ---
 
-*Last updated: v3.309.0 — his career, on one strip*
+*Last updated: v3.310.0 — stepping down while the house stands*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a

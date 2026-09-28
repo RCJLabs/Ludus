@@ -3978,6 +3978,7 @@ function agenda(d){
     if(un.length === 1) add(1, "men", `${un[0].name} has not been sworn in`, "open his page to have the oath said");
     else if(un.length > 1) add(1, "men", `${un.length} men have not been sworn in`, un.map(g=>g.name).join(", ")); }
   agendaMaster(d, add);
+  if(d.flags.stepDownAt != null && d.week - d.flags.stepDownAt < 4 && canStepDown(d)) add(1, "ludus::annals", `You could hand the house to ${d.heir.name}`, "while it stands: The Lanista, among the records, has the door");   /* #318 */
   { const f = ripeFeud(d); if(f) add(2, "men", `${f.a.name} and ${f.b.name} are close to it`, "the yard has noticed"); }
   /* open every week of the year, named as the early income in the charter itself,
      and never once mentioned outside the arena tab */
@@ -14140,6 +14141,10 @@ function lanistaWeek(d){
     if(d.heir && HEIRS[d.heir.kind]) d.succession = { lan:L.name, age:L.age, heir:d.heir.name, kind:d.heir.kind };
     else d.over = { kind:"lanistaDied", name:d.name, lan:L.name, age:L.age, years:yearsAtHead(d, L) };
   }
+  /* #318 — the first week he could step down while the house stands, the chronicle says so, once;
+     the week's list carries it for a month after (`agenda`), and the lanista's sheet for good */
+  if(!d.flags.stepDownAt && canStepDown(d)){ d.flags.stepDownAt = d.week;
+    chron(d, `${L.name} has held this house ${yearsAtHead(d, L)} years, the box is in the black, nothing is owed and the census counts him among its betters. He could hand it to ${d.heir.name} now, while it stands. The Lanista, among the villa's records, has the door.`, "good"); }
 }
 const lanTrain  = d => hasLT(d,"ailing") ? 0.92 : 1;
 const lanCalm   = d => (hasLT(d,"merciful")?0.3:0) + (hasLT(d,"hard")?-0.15:0);
@@ -25295,6 +25300,28 @@ function CareerLadder({ S, g }){
     </div>
   );
 }
+
+/* ---- AND THE DOOR, ON HIS OWN SHEET — #318 ----
+   Under "After you", beside the heir it would go to: what stepping down early still wants, in the
+   gate's own terms (`stepDownNeed`), and the door once it is open. Asking raises the handover
+   `lanistaWeek` raises at 62, so the screen after it offers both of that handover's doors. */
+function StepDown({ S, X }){
+  const want = stepDownNeed(S); if(!want) return null;
+  const heir = S.heir && S.heir.name;
+  const list = want.length > 1 ? `${want.slice(0, -1).join(", ")} and ${want[want.length - 1]}` : want[0];
+  return (
+    <div className="panel" style={{padding:9,marginBottom:10,background:"var(--panel)",borderColor: want.length ? "var(--line-4)" : "var(--gold-line)"}} data-stepdown={want.length ? "short" : "open"}>
+      <div className="tag" style={{marginBottom:4}}>Step down while it stands</div>
+      {want.length
+        ? <div className="dim" style={{fontSize:"var(--fs-md)"}}>You need not wait for the years to decide it. To hand the house on early, it wants {list}.</div>
+        : <>
+          <div style={{fontSize:"var(--fs-md)",marginBottom:6}}>The house is standing and clear. Hand it to {heir} now, and choose on the next screen whether {heir} takes the chair or the story ends with you.</div>
+          <button className="btn" style={{width:"100%"}} onClick={()=>X.setAsk({ title:"Step Down", confirm:`Hand the house to ${heir}`,
+            text:`You give the house up to ${heir} while it stands, rather than waiting for the years to take it from you. The next screen asks the last question: whether ${heir} takes the chair and the house goes on with less of your name behind it, or the story ends here, with you.`,
+            run:()=>{ X.setSheet(null); X.mut(d=>{ stepDownNow(d); }); } })}>Step down</button>
+        </>}
+    </div>);
+}
 function Bar({v, max=100, color, label}){
   return <div className="track" role="progressbar" aria-valuenow={Math.round(clamp(v,0,max))}
     aria-valuemin={0} aria-valuemax={max} aria-label={label||undefined}>
@@ -26767,7 +26794,9 @@ const OVER_TEXT = {
   foreclosed: o=>({ title:"THE PAPER IS CALLED IN", text:`${o.lender} does not come himself. Two men with a magistrate's clerk arrive at the hour the gate opens and read out a number — ${o.owed} denarii — that has not had any relation to what you borrowed for a long time. They take the sand, the racks, the cells and the men in them. Nobody in Capua is surprised, and one or two are relieved it was not them. ${o.name} is a line in somebody's ledger now, and it balances.` }),
   debt: ()=>({ title:"THE CREDITORS COME", text:"Hard men with soft voices arrive at your gate bearing a magistrate's seal. The ludus, the familia, the very sand of your training square — seized, itemized, sold. Capua forgets you before the next games." }),
   closed: o=>({ title:"THE GATES STAND OPEN", text:`You free the last of them on a Tuesday, which is not a day anybody chooses for anything. ${o.freed} men have walked out of ${o.name} on their own legs across ${o.years} year${o.years===1?"":"s"}, and there is nobody left in the cells to see the last one go. The sand will be a yard for something else inside a year and the racks are already sold. Capua thinks you have lost your mind, and one lanista in Neapolis writes to ask how it was done.` }),
-  oldAge: o=>({ title:"THE LONG TENURE", text:`${o.lan} is ${o.age} and has been doing this for ${o.years} year${o.years===1?"":"s"}. There is no single morning it ends. There is a winter where the walk down to the square gets long, and a spring where somebody else has already set the drills before he arrives, and by summer the house is being run by ${o.heir} and everybody has agreed not to say so. He keeps the ledger. It is the part he was always best at.` }),
+  /* #318 — the same ending reached by choice, early: a man who stepped down while the house stood */
+  oldAge: o=>o.early ? ({ title:"THE HOUSE HANDED ON", text:`${o.lan} steps down at ${o.age}, after ${o.years} year${o.years===1?"":"s"} at the head of ${o.name}, on a morning he picks himself. Nothing is owed to any lender, the aedile has nothing to write about the place, and he has climbed further in this town than a man who buys other men is supposed to. ${o.heir} has the keys by the Kalends. He keeps a room over the yard and the habit of counting the men at the post, and after a season he stops correcting anybody. Few lanistae get to choose the morning. He chose one when the house was standing.` })
+    : ({ title:"THE LONG TENURE", text:`${o.lan} is ${o.age} and has been doing this for ${o.years} year${o.years===1?"":"s"}. There is no single morning it ends. There is a winter where the walk down to the square gets long, and a spring where somebody else has already set the drills before he arrives, and by summer the house is being run by ${o.heir} and everybody has agreed not to say so. He keeps the ledger. It is the part he was always best at.` }),
   banned: o=>({ title:RUINS.banned.title, text:RUINS.banned.text(o) }),
   disgrace: o=>({ title:RUINS.disgrace.title, text:RUINS.disgrace.text(o) }),
   ruined: o=>({ title:RUINS.ruined.title, text:RUINS.ruined.text(o) }),
@@ -27643,9 +27672,52 @@ function endTheLine(d){
   const s = d.succession; if(!s || !s.retire) return false;
   d.succession = null;
   d.over = { kind:"oldAge", name:d.name, lan:s.lan, age:s.age, upkeep:30,
-    years:s.years || yearOf(d), heir:s.heir };
+    years:s.years || yearOf(d), heir:s.heir, early:!!s.early };
   return true;
 }
+/* ---- STEPPING DOWN WHILE THE HOUSE STANDS — #318 ----
+   A house that stays in Capua and prospers had no way to finish. `closed` wants an empty yard;
+   Rome wants a thousand fame and the road; and the handover above opens only at 62, well, with an
+   heir of age. A lanista starts at 34-46 and a year is eighteen weeks, so that door opens 290-500
+   weeks in, and #313's careful staying houses were still running at week 420 57% of the time.
+
+   So the same handover opens earlier, on merit, and the player asks for it. MEASURED before a number
+   was written (`probes/stepdown.mjs`, 160 careful staying houses of 420 weeks): the house is clear of
+   trouble (an heir of age, the box at or above nothing, no lender's paper, every edict kept, no ruin
+   warned, at home) on a median 64% of its weeks, and the term that decides WHEN is the years. Ten years
+   at the head opens for 91 of the 92 houses still running at week 420, at a median week 163, and 5 of
+   the 31 that later failed had passed it first, which is the choice working: they could have stopped
+   while ahead. Six years opened for 12 of the 31 and in year six, which is a door, not an ending.
+   The census rung barely binds on those houses, since they climb it anyway; it is the gate's meaning
+   (the census counts him among the knights) and it holds back a house that has lasted without rising.
+   Touring houses pass it rarely, because they are seldom home and clear; they have Rome.
+
+   The handover is the one `lanistaWeek` raises at 62, marked `early`, so both doors follow: the heir
+   takes the chair and the house goes on, or it ends with him at `oldAge`, told as a man who chose. */
+const STEP_DOWN = { years:10, rung:4 };
+const stepDownNeed = d => { const L = d && d.lanista; if(!L || d.over || d.succession) return null;
+  const want = [], y = yearsAtHead(d, L), left = STEP_DOWN.years - y;
+  if(!d.heir) want.push("an heir named");
+  else if(!heirOfAge(d)) want.push(`${d.heir.name} of age`);
+  if(left > 0) want.push(`${left} more year${left === 1 ? "" : "s"} at its head`);
+  if(riseOf(d) < STEP_DOWN.rung) want.push(`the rank of ${RISE_RANKS[STEP_DOWN.rung].name}`);
+  if((d.gold || 0) < 0) want.push("the box out of the red");
+  if(d.loan) want.push("the lender paid off");
+  if(inBreach(d).length) want.push("every edict kept");
+  if(ruinPending(d)) want.push("no ruin hanging over it");
+  if(d.rebellion) want.push("the cells quiet");
+  if(awayFromCapua(d)) want.push("the house home in Capua");
+  return want; };
+const canStepDown = d => { const w = stepDownNeed(d); return !!w && !w.length; };
+function stepDownNow(d){ if(!canStepDown(d)) return false; const L = d.lanista;
+  d.succession = { lan:L.name, age:L.age, heir:d.heir.name, kind:d.heir.kind, retire:true, early:true, years:yearsAtHead(d, L) };
+  return true; }
+/* what the handover screen says, by how it came: chosen early, the long tenure, or a death */
+const succSays = s => s.early
+  ? { title:"THE HOUSE HANDED ON", text:`${s.lan} is ${s.age} and has run this house for ${s.years} years. Nobody has had to carry him down the stairs. The box is in the black, the aedile has nothing to write about the place, and he has climbed further in this town than a man who buys other men is supposed to. He would like to stop while all of that is still true.` }
+  : s.retire
+  ? { title:"THE LONG TENURE", text:`${s.lan} is ${s.age} and has been doing this for ${s.years} year${s.years===1?"":"s"}. There is no single morning it ends. There is a winter where the walk down to the square gets long, and a spring where somebody else has already set the drills before he arrives. He is not going to say the word, so you say it.` }
+  : { title:"THE HOUSE GOES ON", text:`${s.lan} is dead at ${s.age}. The sand is still there, the men are still in the cells, and the debts have not noticed.` };
 
 /* ---- PHASE B: A SECTION IS DATA, NOT A POSITION ----
    The tabs are being reorganised by WHEN a thing is used rather than WHAT it is about, and the
@@ -29180,7 +29252,7 @@ const SECT = {
     <Sect title="The house — records & annals" note={isFirstHouse(S) ? "✦ First House · lanista, houses, book…" : "lanista, the houses, the book, the roll…"}>
     <div className="grid grid-cols-2 gap-2">
       {[["stand","Where Things Stand", `last week, the year, the houses${S.week>20?", the long view":""}${(lawOf(S).edicts||[]).length || lawOf(S).heat >= 1 ? `, the law at ${Math.round(lawOf(S).heat)}` : ""}`],
-        ["lanista","The Lanista", S.lanista? `${S.lanista.age}, ${healthWord(S.lanista.health)}` : "—"],
+        ["lanista","The Lanista", S.lanista? `${S.lanista.age}, ${healthWord(S.lanista.health)}${canStepDown(S) ? ", free to step down" : ""}` : "—"],
         ["standings","The Houses", isFirstHouse(S) ? "✦ First House of Capua" : (()=>{ const t=leagueTable(S);
           return `${ordN(t.findIndex(r=>r.you)+1)} of ${t.length} in Capua`; })()],
         ["house","The House", `${BKEYS.filter(k=>bLevel(S,k)>0).length}/5 built`],
@@ -31947,6 +32019,7 @@ export default function App(){
             <div className="dim" style={{fontSize:"var(--fs-md)",marginTop:3}}>{HEIRS[S.heir.kind].line}</div>
           </div>
         )}
+        <StepDown S={S} X={SX}/>   {/* #318 — see the note over StepDown */}
         {/* it used to be `S.heir ? <panel> : <buttons>` — the note above `heirChoices` says why not */}
         {!S.heir && (
           <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
@@ -35552,16 +35625,12 @@ export default function App(){
         /* retirement raises the same succession death does — see the note on that branch of
            `lanistaWeek`. The difference is that a living man's handover is a CHOICE, so this screen
            has two doors when he has stepped back and one when he has been carried out. */
-        const ret = !!S.succession.retire;
+        const ret = !!S.succession.retire, say = succSays(S.succession);   /* #318 — the words live with the gate */
         return (
           <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.demand}}>
             <div className="modal" tabIndex={-1}>
-              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"var(--ink-hi)",marginBottom:9}}>{ret ? "THE LONG TENURE" : "THE HOUSE GOES ON"}</div>
-              <div style={{fontSize:"var(--fs-lg)",marginBottom:9}}>
-                {ret
-                  ? `${S.succession.lan} is ${S.succession.age} and has been doing this for ${S.succession.years} year${S.succession.years===1?"":"s"}. There is no single morning it ends. There is a winter where the walk down to the square gets long, and a spring where somebody else has already set the drills before he arrives. He is not going to say the word, so you say it.`
-                  : `${S.succession.lan} is dead at ${S.succession.age}. The sand is still there, the men are still in the cells, and the debts have not noticed.`}
-              </div>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"var(--ink-hi)",marginBottom:9}}>{say.title}</div>
+              <div style={{fontSize:"var(--fs-lg)",marginBottom:9}}>{say.text}</div>
               <div className="panel" style={{padding:11,marginBottom:10,background:"var(--panel)",borderColor:"var(--gold-line)"}}>
                 <div className="disp" style={{fontSize:"var(--fs-md)",color:"var(--ink-hi)",marginBottom:3}}>{S.succession.heir}</div>
                 <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{H.line}</div>
@@ -36993,6 +37062,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     edictOwed,                                  /* #314 — what "Comply" still asks of the house */
     heatDrift, inspectOdds, gamHeat, gamHeatSay, standDown,   /* #316 — the law, on a dial */
     careerRungs,   /* #317 — his career, on one strip */
+    STEP_DOWN, stepDownNeed, canStepDown, stepDownNow, succSays,   /* #318 — stepping down while the house stands */
     skySays, skyMods, sigLand, sigTech, legacyRows, legacyNow, legacyPrice, legacyRegard,
     LEGACIES, legacyEarned, isNamed,   /* #305 — the boon strings and the two locks a check has to read */
     /* #302 — an eighteen-rule system the player reads and NOTHING held: no check, no probe, not
