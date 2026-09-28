@@ -31101,9 +31101,49 @@ the time rather than 7%.
   The table holds `make` and a one-line `run`, so the words moved to `complyWord` beside `edictOwed`
   and the table is back at 1098.
 
+
+
+### #315 — a man's page says how far he is from his mastery, and whom to beat in the square
+**v3.307.0. The first open item on `claims.mjs`'s list: `masterNeed` built "N more wins, N more renown"
+toward a mastery and nothing printed it, the gap #299 closed for the legacies.**
+
+What a player saw, traced before anything was changed:
+
+- **The mastery panel** on a man's Training view drew only for a man who could already be named, was a
+  master, or was learning or holding a second trade.
+- **Its own fallback line**, *"A master is made at 12 victories and 55 renown. He has X and Y."*, sat
+  inside that condition and could never draw. It also predates the gate's third term, the square
+  (#232 phase 5).
+- So **a man's page said nothing about mastery until the day the button appeared**, and the only other
+  word was the week's *"X has earned his mastery"*, on that same day.
+
+What changed:
+
+- **`masterSays(d, g)`** gives the gate's three terms, counted: *"Toward his mastery: 9 more wins, 35
+  more renown and a man beaten in the square who is as good as he is. He has 3 of 12 wins and 20 of 55
+  renown."* When the square is owed and the yard holds a man as good as him, it names the weakest such
+  man, because `probes/master.mjs` has a man beating his equal 49% of the time and one 15% better only
+  29%: *"Hektor is as good as he is and stands in this yard."* A woman gets her own pronouns. A master
+  gets nothing, and so does a man who can be named today, because the button says that.
+- **`masterNeed`'s square clause says "as good as he is"**, not "worth as much". Since #252 the square
+  compares fighting quality (`fightQual`), not price.
+- **The panel draws for any active man with something owed**, and the dead line is now that sentence.
+  App stays at its cap of 5,883 lines.
+- **The week says it when the square is all that is left** and there is a man to beat: *"Correus lacks
+  only a proving bout for his mastery · Hektor is as good as he is: a win over Hektor in the square,
+  and he can be named a master"*, pointing at the square's panel. `agendaMaster` replaces the old
+  "has earned his mastery" line in `agenda` and says both.
+- **`claims.mjs`** takes `masterNeed` off its list, as its ratchet asked the moment it had a caller.
+- **`checks/mastery.mjs`** holds the three terms, the man named and why, nobody named when nobody
+  qualifies, a woman, a master, the week's row and its going, and the Training view on screen.
+  Sabotaged with `masterSays` silent, it fails.
+
+**Also found, and not fixed here:** on a woman's Training view, the season panel's button reads *"PUT
+HIM ON A SEASON"*.
+
 ---
 
-*Last updated: v3.306.0 — sending word you will comply says what the edict still asks of the yard*
+*Last updated: v3.307.0 — a man's page says how far he is from his mastery, and whom to beat in the square*
 
 *(This line had read v3.151.0 for a hundred and twenty-seven releases. A footer that says when a
 document was last touched, and is itself the least-touched thing in it, is the same fault as a

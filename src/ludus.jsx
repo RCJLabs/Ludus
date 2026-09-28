@@ -1464,9 +1464,38 @@ const masterNeed = (d,g) => {
   const want = [];
   if((g.wins||0) < MASTERY_GATE.wins) want.push(`${MASTERY_GATE.wins - (g.wins||0)} more wins`);
   if((g.pfame||0) < MASTERY_GATE.pfame) want.push(`${Math.ceil(MASTERY_GATE.pfame - (g.pfame||0))} more renown`);
-  if(!provedIt(g)) want.push("a man beaten in the square who is worth as much as he is");
+  if(!provedIt(g)) want.push("a man beaten in the square who is as good as he is");
   return want.length ? want : null;
 };
+/* ---- AND THE CARD SAYS IT — #315 ----
+   `masterNeed` was written "for the card to say it rather than grey a button out", and nothing
+   called it. The man's mastery panel drew only for a man who could already be named (or was a
+   master, or learning a second trade), and its own fallback line, "A master is made at 12 victories
+   and 55 renown", sat inside a condition that excluded it, and had never heard of the square
+   (#232 phase 5). So a man's page said nothing about mastery until the day the button appeared.
+   It says now how far off he is, in the gate's own three terms. The square is the one term a player
+   can go after on purpose, so when it is owed the page names the man to beat: the weakest in the
+   yard who is as good as him, because `probes/master.mjs` has a man beating his equal 49% of the
+   time and one 15% better only 29%. `fightQual` is the comparison `proveInSquare` makes (#252). */
+const proveFoe = (d, g) => { if(!g || provedIt(g)) return null;
+  const q = fightQual(g);
+  return activeG(d).filter(x=>x.id !== g.id && !x.benched && fightQual(x) >= q)
+    .sort((a,b)=>fightQual(a) - fightQual(b))[0] || null; };
+const masterSays = (d, g) => { const want = masterNeed(d, g); if(!want) return null;
+  const list = want.length > 1 ? `${want.slice(0, -1).join(", ")} and ${want[want.length - 1]}` : want[0];
+  const foe = !provedIt(g) ? proveFoe(d, g) : null, w = g.wins || 0, f = rnd(g.pfame || 0);
+  return her(`Toward his mastery: ${list}. He has ${w >= MASTERY_GATE.wins ? `his ${MASTERY_GATE.wins} wins` : `${w} of ${MASTERY_GATE.wins} wins`}`
+    + ` and ${f >= MASTERY_GATE.pfame ? `his ${MASTERY_GATE.pfame} renown` : `${f} of ${MASTERY_GATE.pfame} renown`}.`
+    + (foe ? ` ${foe.name} is as good as he is and stands in this yard.` : ""), g); };
+/* the week's word, when the square is all that is left: it names the man to beat */
+function agendaMaster(d, add){
+  for(const g of activeG(d)){
+    if(canMaster(d,g)){ add(1, "men", `${g.name} has earned his mastery`, "the doctore would say so out loud"); continue; }
+    const want = masterNeed(d, g), foe = want && want.length === 1 && !provedIt(g) && !g.learning ? proveFoe(d, g) : null;
+    if(foe) add(1, "ludus::square", her(`${g.name} lacks only a proving bout for his mastery`, g),
+      her(`${foe.name} is as good as he is: a win over ${foe.name} in the square, and he can be named a master`, g));
+  }
+}
 const MASTERY = {
   Murmillo:    { name:"The Wall", say:"Nobody has moved him off a mark in three years. He does not so much win as refuse to lose." },
   Thraex:      { name:"The Gap", say:"He has stopped looking for openings and started making them, which is a different trade entirely." },
@@ -3948,7 +3977,7 @@ function agenda(d){
   { const un = unsworn(d);
     if(un.length === 1) add(1, "men", `${un[0].name} has not been sworn in`, "open his page to have the oath said");
     else if(un.length > 1) add(1, "men", `${un.length} men have not been sworn in`, un.map(g=>g.name).join(", ")); }
-  for(const g of activeG(d)) if(canMaster(d,g)) add(1, "men", `${g.name} has earned his mastery`, "the doctore would say so out loud");
+  agendaMaster(d, add);
   { const f = ripeFeud(d); if(f) add(2, "men", `${f.a.name} and ${f.b.name} are close to it`, "the yard has noticed"); }
   /* open every week of the year, named as the early income in the charter itself,
      and never once mentioned outside the arena tab */
@@ -34034,7 +34063,7 @@ export default function App(){
                 </div>
               );
             })()}
-            {gView==="train" && (canMaster(S,selG) || masterOf(selG) || selG.learning || selG.second) && (
+            {gView==="train" && (canMaster(S,selG) || masterOf(selG) || selG.learning || selG.second || (selG.status==="active" && masterSays(S,selG))) && (
               <div className="panel" style={{padding:11,marginBottom:9,background:"var(--panel)",
                 borderColor: selG.learning ? "var(--gold-edge)" : masterOf(selG) ? "var(--gold-line)" : "var(--line-4)"}}>
                 {selG.learning ? (<>
@@ -34083,9 +34112,9 @@ export default function App(){
                       </div>
                     </div>
                   )}
-                  {!masterOf(selG) && !canMaster(S,selG) && !selG.second && (
+                  {!masterOf(selG) && !canMaster(S,selG) && !selG.second && masterSays(S,selG) && (
                     <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
-                      A master is made at {MASTERY_GATE.wins} victories and {MASTERY_GATE.pfame} renown. He has {selG.wins} and {rnd(selG.pfame)}.
+                      {masterSays(S,selG)}
                     </div>
                   )}
                 </>)}
@@ -36897,6 +36926,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     buildUp, setCrestTo, setCareOf, editorBought, EDITORS, PETITIONS, PET_KEYS, runPetition, petitionOdds, petitionWhy, petitionReady, PETITION_COOL, pickAnyOpp, CARE, CARE_KEYS, careWhy, surgeonOK, surgeonFee, retireEligible, scarBurden, FM_KEYS, freedWeek,
     teachSigTo, makeMasterOf, startSecond, switchStyle, techsFor, sigFee, sigOf, TECHNIQUES,
     canMaster, makeMaster, MASTERY_GATE, MASTERY, masterOf, masterNeed,   /* #232 phase 5 — masterOpen/MASTER_ACCLAIM are already on the handle */
+    masterSays, proveFoe, agendaMaster,         /* #315 — how far a man is from his mastery, and whom to beat */
     challengeSquare, squareReady, squareWhy, provedIt, proveInSquare,   /* #232 phase 5 — the square as a door */
     lessonsTold,   /* #265 — what the gatekeeper has already said, for the recall list */
     setPupilTo, beginRetrain, endRetrain, hireDoctore, dismissDoctore, takeDoctoreOffer, makeDoctore, docSecond, onSquare, squareMen, squareWord, squareWeek, squareTook, squareTie, SQUARE_WEAR, SQUARE_TIE, doctoreWeek, docLesson, DOC_LESSONS, tieBetween, tieWord, addTie,   /* #197 — the square's second seat, and the tie words the arena panel already uses */

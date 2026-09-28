@@ -51,7 +51,6 @@ export const describe = "nothing is written, promised to the player, and called 
    by saying what would have to happen for it to leave. */
 const KNOWN = {
   /* a sentence the player would want and never sees */
-  masterNeed:    "builds \"N more wins, N more renown\" toward a mastery and nothing prints it — the same gap #299 closed for the legacies",
   pactBlocks:    "the PRECISE exclusivity rule (a festival, in Capua, another editor's). The live filter at `weekGames` truncates the week's offers to the first one instead, whoever's it is — so \"nobody else's games in Capua\" is enforced as \"one card a week\"",
 
   /* an instrument, kept on purpose: the game does not call these, the suite does, through the
